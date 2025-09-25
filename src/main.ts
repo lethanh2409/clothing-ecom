@@ -7,6 +7,12 @@ import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Bật CORS cho toàn bộ origin
+  app.enableCors({
+    origin: 'http://localhost:3000', // FE Next.js
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
   // log request kiểu dev (GET /users 404 - 3 ms)
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan(':method :url :status :response-time ms - :req[content-type]'));

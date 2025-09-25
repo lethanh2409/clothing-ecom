@@ -9,7 +9,7 @@ export class VariantAsset {
   @Column()
   variant_id: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   url: string;
 
   @Column({ type: 'varchar', length: 50 })

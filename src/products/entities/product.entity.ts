@@ -36,9 +36,13 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  // tinyint -> smallint (Postgres không hỗ trợ tinyint)
-  @Column({ type: 'smallint', default: 1 })
-  status: number;
+  // product.entity.ts
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: 'ACTIVE',
+  })
+  status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
 
   @CreateDateColumn()
   created_at: Date;

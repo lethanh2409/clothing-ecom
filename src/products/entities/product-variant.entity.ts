@@ -34,9 +34,6 @@ export class ProductVariant {
   @Column({ type: 'int', default: 0 })
   quantity: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  image: string;
-
   // tinyint -> smallint
   @Column({ type: 'smallint', default: 1 })
   status: number;
