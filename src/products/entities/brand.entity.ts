@@ -16,8 +16,12 @@ export class Brand {
   @Column({ type: 'varchar', length: 150, unique: true, nullable: true })
   brand_name: string;
 
-  @Column({ type: 'smallint', default: 1 })
-  status: number;
+  @Column({
+    type: 'varchar',
+    length: 20,
+    default: 'active', // active | inactive | deleted
+  })
+  status: string;
 
   @Column({ type: 'varchar', length: 200, unique: true, nullable: true })
   slug: string;
