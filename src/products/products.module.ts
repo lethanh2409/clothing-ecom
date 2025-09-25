@@ -8,10 +8,13 @@ import { VariantAsset } from './entities/variant-asset.entity';
 import { Brand } from './entities/brand.entity';
 import { BrandsService } from './brands.services';
 import { BrandsController } from './brands.controller';
+import { CategoriesService } from './categories.services';
+import { CategoriesController } from './categories.controller';
+import { Category } from './entities/category.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, ProductVariant, VariantAsset, Brand])],
-  providers: [ProductsService, BrandsService],
-  controllers: [ProductsController, BrandsController],
+  imports: [TypeOrmModule.forFeature([Product, ProductVariant, VariantAsset, Brand, Category])],
+  providers: [ProductsService, BrandsService, CategoriesService],
+  controllers: [ProductsController, BrandsController, CategoriesController],
 })
 export class ProductsModule {}
