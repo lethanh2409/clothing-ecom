@@ -141,6 +141,67 @@ export class ProductsService {
     });
   }
 
+  // Lấy sản phẩm mới nhất
+  async getNewProducts() {
+    const products = await this.productRepo.find({
+      relations: ['variants', 'variants.assets', 'brand', 'category'],
+      order: { created_at: 'DESC' },
+    });
+
+    return products.map((product) => {
+      const firstVariant = product.variants[0];
+      return {
+        product_id: product.product_id,
+        product_name: product.product_name,
+        brand: {
+          brand_id: product.brand?.brand_id,
+          brand_name: product.brand?.brand_name,
+        },
+        category: {
+          category_id: product.category?.category_id,
+          category_name: product.category?.category_name,
+        },
+        price: firstVariant?.base_price || null,
+        image: firstVariant?.assets?.find((a) => a.is_primary)?.url || null,
+      };
+    });
+  }
+
+  // products.service.ts
+  async getPopularProducts(limit = 10) {
+    return this.productRepo
+      .createQueryBuilder('product')
+      .leftJoin('product.variants', 'variant')
+      .leftJoin('order_detail', 'od', 'od.variant_id = variant.variant_id')
+      .leftJoin('orders', 'o', 'o.order_id = od.order_id')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('variant.assets', 'assets')
+      .where('o.order_status = :status', { status: 'delivered' })
+      .groupBy('product.product_id')
+      .addGroupBy('brand.brand_id')
+      .addGroupBy('category.category_id')
+      .addGroupBy('variant.variant_id')
+      .addGroupBy('assets.asset_id')
+      .select([
+        'product',
+        'brand',
+        'category',
+        'variant',
+        'assets',
+        'SUM(od.quantity) as total_sold',
+      ])
+      .orderBy('total_sold', 'DESC')
+      .limit(limit)
+      .getRawAndEntities()
+      .then((result) => {
+        return result.entities.map((entity, i) => ({
+          ...entity,
+          total_sold: Number(result.raw[i].total_sold || 0),
+        }));
+      });
+  }
+
   // products.service.ts
   async getProductById(productId: number): Promise<any> {
     const product = await this.productRepo.findOne({

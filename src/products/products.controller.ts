@@ -1,12 +1,12 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ProductsService } from './products.service';
 
-@Controller()
+@Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   // GET /admin/products
-  @Get('admin/products')
+  @Get('admin')
   async getAllProducts() {
     const variants = await this.productsService.getAllProductsWithFirstVariant();
     return {
@@ -17,7 +17,7 @@ export class ProductsController {
   }
 
   // GET /products/customer
-  @Get('products')
+  @Get()
   async getProductsForCustomer() {
     const variants = await this.productsService.getProductsByStatus();
     return {
@@ -27,7 +27,7 @@ export class ProductsController {
     };
   }
 
-  @Get('products/brand/:brandId')
+  @Get('brand/:brandId')
   async getProductsByBrand(@Param('brandId') brandId: number) {
     const products = await this.productsService.getProductsByBrand(brandId);
     return {
@@ -37,7 +37,7 @@ export class ProductsController {
     };
   }
 
-  @Get('products/category/:categoryId')
+  @Get('category/:categoryId')
   async getProductsByCategory(@Param('categoryId') categoryId: number) {
     const products = await this.productsService.getProductsByCategory(categoryId);
     return {
@@ -47,8 +47,24 @@ export class ProductsController {
     };
   }
 
+  @Get('new')
+  async getNewProducts() {
+    const products = await this.productsService.getNewProducts();
+    return { success: true, count: products.length, data: products };
+  }
+
+  @Get('/popular')
+  async getPopularProducts() {
+    const products = await this.productsService.getPopularProducts();
+    return {
+      success: true,
+      count: products.length,
+      data: products,
+    };
+  }
+
   // products.controller.ts
-  @Get('products/:id')
+  @Get(':id')
   async getProductById(@Param('id') id: number) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const product = await this.productsService.getProductById(id);

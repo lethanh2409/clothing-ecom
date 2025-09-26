@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Product } from './product.entity';
 import { VariantAsset } from './variant-asset.entity';
+import { OrderDetail } from 'src/orders/entities/order-detail.entity';
 
 @Entity('product_variants')
 export class ProductVariant {
@@ -62,4 +63,7 @@ export class ProductVariant {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @OneToMany(() => VariantAsset, (asset) => asset.variant)
   assets: VariantAsset[];
+
+  @OneToMany(() => OrderDetail, (detail) => detail.variant)
+  orderDetails: OrderDetail[];
 }
