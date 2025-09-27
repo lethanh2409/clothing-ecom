@@ -7,7 +7,7 @@ import { UserRole } from './entities/user-role.entity';
 import { Role } from './entities/role.entity';
 import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +17,11 @@ export class UsersService {
     @InjectRepository(UserRole) private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
   ) {}
+
+  // 👇 thêm hàm này
+  async findByRefreshToken(refreshToken: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { refresh_token: refreshToken } });
+  }
 
   async updateRefreshToken(userId: number, token: string): Promise<void> {
     const exp = new Date();

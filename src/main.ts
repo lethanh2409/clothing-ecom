@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import morgan from 'morgan';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,6 +14,7 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+  app.use(cookieParser.default());
   // log request kiểu dev (GET /users 404 - 3 ms)
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan(':method :url :status :response-time ms - :req[content-type]'));

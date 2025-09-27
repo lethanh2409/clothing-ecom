@@ -11,6 +11,7 @@ import {
 import { User } from './user.entity';
 import { Address } from './address.entity';
 import { Order } from 'src/orders/entities/order.entity';
+import { Cart } from 'src/cart/entities/cart.entity';
 
 @Entity('customers')
 export class Customer {
@@ -42,4 +43,7 @@ export class Customer {
 
   @OneToMany(() => Order, (order) => order.customer)
   orders: Order[];
+
+  @OneToOne(() => Cart, (cart) => cart.customer)
+  cart: Cart;
 }

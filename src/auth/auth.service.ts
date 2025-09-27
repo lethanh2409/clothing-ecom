@@ -1,63 +1,57 @@
+// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+
+type JwtPayload = { sub: number; username: string };
 
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly usersService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService, // <- inject
   ) {}
 
   async validateUser(username: string, password: string) {
     const user = await this.usersService.findByUsername(username);
     if (!user) throw new UnauthorizedException('User không tồn tại');
-    console.log(user.password);
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
-
     return user;
   }
 
-  async login(user: any) {
-    const payload = { sub: user.user_id, username: user.username };
+  async login(user: { username: string; password: string }) {
+    const validUser = await this.validateUser(user.username, user.password);
+    if (!validUser) {
+      throw new UnauthorizedException('Đăng nhập không thành công');
+    }
 
-    // access token ngắn hạn
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: '15m',
-    });
+    const payload: JwtPayload = { sub: validUser.user_id, username: validUser.username };
 
-    // refresh token dài hạn
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: '7d',
-    });
+    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Lưu refresh token + hạn vào DB
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    await this.usersService.updateRefreshToken(user.user_id, refreshToken);
+    // 👉 Lưu raw refresh token
+    await this.usersService.updateRefreshToken(validUser.user_id, refresh_token);
 
-    return {
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    };
+    return { access_token, refresh_token };
   }
 
-  async refresh(userId: number, refreshToken: string) {
-    const user = await this.usersService.findOne(userId);
-    if (!user || !user.refresh_token) {
-      throw new UnauthorizedException('Refresh token không hợp lệ');
+  async refreshToken(refreshToken: string) {
+    const user = await this.usersService.findByRefreshToken(refreshToken);
+    if (!user) {
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    // So sánh refresh token
-    const isMatch = refreshToken === user.refresh_token;
-    if (!isMatch) {
-      throw new UnauthorizedException('Refresh token không đúng');
-    }
+    const newAccessToken = this.jwtService.sign(
+      { sub: user.user_id, username: user.username },
+      { expiresIn: '15m' },
+    );
 
-    const payload = { sub: user.user_id, username: user.username };
-    return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '15m' }),
-    };
+    return { access_token: newAccessToken };
   }
 }
