@@ -202,7 +202,6 @@ export class ProductsService {
       });
   }
 
-  // products.service.ts
   async getProductById(productId: number): Promise<any> {
     const product = await this.productRepo.findOne({
       where: { product_id: productId },
@@ -213,9 +212,6 @@ export class ProductsService {
       throw new NotFoundException(`Product ${productId} không tồn tại`);
     }
 
-    const firstVariant = product.variants[0];
-    // lấy asset có is_primary = true
-    const primaryAsset = firstVariant?.assets?.find((a) => a.is_primary);
     return {
       product_id: product.product_id,
       product_name: product.product_name,
@@ -227,11 +223,19 @@ export class ProductsService {
         category_id: product.category?.category_id,
         category_name: product.category?.category_name,
       },
-      sku: firstVariant?.sku || null,
-      price: firstVariant?.base_price || null,
-      size: firstVariant?.attribute?.size || null,
-      color: firstVariant?.attribute?.color || null,
-      image: primaryAsset?.url || null, // chỉ lấy ảnh chính
+      variants: product.variants.map((variant) => {
+        // lấy asset chính cho từng variant
+        const primaryAsset = variant.assets?.find((a) => a.is_primary);
+        return {
+          variant_id: variant.variant_id,
+          sku: variant.sku,
+          price: variant.base_price,
+          size: variant.attribute?.size || null,
+          color: variant.attribute?.color || null,
+          image: primaryAsset?.url || null,
+        };
+      }),
     };
   }
+
 }
