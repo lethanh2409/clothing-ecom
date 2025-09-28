@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -16,6 +21,7 @@ export class UsersService {
     @InjectRepository(Customer) private readonly customerRepository: Repository<Customer>,
     @InjectRepository(UserRole) private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Customer) private readonly cartRepository: Repository<Customer>, // 👈 thêm
   ) {}
 
   // 👇 thêm hàm này
@@ -103,6 +109,10 @@ export class UsersService {
       user_id: savedUser.user_id,
       birthday,
       gender,
+      cart: {
+        total_price: 0,
+        session_id: null,
+      },
     });
 
     return await this.customerRepository.save(customer);
@@ -316,5 +326,18 @@ export class UsersService {
       .leftJoinAndSelect('userRoles.role', 'role')
       .leftJoinAndSelect('user.customer', 'customer')
       .getMany();
+  }
+
+  // src/users/users.service.ts
+  async findCustomerIdByUserId(userId: number): Promise<number> {
+    const customer = await this.customerRepository.findOne({
+      where: { user: { user_id: userId } },
+    });
+
+    if (!customer) {
+      throw new UnauthorizedException('Token này không thuộc về customer nào');
+    }
+
+    return customer.customer_id;
   }
 }

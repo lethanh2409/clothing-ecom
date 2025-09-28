@@ -3,11 +3,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
 import { Customer } from '../../users/entities/customer.entity';
 import { CartDetail } from './cart-detail.entity';
@@ -17,7 +17,7 @@ export class Cart {
   @PrimaryGeneratedColumn()
   cart_id: number;
 
-  @ManyToOne(() => Customer, (customer) => customer.cart, { onDelete: 'CASCADE' })
+  @OneToOne(() => Customer, (customer) => customer.cart)
   @JoinColumn({ name: 'customer_id' })
   customer: Customer;
 

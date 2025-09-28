@@ -2,33 +2,49 @@
 import { Controller, Get, Post, Delete, Patch, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UsersService } from '../users/users.service';
 
 @Controller('cart')
 @UseGuards(JwtAuthGuard)
 export class CartController {
-  constructor(private readonly cartService: CartService) {}
+  constructor(
+    private readonly cartService: CartService,
+    private readonly usersService: UsersService, // 👈 inject thêm
+  ) {}
 
   @Get()
-  getCart(@Req() req) {
+  async getCart(@Req() req) {
+    const userId = req.user.userId || req.user.sub; // từ payload
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return this.cartService.getCartByCustomer(req.user.sub);
+    const customerId = await this.usersService.findCustomerIdByUserId(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.cartService.getCartByCustomer(customerId);
   }
 
   @Post('add')
-  addToCart(@Req() req, @Body() body: { variantId: number; quantity: number }) {
+  async addToCart(@Req() req, @Body() body: { variantId: number; quantity: number }) {
+    const userId = req.user.userId || req.user.sub; // từ payload
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return this.cartService.addToCart(req.user.sub, body.variantId, body.quantity);
+    const customerId = await this.usersService.findCustomerIdByUserId(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.cartService.addToCart(customerId, body.variantId, body.quantity);
   }
 
   @Patch('update')
-  updateQuantity(@Req() req, @Body() body: { variantId: number; quantity: number }) {
+  async updateQuantity(@Req() req, @Body() body: { variantId: number; quantity: number }) {
+    const userId = req.user.userId || req.user.sub; // từ payload
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return this.cartService.updateQuantity(req.user.sub, body.variantId, body.quantity);
+    const customerId = await this.usersService.findCustomerIdByUserId(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.cartService.updateQuantity(customerId, body.variantId, body.quantity);
   }
 
   @Delete('remove/:variantId')
-  removeFromCart(@Req() req, @Param('variantId') variantId: number) {
+  async removeFromCart(@Req() req, @Param('variantId') variantId: number) {
+    const userId = req.user.userId || req.user.sub; // từ payload
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return this.cartService.removeFromCart(req.user.sub, variantId);
+    const customerId = await this.usersService.findCustomerIdByUserId(userId);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.cartService.removeFromCart(customerId, variantId);
   }
 }
