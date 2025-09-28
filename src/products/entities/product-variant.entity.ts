@@ -60,9 +60,8 @@ export class ProductVariant {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   @OneToMany(() => VariantAsset, (asset) => asset.variant)
-  assets: VariantAsset[];
+  assets?: VariantAsset[];
 
   @OneToMany(() => OrderDetail, (detail) => detail.variant)
   orderDetails: OrderDetail[];

@@ -17,13 +17,36 @@ export class CartService {
   async getCartByCustomer(customerId: number): Promise<Cart> {
     let cart = await this.cartRepo.findOne({
       where: { customer: { customer_id: customerId } },
-      relations: ['details', 'details.variant'],
+      relations: [
+        'details',
+        'details.variant',
+        'details.variant.assets', // vẫn join để lấy ảnh
+      ],
     });
 
     if (!cart) {
       cart = this.cartRepo.create({ customer: { customer_id: customerId }, total_price: 0 });
       await this.cartRepo.save(cart);
     }
+
+    // Map lại dữ liệu: chọn ảnh primary và loại bỏ assets
+    cart.details = cart.details.map((d) => {
+      const variant = d.variant;
+      if (variant) {
+        const primaryAsset =
+          variant.assets?.find((a) => a.is_primary) || variant.assets?.[0] || null;
+
+        return {
+          ...d,
+          variant: {
+            ...variant,
+            image: primaryAsset ? primaryAsset.url : null, // giữ 1 ảnh duy nhất
+            assets: undefined, // loại bỏ assets khỏi response
+          },
+        };
+      }
+      return d;
+    });
 
     return cart;
   }
