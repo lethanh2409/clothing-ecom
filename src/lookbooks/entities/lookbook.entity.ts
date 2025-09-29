@@ -6,7 +6,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProductLookbook } from './product-lookbook.entity';
+import { LookbookItem } from './lookbook_items.entity';
 
 @Entity('lookbooks')
 export class Lookbook {
@@ -31,6 +31,6 @@ export class Lookbook {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @OneToMany(() => ProductLookbook, (pl) => pl.lookbook)
-  productLookbooks: ProductLookbook[];
+  @OneToMany(() => LookbookItem, (item) => item.lookbook)
+  items: LookbookItem[];
 }

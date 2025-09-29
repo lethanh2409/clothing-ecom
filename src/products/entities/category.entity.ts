@@ -18,9 +18,6 @@ export class Category {
   @Column({ type: 'varchar', length: 150, unique: true, nullable: true })
   category_name: string;
 
-  @Column({ nullable: true })
-  parent_id: number;
-
   @Column({
     type: 'varchar',
     length: 20,

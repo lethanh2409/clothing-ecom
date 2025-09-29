@@ -1,5 +1,5 @@
 // src/products/categories.controller.ts
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CategoriesService } from './categories.services';
 
 @Controller('categories')
@@ -22,5 +22,17 @@ export class CategoriesController {
       success: true,
       data: await this.categoriesService.getCategoriesByStatus(),
     };
+  }
+
+  // GET /categories/parents
+  @Get('parents')
+  getParentCategories() {
+    return this.categoriesService.getParentCategories();
+  }
+
+  // GET /categories/:id/sub
+  @Get(':id/sub')
+  getSubCategories(@Param('id') id: number) {
+    return this.categoriesService.getSubCategories(id);
   }
 }

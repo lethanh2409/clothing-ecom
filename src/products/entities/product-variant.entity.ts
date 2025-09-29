@@ -11,6 +11,7 @@ import {
 import { Product } from './product.entity';
 import { VariantAsset } from './variant-asset.entity';
 import { OrderDetail } from 'src/orders/entities/order-detail.entity';
+import { LookbookItem } from 'src/lookbooks/entities/lookbook_items.entity';
 
 @Entity('product_variants')
 export class ProductVariant {
@@ -65,4 +66,7 @@ export class ProductVariant {
 
   @OneToMany(() => OrderDetail, (detail) => detail.variant)
   orderDetails: OrderDetail[];
+
+  @OneToMany(() => LookbookItem, (item) => item.variant)
+  lookbookItems: LookbookItem[];
 }

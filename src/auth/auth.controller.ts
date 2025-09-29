@@ -1,8 +1,8 @@
-// src/auth/auth.controller.ts
-import { Controller, Post, Body, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import express from 'express';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import express from 'express';
+import { JwtUser } from '../types/jwt-user.type';
 
 @Controller('auth')
 export class AuthController {
@@ -18,27 +18,28 @@ export class AuthController {
     // 👇 Set refresh token vào cookie HttpOnly
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production', // bật true khi deploy https
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
 
+    // Trả access token về cho FE
     return { access_token };
   }
 
   @Post('refresh')
   async refresh(@Req() req: express.Request) {
-    const refreshToken = req.cookies?.['refresh_token'];
+    const refreshToken = (req.cookies?.['refresh_token'] as string) || undefined;
+    console.log({ refreshToken });
     if (!refreshToken) {
       throw new Error('No refresh token in cookies');
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.authService.refreshToken(refreshToken);
   }
 
   @Post('me')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@Req() req: express.Request) {
+  getProfile(@Req() req: express.Request & { user: JwtUser }) {
     return req.user;
   }
 }

@@ -11,7 +11,6 @@ import {
 import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 import { ProductVariant } from './product-variant.entity';
-import { ProductLookbook } from './product-lookbook.entity';
 
 @Entity('products')
 export class Product {
@@ -60,7 +59,4 @@ export class Product {
 
   @OneToMany(() => ProductVariant, (variant) => variant.product)
   variants: ProductVariant[];
-
-  @OneToMany(() => ProductLookbook, (productLookbook) => productLookbook.product)
-  productLookbooks: ProductLookbook[];
 }
