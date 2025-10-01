@@ -35,13 +35,4 @@ export class LookbooksService {
 
     return lookbook;
   }
-
-  // Lấy tất cả items trong 1 lookbook
-  async getItems(id: number) {
-    return this.lookbookItemRepo.find({
-      where: { lookbook: { lookbook_id: id } },
-      relations: ['variant', 'variant.product'],
-      order: { position: 'ASC' },
-    });
-  }
 }

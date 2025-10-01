@@ -14,9 +14,4 @@ export class LookbooksController {
   getOne(@Param('id') id: string) {
     return this.lookbooksService.getOne(+id);
   }
-
-  @Get(':id/items')
-  getItems(@Param('id') id: string) {
-    return this.lookbooksService.getItems(+id);
-  }
 }

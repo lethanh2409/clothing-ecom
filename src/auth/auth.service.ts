@@ -4,8 +4,11 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/users/entities/user.entity';
+import { Repository } from 'typeorm';
 
-type JwtPayload = { sub: number; username: string };
+type JwtPayload = { sub: number; username: string; roles: string[] };
 
 @Injectable()
 export class AuthService {
@@ -13,14 +16,21 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService, // <- inject
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
   ) {}
 
-  async validateUser(username: string, password: string) {
-    const user = await this.usersService.findByUsername(username);
-    if (!user) throw new UnauthorizedException('User không tồn tại');
+  async validateUser(username: string, pass: string): Promise<User | null> {
+    const user = await this.usersRepository.findOne({
+      where: { username },
+      relations: ['userRoles', 'userRoles.role'],
+    });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Sai mật khẩu');
+    if (!user) return null;
+
+    const isPasswordValid = await bcrypt.compare(pass, user.password ?? '');
+    if (!isPasswordValid) return null;
+
     return user;
   }
 
@@ -30,12 +40,17 @@ export class AuthService {
       throw new UnauthorizedException('Đăng nhập không thành công');
     }
 
-    const payload: JwtPayload = { sub: validUser.user_id, username: validUser.username };
+    const roles = validUser.userRoles.map((ur) => ur.role.role_name);
+
+    const payload: JwtPayload = {
+      sub: validUser.user_id,
+      username: validUser.username,
+      roles,
+    };
 
     const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // 👉 Lưu raw refresh token
     await this.usersService.updateRefreshToken(validUser.user_id, refresh_token);
 
     return { access_token, refresh_token };
@@ -47,10 +62,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const newAccessToken = this.jwtService.sign(
-      { sub: user.user_id, username: user.username },
-      { expiresIn: '15m' },
-    );
+    const roles = user.userRoles.map((ur) => ur.role.role_name);
+
+    const payload: JwtPayload = {
+      sub: user.user_id,
+      username: user.username,
+      roles,
+    };
+
+    const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
 
     return { access_token: newAccessToken };
   }
