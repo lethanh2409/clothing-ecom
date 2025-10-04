@@ -6,16 +6,22 @@ import {
   Req,
   UseGuards,
   BadRequestException,
+  Body,
+  Post,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorate';
 import { RolesGuard } from '../auth/roles.guard';
-
+import { CreateOrderDto } from './dtos/create-order.dto';
+import { VnpayService } from '../payment/vnpay.service';
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard) // áp cho toàn bộ controller
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly vnpayService: VnpayService,
+  ) {}
 
   @Get()
   @Roles('ADMIN')
@@ -58,5 +64,17 @@ export class OrdersController {
       throw new NotFoundException(`Order ${id} not found`);
     }
     return order;
+  }
+
+  @Post()
+  @Roles('CUSTOMER')
+  async create(@Body() dto: CreateOrderDto) {
+    return this.ordersService.createOrder(dto);
+  }
+
+  @Post(':id/pay')
+  @Roles('CUSTOMER')
+  async retryPayment(@Param('id') id: string) {
+    return this.vnpayService.retryPayment(Number(id));
   }
 }

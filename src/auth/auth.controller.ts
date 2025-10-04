@@ -13,7 +13,7 @@ export class AuthController {
     @Body() body: { username: string; password: string },
     @Res({ passthrough: true }) res: express.Response,
   ) {
-    const { access_token, refresh_token } = await this.authService.login(body);
+    const { access_token, refresh_token, roles } = await this.authService.login(body);
 
     // 👇 Set refresh token vào cookie HttpOnly
     res.cookie('refresh_token', refresh_token, {
@@ -24,7 +24,7 @@ export class AuthController {
     });
 
     // Trả access token về cho FE
-    return { access_token };
+    return { access_token, roles };
   }
 
   @Post('refresh')

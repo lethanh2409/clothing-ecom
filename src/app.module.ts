@@ -9,6 +9,10 @@ import { OrdersModule } from './orders/orders.module';
 import { CartModule } from './cart/cart.module';
 import { LookbooksModule } from './lookbooks/lookbooks.module';
 import { VouchersModule } from './vouchers/vouchers.module';
+import { PrismaModule } from './prisma/prisma.module';
+import { PaymentModule } from './payment/payment.module';
+import { VnpayService } from './payment/vnpay.service';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -48,6 +52,13 @@ import { VouchersModule } from './vouchers/vouchers.module';
     LookbooksModule,
 
     VouchersModule,
+
+    PrismaModule,
+
+    PaymentModule,
+
+    ReviewsModule,
   ],
+  providers: [VnpayService],
 })
 export class AppModule {}

@@ -97,7 +97,7 @@ export class UsersService {
 
     // Gán role customer mặc định
     const customerRole = await this.roleRepository.findOne({
-      where: { role_name: 'customer' },
+      where: { role_name: 'CUSTOMER' },
     });
 
     if (customerRole) {

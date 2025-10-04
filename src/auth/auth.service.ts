@@ -7,6 +7,7 @@ import { UsersService } from '../users/users.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
+import { UserRole } from 'src/users/entities/user-role.entity';
 
 type JwtPayload = { sub: number; username: string; roles: string[] };
 
@@ -18,6 +19,8 @@ export class AuthService {
     private readonly configService: ConfigService, // <- inject
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(UserRole)
+    private readonly userRoleRepository: Repository<User>,
   ) {}
 
   async validateUser(username: string, pass: string): Promise<User | null> {
@@ -34,26 +37,37 @@ export class AuthService {
     return user;
   }
 
-  async login(user: { username: string; password: string }) {
-    const validUser = await this.validateUser(user.username, user.password);
-    if (!validUser) {
-      throw new UnauthorizedException('Đăng nhập không thành công');
+  async login(body: { username: string; password: string }) {
+    const user = await this.usersRepository.findOne({
+      where: { username: body.username },
+      relations: ['userRoles', 'userRoles.role'], // 👈 bắt buộc
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Sai username hoặc password');
     }
 
-    const roles = validUser.userRoles.map((ur) => ur.role.role_name);
+    const match = await bcrypt.compare(body.password, user.password);
+    if (!match) {
+      throw new UnauthorizedException('Sai username hoặc password');
+    }
 
-    const payload: JwtPayload = {
-      sub: validUser.user_id,
-      username: validUser.username,
-      roles,
-    };
+    // Lấy danh sách role name trực tiếp
+    const roleNames = user.userRoles.map((ur) => ur.role.role_name);
 
-    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const payload = { sub: user.user_id, email: user.email, roles: roleNames };
 
-    await this.usersService.updateRefreshToken(validUser.user_id, refresh_token);
+    const access_token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: '1h',
+    });
 
-    return { access_token, refresh_token };
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: '7d',
+    });
+
+    return { access_token, refresh_token, roles: roleNames };
   }
 
   async refreshToken(refreshToken: string) {
