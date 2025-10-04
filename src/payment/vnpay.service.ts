@@ -193,4 +193,13 @@ export class VnpayService {
 
     return { order, payment, qrUrl };
   }
+
+  //   private transformPayment(payment: any) {
+  //   return {
+  //     ...payment,
+  //     amount: Number(payment.amount),
+  //     created_at: this.formatDate(payment.created_at),
+  //     updated_at: this.formatDate(payment.updated_at),
+  //   };
+  // }
 }

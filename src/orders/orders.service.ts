@@ -5,6 +5,8 @@ import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { VnpayService } from '../payment/vnpay.service';
+import { format } from 'date-fns';
+import { orders, payments } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -59,7 +61,7 @@ export class OrdersService {
 
   async createOrder(dto: CreateOrderDto) {
     return this.prisma.$transaction(async (tx) => {
-      // 1. Tạo order
+      // 1. Tạo order (ban đầu total_price = 0)
       const order = await tx.orders.create({
         data: {
           customer_id: dto.customerId,
@@ -80,7 +82,7 @@ export class OrdersService {
         });
 
         if (!variant || variant.quantity < item.quantity) {
-          throw new BadRequestException(`Not enough stock for ${item.variantId}`);
+          throw new BadRequestException(`Not enough stock for variant ${item.variantId}`);
         }
 
         const subTotal = Number(variant.base_price) * item.quantity;
@@ -93,11 +95,11 @@ export class OrdersService {
             variant_id: variant.variant_id,
             quantity: item.quantity,
             total_price: subTotal,
-            discount_price: 0, // 👈 fix lỗi
+            discount_price: 0,
           },
         });
 
-        // 2.2 Ghi inventory
+        // 2.2 Ghi inventory transaction
         await tx.inventory_transactions.create({
           data: {
             variant_id: variant.variant_id,
@@ -115,7 +117,7 @@ export class OrdersService {
       }
 
       // 3. Update tổng tiền order
-      await tx.orders.update({
+      const updatedOrder = await tx.orders.update({
         where: { order_id: order.order_id },
         data: { total_price: total },
       });
@@ -124,7 +126,7 @@ export class OrdersService {
       const txId = 'TX-' + Date.now();
       const payment = await tx.payments.create({
         data: {
-          order_id: order.order_id,
+          order_id: updatedOrder.order_id,
           method: 'VNPAY_QR',
           status: 'pending',
           transaction_id: txId,
@@ -134,12 +136,40 @@ export class OrdersService {
 
       // 5. Sinh link QR VNPAY
       const qrUrl = this.vnpayService.generatePaymentUrl({
-        orderId: order.order_id,
+        orderId: updatedOrder.order_id,
         amount: total,
         txnRef: txId,
       });
 
-      return { order, payment, qrUrl };
+      // 6. Trả về dữ liệu đã transform
+      return {
+        order: this.transformOrder(updatedOrder),
+        payment: this.transformPayment(payment),
+        qrUrl,
+      };
     });
+  }
+
+  private transformOrder(order: orders) {
+    return {
+      ...order,
+      total_price: Number(order.total_price),
+      shipping_fee: Number(order.shipping_fee),
+      created_at: this.formatDate(order.created_at),
+      updated_at: this.formatDate(order.updated_at),
+    };
+  }
+
+  private transformPayment(payment: payments) {
+    return {
+      ...payment,
+      amount: Number(payment.amount),
+      created_at: this.formatDate(payment.created_at),
+      updated_at: this.formatDate(payment.updated_at),
+    };
+  }
+
+  private formatDate(date: Date | string): string {
+    return format(new Date(date), 'HH:mm:ss dd/MM/yyyy'); // 24h format
   }
 }
