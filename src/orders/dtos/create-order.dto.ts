@@ -6,10 +6,6 @@ import { OrderItemDto } from './order-item.dto';
 export class CreateOrderDto {
   @IsInt()
   @Min(1)
-  customerId: number;
-
-  @IsInt()
-  @Min(1)
   addressId: number;
 
   @IsArray()

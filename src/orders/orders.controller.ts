@@ -8,6 +8,7 @@ import {
   BadRequestException,
   Body,
   Post,
+  ForbiddenException,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -15,12 +16,15 @@ import { Roles } from '../auth/roles.decorate';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { VnpayService } from '../payment/vnpay.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard) // áp cho toàn bộ controller
 export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly vnpayService: VnpayService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -68,8 +72,19 @@ export class OrdersController {
 
   @Post()
   @Roles('CUSTOMER')
-  async create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.createOrder(dto);
+  async create(@Body() dto: CreateOrderDto, @Req() req) {
+    const userId = Number(req.user?.userId); // hoặc req.user?.userId tùy payload bạn sign
+    // Tìm customer_id từ user_id
+    const customer = await this.prisma.customers.findUnique({
+      where: { user_id: userId },
+      select: { customer_id: true },
+    });
+
+    if (!customer) {
+      throw new ForbiddenException('Tài khoản này không có hồ sơ khách hàng.');
+    }
+
+    return this.ordersService.createOrder(dto, customer.customer_id);
   }
 
   @Post(':id/pay')

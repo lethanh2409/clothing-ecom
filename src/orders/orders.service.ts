@@ -59,12 +59,12 @@ export class OrdersService {
     });
   }
 
-  async createOrder(dto: CreateOrderDto) {
+  async createOrder(dto: CreateOrderDto, customerId: number) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Tạo order (ban đầu total_price = 0)
       const order = await tx.orders.create({
         data: {
-          customer_id: dto.customerId,
+          customer_id: customerId,
           address_id: dto.addressId,
           total_price: 0,
           shipping_fee: 30000,
