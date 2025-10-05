@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PaymentModule } from './payment/payment.module';
 import { VnpayService } from './payment/vnpay.service';
 import { ReviewsModule } from './reviews/reviews.module';
+import { AddressModule } from './address/address.module';
 
 @Module({
   imports: [
@@ -58,6 +59,8 @@ import { ReviewsModule } from './reviews/reviews.module';
     PaymentModule,
 
     ReviewsModule,
+
+    AddressModule,
   ],
   providers: [VnpayService],
 })

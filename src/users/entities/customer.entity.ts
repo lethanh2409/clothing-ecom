@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Address } from './address.entity';
+import { Address } from '../../address/entities/address.entity';
 import { Order } from 'src/orders/entities/order.entity';
 import { Cart } from 'src/cart/entities/cart.entity';
 

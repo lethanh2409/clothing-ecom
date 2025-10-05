@@ -43,6 +43,8 @@ model users {
   user_role     user_role[]
   customers     customers?
   order_status_history order_status_history[]
+  audit_logs    audit_logs[]
+  site_contents site_contents[] @relation("UserUpdatedContents")
 
   @@map("users")
 }
@@ -385,18 +387,22 @@ model payments {
 
 /// INVENTORY_TRANSACTIONS
 model inventory_transactions {
-  inventory_id Int @id @default(autoincrement())
-  variant_id   Int
-  change_quantity Int
-  reason       String?
-  order_id     Int?
-  created_at   DateTime @default(now())
+  inventory_id     Int      @id @default(autoincrement())
+  variant_id       Int
+  warehouse_id     Int
+  change_quantity  Int
+  reason           String?
+  order_id         Int?
+  created_at       DateTime @default(now())
 
+  // Quan hệ với các bảng khác
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
-  orders orders? @relation(fields: [order_id], references: [order_id])
+  orders           orders?          @relation(fields: [order_id], references: [order_id])
+  warehouses       warehouses       @relation(fields: [warehouse_id], references: [warehouse_id])
 
   @@map("inventory_transactions")
 }
+
 
 /// RETURNS
 model returns {
@@ -449,3 +455,63 @@ model reviews {
 
   @@map("reviews")
 }
+
+
+/// WAREHOUSES
+model warehouses {
+  warehouse_id Int      @id @default(autoincrement())
+  wh_name      String
+  wh_address   String
+  is_default   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  // Quan hệ 1-n với inventory_transactions
+  inventory_transactions inventory_transactions[]
+
+  @@map("warehouses")
+}
+
+model audit_logs {
+  audit_id    Int      @id @default(autoincrement())
+  user_id     Int?
+  action      String
+  entity_type String?
+  entity_id   Int?
+  details     Json?
+  ip_address  String?
+  user_agent  String?
+  created_at  DateTime @default(now())
+
+  users users? @relation(fields: [user_id], references: [user_id])
+  @@map("audit_logs")
+}
+
+model site_contents {
+  content_id Int      @id @default(autoincrement())
+  slug       String   @unique
+  title      String
+  content    String
+  category   String?
+  tags       String[]
+  status     Boolean  @default(true)
+  vector     String?  @db.Text   // nếu bạn lưu embeddings thì thay thành Json hoặc vector type
+  updated_by Int?
+  updated_at DateTime @default(now())
+
+  users users? @relation("UserUpdatedContents", fields: [updated_by], references: [user_id])
+
+  @@map("site_contents")
+  content_embeddings content_embeddings[]
+}
+
+model content_embeddings {
+  id         Int      @id @default(autoincrement())
+  content_id Int
+  chunk      String
+  embedding  Json?
+  created_at DateTime @default(now())
+
+  site_contents site_contents @relation(fields: [content_id], references: [content_id], onDelete: Cascade)
+}
+

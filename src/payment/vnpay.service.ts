@@ -104,26 +104,33 @@ export class VnpayService {
       throw new BadRequestException('Sai chữ ký – dữ liệu không hợp lệ!');
     }
 
-    // 2) Lấy txnRef an toàn
+    // 2) Lấy txnRef
     const txnRef = String(query['vnp_TxnRef'] || '').trim();
-    if (!txnRef) {
-      throw new BadRequestException('Thiếu vnp_TxnRef');
-    }
+    if (!txnRef) throw new BadRequestException('Thiếu vnp_TxnRef');
 
-    // 3) Lấy trạng thái từ VNPAY
     const rspCode = String(query['vnp_ResponseCode'] || '');
     const transStatus = String(query['vnp_TransactionStatus'] || '');
 
-    // 4) Tìm payment theo txnRef (transaction_id)
+    // 3) Tìm payment theo txnRef
     const payment = await this.prisma.payments.findFirst({
       where: { transaction_id: txnRef },
       select: { payment_id: true, order_id: true, status: true },
     });
-    if (!payment) {
-      throw new NotFoundException(`Không tìm thấy payment với txnRef=${txnRef}`);
-    }
+    if (!payment) throw new NotFoundException(`Không tìm thấy payment với txnRef=${txnRef}`);
 
-    // 5) Cập nhật theo kết quả
+    // 🆕 4) Lấy thêm thông tin từ orders
+    const order = await this.prisma.orders.findUnique({
+      where: { order_id: payment.order_id },
+      select: {
+        order_id: true,
+        customer_id: true,
+        address_id: true,
+      },
+    });
+
+    if (!order) throw new NotFoundException(`Không tìm thấy đơn hàng id=${payment.order_id}`);
+
+    // 5) Xử lý cập nhật và trả về kết quả
     if (rspCode === '00' && transStatus === '00') {
       await this.prisma.$transaction(async (tx) => {
         await tx.payments.update({
@@ -139,6 +146,8 @@ export class VnpayService {
       return {
         message: 'Thanh toán thành công',
         orderId: payment.order_id,
+        customerId: order.customer_id,
+        addressId: order.address_id,
         txnRef,
       };
     } else {
@@ -150,6 +159,8 @@ export class VnpayService {
       return {
         message: 'Thanh toán thất bại',
         orderId: payment.order_id,
+        customerId: order.customer_id,
+        addressId: order.address_id,
         txnRef,
         rspCode,
         transStatus,

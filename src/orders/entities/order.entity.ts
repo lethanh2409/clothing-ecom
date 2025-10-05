@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Customer } from '../../users/entities/customer.entity';
-import { Address } from '../../users/entities/address.entity';
+import { Address } from '../../address/entities/address.entity';
 import { Voucher } from './voucher.entity';
 import { OrderDetail } from './order-detail.entity';
 
