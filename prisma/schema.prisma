@@ -67,6 +67,8 @@ enum Gender {
   female
   other
   unisex
+
+  @@map("customers_gender_enum")
 }
 /// CUSTOMERS
 model customers {
