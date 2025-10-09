@@ -33,6 +33,7 @@ export class OrdersService {
         'voucher',
         'details',
         'details.variant',
+        'details.variant.assets', // ✅ Thêm dòng này
         'details.variant.product',
       ],
     });
@@ -46,18 +47,20 @@ export class OrdersService {
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {
     return this.orderRepo.find({
-      where: { customer: { user_id: userId } }, // dựa trên quan hệ ManyToOne
+      where: { customer: { user_id: userId } },
       relations: [
         'customer',
         'address',
         'voucher',
         'details',
         'details.variant',
+        'details.variant.assets', // ✅ Thêm dòng này
         'details.variant.product',
       ],
-      order: { created_at: 'DESC' }, // sắp xếp mới nhất trước
+      order: { created_at: 'DESC' },
     });
   }
+
 
   async createOrder(dto: CreateOrderDto, customerId: number) {
     return this.prisma.$transaction(async (tx) => {

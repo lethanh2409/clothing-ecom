@@ -29,26 +29,19 @@ export class CartService {
       await this.cartRepo.save(cart);
     }
 
-    // Map lại dữ liệu: chọn ảnh primary và loại bỏ assets
-    cart.details = cart.details.map((d) => {
-      const variant = d.variant;
-      if (variant) {
-        const primaryAsset =
-          variant.assets?.find((a) => a.is_primary) || variant.assets?.[0] || null;
+    // Không cần xử lý ảnh, giữ nguyên assets
+    const result = {
+      ...cart,
+      details: cart.details.map((d) => ({
+        ...d,
+        variant: {
+          ...d.variant,
+          // Giữ nguyên assets, không thêm field image
+        },
+      })),
+    };
 
-        return {
-          ...d,
-          variant: {
-            ...variant,
-            image: primaryAsset ? primaryAsset.url : null, // giữ 1 ảnh duy nhất
-            assets: undefined, // loại bỏ assets khỏi response
-          },
-        };
-      }
-      return d;
-    });
-
-    return cart;
+    return result; // Trả plain object
   }
 
   async addToCart(customerId: number, variantId: number, quantity: number): Promise<Cart> {
