@@ -1,23 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Address } from './entities/address.entity';
-import { Customer } from '../users/entities/customer.entity';
+import { PrismaService } from '../prisma/prisma.service'; // Adjust path as needed
+import { addresses } from '@prisma/client'; // Generated type
 
 @Injectable()
 export class AddressesService {
-  constructor(
-    @InjectRepository(Address)
-    private addressRepository: Repository<Address>,
-    @InjectRepository(Customer)
-    private customerRepository: Repository<Customer>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Lấy tất cả địa chỉ của user
-   */
-  async getAddressByUserId(userId: number): Promise<Address[]> {
-    const customer = await this.customerRepository.findOne({
+  async getAddressByUserId(userId: number): Promise<addresses[]> {
+    const customer = await this.prisma.customers.findUnique({
       where: { user_id: userId },
     });
 
@@ -25,15 +15,12 @@ export class AddressesService {
       throw new NotFoundException('Customer not found');
     }
 
-    return this.addressRepository.find({
+    return this.prisma.addresses.findMany({
       where: {
         customer_id: customer.customer_id,
         status: true,
       },
-      order: {
-        is_default: 'DESC',
-        created_at: 'DESC',
-      },
+      orderBy: [{ is_default: 'desc' }, { created_at: 'desc' }],
     });
   }
 }

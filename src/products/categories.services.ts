@@ -1,41 +1,86 @@
 // src/categories/categories.service.ts
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
-import { Category } from './entities/category.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateCategoryDto } from './dtos/create-category.dto';
+import { UpdateCategoryDto } from './dtos/update-category.dto';
+import { categories } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
-  constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepo: Repository<Category>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  // Lấy tất cả category
-  async getAllCategories(): Promise<Category[]> {
-    return this.categoryRepo.find();
+  // Admin: lấy tất cả category (kèm children nếu bạn đã khai báo relation trong schema)
+  async getAllCategories(): Promise<categories[]> {
+    return this.prisma.categories.findMany({
+      orderBy: { category_id: 'asc' },
+      // Nếu trong prisma/schema.prisma bạn đặt tên relation là `children`
+      include: { children: true },
+    });
   }
 
-  // Lấy category theo status = 'active'
-  async getCategoriesByStatus(): Promise<Category[]> {
-    return this.categoryRepo.find({
-      where: { status: 'active' },
+  // FE: chỉ lấy category đang active
+  async getCategoriesByStatus(): Promise<categories[]> {
+    return this.prisma.categories.findMany({
+      where: { status: true },
+      orderBy: { category_id: 'asc' },
+      include: { children: true },
     });
   }
 
   // Lấy tất cả category cha (parent_id IS NULL)
-  async getParentCategories() {
-    return this.categoryRepo.find({
-      where: { parent: IsNull() },
-      relations: ['children'],
+  async getParentCategories(): Promise<categories[]> {
+    return this.prisma.categories.findMany({
+      where: { parent_id: null },
+      orderBy: { category_id: 'asc' },
+      include: { children: true },
     });
   }
 
   // Lấy tất cả category con theo parent_id
-  async getSubCategories(parentId: number) {
-    return this.categoryRepo.find({
-      where: { parent: { category_id: parentId } },
-      relations: ['children'],
+  async getSubCategories(parentId: number): Promise<categories[]> {
+    return this.prisma.categories.findMany({
+      where: { parent_id: parentId },
+      orderBy: { category_id: 'asc' },
+      include: { children: true },
+    });
+  }
+
+  // --- ADMIN CRUD ---
+  async create(dto: CreateCategoryDto): Promise<categories> {
+    return this.prisma.categories.create({
+      data: {
+        category_name: dto.category_name,
+        slug: dto.slug,
+        description: dto.description,
+        parent_id: dto.parent_id ?? null,
+        status: dto.status ?? true,
+      },
+    });
+  }
+
+  async update(id: number, dto: UpdateCategoryDto): Promise<categories> {
+    const existed = await this.prisma.categories.findUnique({ where: { category_id: id } });
+    if (!existed) throw new NotFoundException('Category not found');
+
+    return this.prisma.categories.update({
+      where: { category_id: id },
+      data: {
+        category_name: dto.category_name ?? existed.category_name,
+        slug: dto.slug ?? existed.slug,
+        description: dto.description ?? existed.description,
+        parent_id: dto.parent_id ?? existed.parent_id,
+        status: typeof dto.status === 'boolean' ? dto.status : existed.status,
+      },
+    });
+  }
+
+  async softDelete(id: number): Promise<categories> {
+    const existed = await this.prisma.categories.findUnique({ where: { category_id: id } });
+    if (!existed) throw new NotFoundException('Category not found');
+
+    return this.prisma.categories.update({
+      where: { category_id: id },
+      data: { status: false },
     });
   }
 }

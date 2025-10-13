@@ -7,5 +7,5 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiProperty({ example: 1, required: false })
   @IsOptional()
   @IsInt()
-  status?: number;
+  status?: boolean;
 }

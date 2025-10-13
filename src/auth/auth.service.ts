@@ -1,32 +1,34 @@
-// src/auth/auth.service.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { UsersService } from '../users/users.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { Repository } from 'typeorm';
-import { UserRole } from 'src/users/entities/user-role.entity';
+import { PrismaService } from '../prisma/prisma.service'; // Adjust path
+import { users } from '@prisma/client';
 
-type JwtPayload = { sub: number; username: string; roles: string[] };
+export interface JwtPayload {
+  sub: number;
+  username: string;
+  roles: string[];
+}
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService, // <- inject
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-    @InjectRepository(UserRole)
-    private readonly userRoleRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {}
 
-  async validateUser(username: string, pass: string): Promise<User | null> {
-    const user = await this.usersRepository.findOne({
+  async validateUser(username: string, pass: string): Promise<users | null> {
+    const user = await this.prisma.users.findUnique({
       where: { username },
-      relations: ['userRoles', 'userRoles.role'],
+      include: {
+        user_role: {
+          include: {
+            roles: true,
+          },
+        },
+      },
     });
 
     if (!user) return null;
@@ -38,9 +40,15 @@ export class AuthService {
   }
 
   async login(body: { username: string; password: string }) {
-    const user = await this.usersRepository.findOne({
+    const user = await this.prisma.users.findUnique({
       where: { username: body.username },
-      relations: ['userRoles', 'userRoles.role'], // 👈 bắt buộc
+      include: {
+        user_role: {
+          include: {
+            roles: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -52,8 +60,7 @@ export class AuthService {
       throw new UnauthorizedException('Sai username hoặc password');
     }
 
-    // Lấy danh sách role name trực tiếp
-    const roleNames = user.userRoles.map((ur) => ur.role.role_name);
+    const roleNames = user.user_role.map((ur) => ur.roles.role_name);
 
     const payload = { sub: user.user_id, email: user.email, roles: roleNames };
 
@@ -71,12 +78,24 @@ export class AuthService {
   }
 
   async refreshToken(refreshToken: string) {
-    const user = await this.usersService.findByRefreshToken(refreshToken);
+    // Assume usersService.findByRefreshToken is updated to use Prisma
+    // For now, implement directly or update usersService accordingly
+    const user = await this.prisma.users.findFirst({
+      where: { refresh_token: refreshToken },
+      include: {
+        user_role: {
+          include: {
+            roles: true,
+          },
+        },
+      },
+    });
+
     if (!user) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const roles = user.userRoles.map((ur) => ur.role.role_name);
+    const roles = user.user_role.map((ur) => ur.roles.role_name);
 
     const payload: JwtPayload = {
       sub: user.user_id,

@@ -1,122 +1,224 @@
-// src/cart/cart.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Cart } from './entities/cart.entity';
-import { CartDetail } from './entities/cart-detail.entity';
-import { ProductVariant } from '../products/entities/product-variant.entity';
+import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+
+type CartWithItems = Prisma.cartGetPayload<{
+  include: {
+    cart_detail: {
+      include: {
+        product_variants: {
+          include: {
+            variant_assets: true;
+          };
+        };
+      };
+    };
+  };
+}>;
 
 @Injectable()
 export class CartService {
-  constructor(
-    @InjectRepository(Cart) private cartRepo: Repository<Cart>,
-    @InjectRepository(CartDetail) private cartDetailRepo: Repository<CartDetail>,
-    @InjectRepository(ProductVariant) private variantRepo: Repository<ProductVariant>,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async getCartByCustomer(customerId: number): Promise<Cart> {
-    let cart = await this.cartRepo.findOne({
-      where: { customer: { customer_id: customerId } },
-      relations: [
-        'details',
-        'details.variant',
-        'details.variant.assets', // vẫn join để lấy ảnh
-      ],
+  /**
+   * Lấy giỏ hàng của customer (tạo nếu chưa có)
+   */
+  async getCartByCustomer(customerId: number): Promise<CartWithItems> {
+    // findFirst an toàn hơn findUnique nếu customer_id KHÔNG có unique index
+    let cart = await this.prisma.cart.findFirst({
+      where: { customer_id: customerId },
+      include: {
+        cart_detail: {
+          include: {
+            product_variants: {
+              include: { variant_assets: true },
+            },
+          },
+        },
+      },
     });
 
     if (!cart) {
-      cart = this.cartRepo.create({ customer: { customer_id: customerId }, total_price: 0 });
-      await this.cartRepo.save(cart);
-    }
-
-    // Không cần xử lý ảnh, giữ nguyên assets
-    const result = {
-      ...cart,
-      details: cart.details.map((d) => ({
-        ...d,
-        variant: {
-          ...d.variant,
-          // Giữ nguyên assets, không thêm field image
+      cart = await this.prisma.cart.create({
+        data: { customer_id: customerId },
+        include: {
+          cart_detail: {
+            include: {
+              product_variants: { include: { variant_assets: true } },
+            },
+          },
         },
-      })),
-    };
-
-    return result; // Trả plain object
-  }
-
-  async addToCart(customerId: number, variantId: number, quantity: number): Promise<Cart> {
-    const cart = await this.getCartByCustomer(customerId);
-    const variant = await this.variantRepo.findOne({ where: { variant_id: variantId } });
-
-    if (!variant) throw new NotFoundException('Variant not found');
-
-    let detail = await this.cartDetailRepo.findOne({
-      where: { cart: { cart_id: cart.cart_id }, variant: { variant_id: variantId } },
-    });
-
-    if (detail) {
-      detail.quantity += quantity;
-      detail.sub_price = Number(variant.base_price) * detail.quantity;
-    } else {
-      detail = this.cartDetailRepo.create({
-        cart,
-        variant,
-        quantity,
-        sub_price: Number(variant.base_price) * quantity,
       });
     }
 
-    await this.cartDetailRepo.save(detail);
-    await this.recalculateTotal(cart.cart_id);
-
-    return this.getCartByCustomer(customerId);
+    return cart;
   }
 
-  async removeFromCart(customerId: number, variantId: number): Promise<Cart> {
-    const cart = await this.getCartByCustomer(customerId);
-    await this.cartDetailRepo.delete({
-      cart: { cart_id: cart.cart_id },
-      variant: { variant_id: variantId },
+  /**
+   * Thêm sản phẩm (variant) vào giỏ
+   * - Nếu item đã có thì cộng dồn quantity
+   * - Tính lại total trong transaction
+   */
+  async addToCart(customerId: number, variantId: number, quantity: number): Promise<CartWithItems> {
+    if (quantity <= 0) throw new NotFoundException('Quantity must be > 0');
+
+    return await this.prisma.$transaction(async (tx) => {
+      // Đảm bảo giỏ tồn tại
+      let cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
+      if (!cart) {
+        cart = await tx.cart.create({ data: { customer_id: customerId } });
+      }
+
+      // Variant phải tồn tại
+      const variant = await tx.product_variants.findUnique({
+        where: { variant_id: variantId },
+      });
+      if (!variant) throw new NotFoundException('Variant not found');
+
+      // Lấy (hoặc tạo) item trong giỏ
+      // CẦN @@unique([cart_id, variant_id], name: "cart_id_variant_id") (xem ghi chú phía dưới)
+      const existing = await tx.cart_detail.findUnique({
+        where: {
+          cart_id_variant_id: { cart_id: cart.cart_id, variant_id: variantId },
+        },
+      });
+
+      const basePrice = variant.base_price ?? new Prisma.Decimal(0);
+
+      if (existing) {
+        const newQty = existing.quantity + quantity;
+        await tx.cart_detail.update({
+          where: { cart_detail_id: existing.cart_detail_id },
+          data: {
+            quantity: newQty,
+            sub_price: basePrice.mul(newQty),
+          },
+        });
+      } else {
+        await tx.cart_detail.create({
+          data: {
+            cart_id: cart.cart_id,
+            variant_id: variantId,
+            quantity,
+            sub_price: basePrice.mul(quantity),
+          },
+        });
+      }
+
+      await this.recalculateTotalTx(tx, cart.cart_id);
+
+      // trả về giỏ đã include đầy đủ
+      const full = await tx.cart.findUnique({
+        where: { cart_id: cart.cart_id },
+        include: {
+          cart_detail: {
+            include: {
+              product_variants: { include: { variant_assets: true } },
+            },
+          },
+        },
+      });
+
+      // full chắc chắn có vì vừa tạo/lấy ở trên
+      return full as CartWithItems;
     });
-    await this.recalculateTotal(cart.cart_id);
-    return this.getCartByCustomer(customerId);
   }
 
-  async updateQuantity(customerId: number, variantId: number, quantity: number): Promise<Cart> {
-    const cart = await this.getCartByCustomer(customerId);
-    const detail = await this.cartDetailRepo.findOne({
-      where: { cart: { cart_id: cart.cart_id }, variant: { variant_id: variantId } },
+  /**
+   * Cập nhật số lượng item
+   * - quantity <= 0: xoá item
+   * - tính lại total trong transaction
+   */
+  async updateQuantity(
+    customerId: number,
+    variantId: number,
+    quantity: number,
+  ): Promise<CartWithItems> {
+    return await this.prisma.$transaction(async (tx) => {
+      const cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
+      if (!cart) throw new NotFoundException('Cart not found');
+
+      const detail = await tx.cart_detail.findUnique({
+        where: { cart_id_variant_id: { cart_id: cart.cart_id, variant_id: variantId } },
+        include: { product_variants: true },
+      });
+      if (!detail) throw new NotFoundException('Cart item not found');
+
+      if (quantity <= 0) {
+        await tx.cart_detail.delete({ where: { cart_detail_id: detail.cart_detail_id } });
+      } else {
+        const price = detail.product_variants?.base_price ?? new Prisma.Decimal(0);
+        await tx.cart_detail.update({
+          where: { cart_detail_id: detail.cart_detail_id },
+          data: {
+            quantity,
+            sub_price: price.mul(quantity),
+          },
+        });
+      }
+
+      await this.recalculateTotalTx(tx, cart.cart_id);
+
+      const full = await tx.cart.findUnique({
+        where: { cart_id: cart.cart_id },
+        include: {
+          cart_detail: {
+            include: {
+              product_variants: { include: { variant_assets: true } },
+            },
+          },
+        },
+      });
+      return full as CartWithItems;
     });
-
-    if (!detail) throw new NotFoundException('Cart item not found');
-    detail.quantity = quantity;
-    detail.sub_price = Number(detail.variant.base_price) * quantity;
-    await this.cartDetailRepo.save(detail);
-    await this.recalculateTotal(cart.cart_id);
-    return this.getCartByCustomer(customerId);
   }
 
-  private async recalculateTotal(cartId: number): Promise<void> {
-    const cart = await this.cartRepo.findOne({
+  /**
+   * Xoá 1 item khỏi giỏ
+   */
+  async removeFromCart(customerId: number, variantId: number): Promise<CartWithItems> {
+    return await this.prisma.$transaction(async (tx) => {
+      const cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
+      if (!cart) throw new NotFoundException('Cart not found');
+
+      await tx.cart_detail.deleteMany({
+        where: { cart_id: cart.cart_id, variant_id: variantId },
+      });
+
+      await this.recalculateTotalTx(tx, cart.cart_id);
+
+      const full = await tx.cart.findUnique({
+        where: { cart_id: cart.cart_id },
+        include: {
+          cart_detail: {
+            include: {
+              product_variants: { include: { variant_assets: true } },
+            },
+          },
+        },
+      });
+      return full as CartWithItems;
+    });
+  }
+
+  /**
+   * (Private) Tính lại total trong transaction
+   */
+  private async recalculateTotalTx(tx: Prisma.TransactionClient, cartId: number): Promise<void> {
+    const details = await tx.cart_detail.findMany({
       where: { cart_id: cartId },
-      relations: ['details', 'details.variant'], // lấy cả variant để tính giá chắc chắn
+      include: { product_variants: true },
     });
 
-    if (!cart) {
-      throw new Error(`Cart with id ${cartId} not found`);
+    let total = new Prisma.Decimal(0);
+    for (const d of details) {
+      const price = d.product_variants?.base_price ?? new Prisma.Decimal(0);
+      total = total.add(price.mul(d.quantity));
     }
 
-    // Nếu details rỗng thì gán []
-    const details: CartDetail[] = cart.details || [];
-
-    // Tính tổng tiền dựa trên variant.base_price * quantity (an toàn hơn sub_price)
-    const total = details.reduce((sum: number, d: CartDetail) => {
-      const price = Number(d.variant?.base_price ?? d.sub_price ?? 0);
-      return sum + price * (d.quantity || 0);
-    }, 0);
-
-    cart.total_price = total;
-
-    await this.cartRepo.save(cart);
+    await tx.cart.update({
+      where: { cart_id: cartId },
+      data: { total_price: total },
+    });
   }
 }

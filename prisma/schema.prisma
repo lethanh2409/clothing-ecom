@@ -1,20 +1,34 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // ✅ Thêm dòng này để chỉ định schema
+  schemas  = ["clothing_ecom"]
 }
 
-/// ENUM
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ✅ Thêm @@schema() cho MỌI model và enum
 enum product_status {
   ACTIVE
   INACTIVE
   OUT_OF_STOCK
+  
+  @@schema("clothing_ecom")
 }
 
-/// ROLES
+enum Gender {
+  male
+  female
+  other
+  unisex
+  
+  @@schema("clothing_ecom")
+}
+
 model roles {
   role_id     Int      @id @default(autoincrement())
   role_name   String   @unique
@@ -24,9 +38,9 @@ model roles {
   user_role   user_role[]
 
   @@map("roles")
+  @@schema("clothing_ecom")  // ✅ Thêm vào mọi model
 }
 
-/// USERS
 model users {
   user_id       Int       @id @default(autoincrement())
   username      String    @unique
@@ -47,9 +61,10 @@ model users {
   site_contents site_contents[] @relation("UserUpdatedContents")
 
   @@map("users")
+  @@schema("clothing_ecom")  // ✅ Thêm vào mọi model
 }
 
-/// USER_ROLE
+// ✅ Thêm @@schema("clothing_ecom") vào TẤT CẢ các model còn lại...
 model user_role {
   user_role_id Int  @id @default(autoincrement())
   user_id      Int
@@ -59,20 +74,10 @@ model user_role {
   roles roles @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
 
   @@unique([user_id, role_id])
-
   @@map("user_role")
+  @@schema("clothing_ecom")
 }
 
-
-enum Gender {
-  male
-  female
-  other
-  unisex
-
-  @@map("customers_gender_enum")
-}
-/// CUSTOMERS
 model customers {
   customer_id Int       @id @default(autoincrement())
   user_id     Int       @unique
@@ -89,8 +94,8 @@ model customers {
   returns    returns[]  
 
   @@map("customers")
+  @@schema("clothing_ecom")
 }
-
 
 /// ADDRESSES
 model addresses {
@@ -112,12 +117,13 @@ model addresses {
   orders    orders[]
 
   @@map("addresses")
+  @@schema("clothing_ecom")
 }
 
 /// BRANDS
 model brands {
   brand_id    Int      @id @default(autoincrement())
-  brand_name  String
+  brand_name  String   @unique
   status      Boolean  @default(true)
   slug        String?  @unique
   description String?
@@ -129,6 +135,7 @@ model brands {
   sizes       sizes[]
 
   @@map("brands")
+  @@schema("clothing_ecom")
 }
 
 /// CATEGORIES
@@ -136,19 +143,20 @@ model categories {
   category_id  Int       @id @default(autoincrement())
   category_name String
   parent_id    Int?
-  status       Boolean   @default(true)
+  status       Boolean @default(true)
+
   slug         String?   @unique
   description  String?
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 
   products products[]
-  sizes    sizes[]
 
   parent   categories? @relation("CategoryParent", fields: [parent_id], references: [category_id])
   children categories[] @relation("CategoryParent")
 
   @@map("categories")
+  @@schema("clothing_ecom")
 }
 
 /// LOOKBOOKS
@@ -164,6 +172,7 @@ model lookbooks {
   lookbook_items lookbook_items[]
 
   @@map("lookbooks")
+  @@schema("clothing_ecom")
 }
 
 /// PRODUCTS
@@ -183,34 +192,9 @@ model products {
   product_variants product_variants[]
 
   @@map("products")
+  @@schema("clothing_ecom")
 }
 
-/// PRODUCT_VARIANTS
-model product_variants {
-  variant_id  Int      @id @default(autoincrement())
-  product_id  Int
-  sku         String   @unique
-  barcode     String?
-  cost_price  Decimal?
-  base_price  Decimal?
-  quantity    Int      @default(0)
-  status      Boolean  @default(true)
-  attribute   Json?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-
-  products  products  @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  variant_assets variant_assets[]
-  lookbook_items lookbook_items[]
-  order_detail   order_detail[]
-  inventory_transactions inventory_transactions[]
-  return_detail return_detail[]
-
-  // thêm dòng này để match với cart_detail
-  cart_detail cart_detail[]
-
-  @@map("product_variants")
-}
 
 /// LOOKBOOK_ITEMS
 model lookbook_items {
@@ -226,6 +210,7 @@ model lookbook_items {
   @@unique([lookbook_id, variant_id])
 
   @@map("lookbook_items")
+  @@schema("clothing_ecom")
 }
 
 /// VARIANT_ASSETS
@@ -240,30 +225,61 @@ model variant_assets {
 
   @@unique([variant_id, url])
   @@map("variant_assets")
+  @@schema("clothing_ecom")
 }
 
 /// SIZES
 model sizes {
-  size_id     Int      @id @default(autoincrement())
-  brand_id    Int?
-  category_id Int?
-  size_label  String
-  size_type   String?
-  measurements Json?
+  size_id       Int       @id @default(autoincrement())
+  brand_id      Int?
+  gender        String
+  size_label    String
+  height_range  String?
+  weight_range  String?
+  measurements  Json?
+  note          String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
+
+  brands        brands?   @relation(fields: [brand_id], references: [brand_id])
+  product_variants product_variants[]
+
+  @@unique([brand_id, gender, size_label])
+  @@map("sizes")
+  @@schema("clothing_ecom")
+}
+
+model product_variants {
+  variant_id  Int      @id @default(autoincrement())
+  product_id  Int
+  size_id     Int?     // Thêm field này
+  sku         String   @unique
+  barcode     String?
+  cost_price  Decimal?
+  base_price  Decimal?
+  quantity    Int      @default(0)
+  status      Boolean  @default(true)
+  attribute   Json?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  brands     brands?     @relation(fields: [brand_id], references: [brand_id])
-  categories categories? @relation(fields: [category_id], references: [category_id])
+  products    products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  sizes       sizes?   @relation(fields: [size_id], references: [size_id]) // Quan hệ 1:1 với size
+  variant_assets variant_assets[]
+  lookbook_items lookbook_items[]
+  order_detail   order_detail[]
+  inventory_transactions inventory_transactions[]
+  return_detail return_detail[]
+  cart_detail cart_detail[]
 
-  @@unique([brand_id, category_id, size_label])
-  @@map("sizes")
+  @@map("product_variants")
+  @@schema("clothing_ecom")
 }
 
 /// VOUCHERS
 model vouchers {
   voucher_id        Int      @id @default(autoincrement())
-  title             String
+  title             String    
   description       String?
   discount_type     String
   discount_value    Decimal
@@ -281,6 +297,7 @@ model vouchers {
   orders orders[]
 
   @@map("vouchers")
+  @@schema("clothing_ecom")
 }
 
 /// CART
@@ -295,6 +312,7 @@ model cart {
   cart_detail cart_detail[]
 
   @@map("cart")
+  @@schema("clothing_ecom")
 }
 
 /// CART_DETAIL
@@ -310,6 +328,7 @@ model cart_detail {
 
   @@unique([cart_id, variant_id])
   @@map("cart_detail")
+  @@schema("clothing_ecom")
 }
 
 /// ORDERS
@@ -335,6 +354,7 @@ model orders {
   inventory_transactions inventory_transactions[]
 
   @@map("orders")
+  @@schema("clothing_ecom")
 }
 
 /// ORDER_STATUS_HISTORY
@@ -349,6 +369,7 @@ model order_status_history {
   users  users? @relation(fields: [user_id], references: [user_id])
 
   @@map("order_status_history")
+  @@schema("clothing_ecom")
 }
 
 /// ORDER_DETAIL
@@ -366,6 +387,7 @@ model order_detail {
   return_detail return_detail[]
 
   @@map("order_detail")
+  @@schema("clothing_ecom")
 }
 
 /// PAYMENTS
@@ -383,6 +405,7 @@ model payments {
   orders orders @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
 
   @@map("payments")
+  @@schema("clothing_ecom")
 }
 
 /// INVENTORY_TRANSACTIONS
@@ -398,9 +421,10 @@ model inventory_transactions {
   // Quan hệ với các bảng khác
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
   orders           orders?          @relation(fields: [order_id], references: [order_id])
-  warehouses       warehouses       @relation(fields: [warehouse_id], references: [warehouse_id])
+  // warehouses       warehouses       @relation(fields: [warehouse_id], references: [warehouse_id])
 
   @@map("inventory_transactions")
+  @@schema("clothing_ecom")
 }
 
 
@@ -420,6 +444,7 @@ model returns {
   return_detail return_detail[]
 
   @@map("returns")
+  @@schema("clothing_ecom")
 }
 
 
@@ -436,6 +461,7 @@ model return_detail {
   product_variants product_variants? @relation(fields: [new_variant_id], references: [variant_id])
 
   @@map("return_detail")
+  @@schema("clothing_ecom")
 }
 
 /// REVIEWS
@@ -454,23 +480,25 @@ model reviews {
   order_detail order_detail @relation(fields: [order_detail_id], references: [order_detail_id])
 
   @@map("reviews")
+  @@schema("clothing_ecom")
 }
 
 
 /// WAREHOUSES
-model warehouses {
-  warehouse_id Int      @id @default(autoincrement())
-  wh_name      String
-  wh_address   String
-  is_default   Boolean  @default(false)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+// model warehouses {
+//   warehouse_id Int      @id @default(autoincrement())
+//   wh_name      String
+//   wh_address   String
+//   is_default   Boolean  @default(false)
+//   created_at   DateTime @default(now())
+//   updated_at   DateTime @updatedAt
 
-  // Quan hệ 1-n với inventory_transactions
-  inventory_transactions inventory_transactions[]
+//   // Quan hệ 1-n với inventory_transactions
+//   inventory_transactions inventory_transactions[]
 
-  @@map("warehouses")
-}
+//   @@map("warehouses")
+//   @@schema("clothing_ecom")
+// }
 
 model audit_logs {
   audit_id    Int      @id @default(autoincrement())
@@ -485,6 +513,7 @@ model audit_logs {
 
   users users? @relation(fields: [user_id], references: [user_id])
   @@map("audit_logs")
+  @@schema("clothing_ecom")
 }
 
 model site_contents {
@@ -503,6 +532,7 @@ model site_contents {
 
   @@map("site_contents")
   content_embeddings content_embeddings[]
+  @@schema("clothing_ecom")
 }
 
 model content_embeddings {
@@ -513,5 +543,7 @@ model content_embeddings {
   created_at DateTime @default(now())
 
   site_contents site_contents @relation(fields: [content_id], references: [content_id], onDelete: Cascade)
+  @@map("content_embeddings")
+  @@schema("clothing_ecom")
 }
 

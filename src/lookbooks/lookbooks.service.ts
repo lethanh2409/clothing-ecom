@@ -1,32 +1,48 @@
+// src/lookbooks/lookbooks.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Lookbook } from './entities/lookbook.entity';
-import { LookbookItem } from './entities/lookbook_items.entity';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class LookbooksService {
-  constructor(
-    @InjectRepository(Lookbook)
-    private readonly lookbookRepo: Repository<Lookbook>,
+  constructor(private readonly prisma: PrismaService) {}
 
-    @InjectRepository(LookbookItem)
-    private readonly lookbookItemRepo: Repository<LookbookItem>,
-  ) {}
-
-  // Lấy tất cả lookbook (kèm items và variant)
+  // Lấy tất cả lookbook (kèm items -> variant -> product)
   async getAll() {
-    return this.lookbookRepo.find({
-      relations: ['items', 'items.variant', 'items.variant.product'],
-      order: { created_at: 'DESC' },
+    return this.prisma.lookbooks.findMany({
+      orderBy: { lookbook_id: 'desc' }, // dùng lookbook_id vì thường không có created_at
+      include: {
+        lookbook_items: {
+          orderBy: { position: 'asc' },
+          include: {
+            product_variants: {
+              include: {
+                products: true, // thông tin product
+                variant_assets: true, // ảnh variant (nếu cần)
+              },
+            },
+          },
+        },
+      },
     });
   }
 
   // Lấy 1 lookbook theo id
   async getOne(id: number) {
-    const lookbook = await this.lookbookRepo.findOne({
+    const lookbook = await this.prisma.lookbooks.findUnique({
       where: { lookbook_id: id },
-      relations: ['items', 'items.variant', 'items.variant.product'],
+      include: {
+        lookbook_items: {
+          orderBy: { position: 'asc' },
+          include: {
+            product_variants: {
+              include: {
+                products: true,
+                variant_assets: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!lookbook) {

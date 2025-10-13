@@ -1,77 +1,61 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ProductsService } from './products.service';
+
+type ListResponse = { success: true; count: number; data: any[] };
+type ItemResponse = { success: true; data: any };
 
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // GET /admin/products
+  // GET /products/admin
   @Get('admin')
-  async getAllProducts() {
-    const variants = await this.productsService.getAllProductsWithFirstVariant();
-    return {
-      success: true,
-      count: variants.length,
-      data: variants,
-    };
+  async getAllProducts(): Promise<ListResponse> {
+    const items = await this.productsService.getAllProductsWithFirstVariant();
+    return { success: true, count: items.length, data: items };
   }
 
-  // GET /products/customer
+  // GET /products
   @Get()
-  async getProductsForCustomer() {
-    const variants = await this.productsService.getProductsByStatus();
-    return {
-      success: true,
-      count: variants.length,
-      data: variants,
-    };
+  async getProductsForCustomer(): Promise<ListResponse> {
+    const items = await this.productsService.getProductsByStatus();
+    return { success: true, count: items.length, data: items };
   }
 
+  // GET /products/brand/:brandId
   @Get('brand/:brandId')
-  async getProductsByBrand(@Param('brandId') brandId: number) {
-    const products = await this.productsService.getProductsByBrand(brandId);
-    return {
-      success: true,
-      count: products.length,
-      data: products,
-    };
+  async getProductsByBrand(@Param('brandId', ParseIntPipe) brandId: number): Promise<ListResponse> {
+    const items = await this.productsService.getProductsByBrand(brandId);
+    return { success: true, count: items.length, data: items };
   }
 
+  // GET /products/category/:categoryId
   @Get('category/:categoryId')
-  async getProductsByCategory(@Param('categoryId') categoryId: number) {
-    const products = await this.productsService.getProductsByCategory(categoryId);
-    return {
-      success: true,
-      count: products.length,
-      data: products,
-    };
+  async getProductsByCategory(
+    @Param('categoryId', ParseIntPipe) categoryId: number,
+  ): Promise<ListResponse> {
+    const items = await this.productsService.getProductsByCategory(categoryId);
+    return { success: true, count: items.length, data: items };
   }
 
+  // GET /products/new
   @Get('new')
-  async getNewProducts() {
-    const products = await this.productsService.getNewProducts();
-    return { success: true, count: products.length, data: products };
+  async getNewProducts(): Promise<ListResponse> {
+    const items = await this.productsService.getNewProducts();
+    return { success: true, count: items.length, data: items };
   }
 
-  @Get('/popular')
-  async getPopularProducts() {
-    const products = await this.productsService.getPopularProducts();
-    return {
-      success: true,
-      count: products.length,
-      data: products,
-    };
+  // GET /products/popular
+  @Get('popular')
+  async getPopularProducts(): Promise<ListResponse> {
+    const items = await this.productsService.getPopularProducts();
+    return { success: true, count: items.length, data: items };
   }
 
-  // products.controller.ts
+  // GET /products/:id  (đặt sau các route tĩnh)
   @Get(':id')
-  async getProductById(@Param('id') id: number) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  async getProductById(@Param('id', ParseIntPipe) id: number): Promise<ItemResponse> {
     const product = await this.productsService.getProductById(id);
-    return {
-      success: true,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      data: product,
-    };
+    return { success: true, data: product };
   }
 }

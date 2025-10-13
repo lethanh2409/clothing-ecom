@@ -1,312 +1,244 @@
+// src/users/users.service.ts
 import {
   Injectable,
   NotFoundException,
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { Customer } from './entities/customer.entity';
-import { UserRole } from './entities/user-role.entity';
-import { Role } from './entities/role.entity';
+import { Prisma, users, customers } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
+// helper: bỏ password an toàn, không tạo biến 'password' thừa
+function withoutPassword<T extends { password?: unknown }>(u: T): Omit<T, 'password'> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _pw, ...safe } = u;
+  return safe;
+}
+
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(Customer) private readonly customerRepository: Repository<Customer>,
-    @InjectRepository(UserRole) private readonly userRoleRepository: Repository<UserRole>,
-    @InjectRepository(Role) private readonly roleRepository: Repository<Role>,
-    @InjectRepository(Customer) private readonly cartRepository: Repository<Customer>, // 👈 thêm
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  // 👇 thêm hàm này
-  async findByRefreshToken(refreshToken: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { refresh_token: refreshToken } });
+  // =========================
+  // Refresh token helpers
+  // =========================
+  async findByRefreshToken(refreshToken: string): Promise<users | null> {
+    return this.prisma.users.findFirst({ where: { refresh_token: refreshToken } });
   }
 
   async updateRefreshToken(userId: number, token: string): Promise<void> {
     const exp = new Date();
-    exp.setDate(exp.getDate() + 7); // refresh token sống 7 ngày
-
-    await this.userRepository.update(userId, {
-      refresh_token: token,
-      refresh_token_exp: exp,
+    exp.setDate(exp.getDate() + 7);
+    await this.prisma.users.update({
+      where: { user_id: userId },
+      // ⚠️ schema bạn là expired_at (không phải refresh_token_exp)
+      data: { refresh_token: token, expired_at: exp },
     });
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  // =========================
+  // Create user (ADMIN)
+  // =========================
+  async create(createUserDto: CreateUserDto): Promise<Omit<users, 'password'>> {
     const { role_ids, ...userData } = createUserDto;
 
-    // Kiểm tra username và email đã tồn tại
-    const existingUser = await this.userRepository.findOne({
-      where: [{ username: userData.username }, { email: userData.email }],
+    const exists = await this.prisma.users.findFirst({
+      where: { OR: [{ username: userData.username }, { email: userData.email }] },
+      select: { user_id: true },
+    });
+    if (exists) throw new ConflictException('Username hoặc email đã tồn tại');
+
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.users.create({
+        data: {
+          ...userData,
+          password: hashedPassword,
+          // status là boolean theo Prisma (mặc định true trong schema)
+        } as Prisma.usersCreateInput,
+      });
+
+      if (role_ids?.length) {
+        await tx.user_role.createMany({
+          data: role_ids.map((rid) => ({ user_id: u.user_id, role_id: rid })),
+          skipDuplicates: true,
+        });
+      }
+      return u;
     });
 
-    if (existingUser) {
-      throw new ConflictException('Username hoặc email đã tồn tại');
-    }
-
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-
-    // Tạo user
-    const user = this.userRepository.create({
-      ...userData,
-      password: hashedPassword,
+    const full = await this.prisma.users.findUnique({
+      where: { user_id: created.user_id },
+      include: { user_role: { include: { roles: true } }, customers: true },
     });
-
-    const savedUser = await this.userRepository.save(user);
-
-    // Gán roles nếu có
-    if (role_ids && role_ids.length > 0) {
-      await this.assignRolesToUser(savedUser.user_id, role_ids);
-    }
-
-    return this.findOne(savedUser.user_id);
+    return withoutPassword(full!);
   }
 
-  async createCustomer(createCustomerDto: CreateCustomerDto): Promise<Customer> {
-    const { birthday, gender, ...userData } = createCustomerDto;
+  // =========================
+  // Đăng ký customer
+  // =========================
+  async createCustomer(dto: CreateCustomerDto): Promise<customers> {
+    const { birthday, gender, ...userData } = dto;
 
-    // Kiểm tra username và email đã tồn tại
-    const existingUser = await this.userRepository.findOne({
-      where: [{ username: userData.username }, { email: userData.email }],
+    const exists = await this.prisma.users.findFirst({
+      where: { OR: [{ username: userData.username }, { email: userData.email }] },
+      select: { user_id: true },
+    });
+    if (exists) throw new ConflictException('Username hoặc email đã tồn tại');
+
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const customer = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.users.create({
+        data: { ...userData, password: hashedPassword } as Prisma.usersCreateInput,
+      });
+
+      const customerRole = await tx.roles.findFirst({ where: { role_name: 'CUSTOMER' } });
+      if (customerRole) {
+        await tx.user_role.create({
+          data: { user_id: user.user_id, role_id: customerRole.role_id },
+        });
+      }
+
+      const cust = await tx.customers.create({
+        data: { user_id: user.user_id, birthday, gender: gender as any },
+      });
+
+      await tx.cart.create({
+        data: { customer_id: cust.customer_id, total_price: new Prisma.Decimal(0) },
+      });
+
+      return cust;
     });
 
-    if (existingUser) {
-      throw new ConflictException('Username hoặc email đã tồn tại');
-    }
-
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
-
-    // Tạo user
-    const user = this.userRepository.create({
-      ...userData,
-      password: hashedPassword,
-    });
-
-    const savedUser = await this.userRepository.save(user);
-
-    // Gán role customer mặc định
-    const customerRole = await this.roleRepository.findOne({
-      where: { role_name: 'CUSTOMER' },
-    });
-
-    if (customerRole) {
-      await this.assignRolesToUser(savedUser.user_id, [customerRole.role_id]);
-    }
-
-    // Tạo customer profile
-    const customer = this.customerRepository.create({
-      user_id: savedUser.user_id,
-      birthday,
-      gender,
-      cart: {
-        total_price: 0,
-        session_id: null,
-      },
-    });
-
-    return await this.customerRepository.save(customer);
+    return customer;
   }
 
-  async findAll(): Promise<User[]> {
-    return await this.userRepository.find({
-      relations: ['userRoles', 'userRoles.role', 'customer'],
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        phone: true,
-        full_name: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-        userRoles: {
-          user_role_id: true,
-          role: {
-            role_name: true, // 👈 chỉ lấy role_name
-          },
-        },
-      },
+  // =========================
+  // Read
+  // =========================
+  async findAll() {
+    const rows = await this.prisma.users.findMany({
+      include: { user_role: { include: { roles: true } }, customers: true },
+      orderBy: { created_at: 'desc' },
     });
+    return rows.map(withoutPassword);
   }
 
-  async findOne(id: number): Promise<User> {
-    const user = await this.userRepository.findOne({
+  async findOne(id: number): Promise<Omit<users, 'password'>> {
+    const user = await this.prisma.users.findUnique({
       where: { user_id: id },
-      relations: ['userRoles', 'userRoles.role', 'customer'],
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        phone: true,
-        full_name: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
+      include: { user_role: { include: { roles: true } }, customers: true },
     });
-
-    if (!user) {
-      throw new NotFoundException(`User với ID ${id} không tìm thấy`);
-    }
-
-    return user;
+    if (!user) throw new NotFoundException(`User với ID ${id} không tìm thấy`);
+    return withoutPassword(user);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return await this.userRepository.findOne({
+  async findByUsername(username: string): Promise<users | null> {
+    return this.prisma.users.findFirst({
       where: { username },
-      relations: ['userRoles', 'userRoles.role'],
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        password: true, // Cần password để validate login
-        phone: true,
-        full_name: true,
-        status: true,
-      },
+      include: { user_role: { include: { roles: true } } },
     });
   }
 
-  async findByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findOne({
+  async findByEmail(email: string): Promise<users | null> {
+    return this.prisma.users.findFirst({
       where: { email },
-      relations: ['userRoles', 'userRoles.role'],
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        password: true, // Cần password để validate login
-        phone: true,
-        full_name: true,
-        status: true,
-      },
+      include: { user_role: { include: { roles: true } } },
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const { role_ids, password, ...userData } = updateUserDto;
+  // =========================
+  // Update
+  // =========================
+  async update(id: number, dto: UpdateUserDto): Promise<Omit<users, 'password'>> {
+    const { role_ids, password, ...userData } = dto;
+    await this.ensureUserExists(id);
 
-    await this.findOne(id); // Check if user exists
-
-    let existingUser: User | null = null;
-
-    if (userData.username) {
-      existingUser = await this.userRepository.findOne({
-        where: { username: userData.username },
+    if (userData.username || userData.email) {
+      const clash = await this.prisma.users.findFirst({
+        where: {
+          AND: [
+            { user_id: { not: id } },
+            {
+              OR: [
+                userData.username ? { username: userData.username } : undefined,
+                userData.email ? { email: userData.email } : undefined,
+              ].filter(Boolean) as any,
+            },
+          ],
+        },
+        select: { user_id: true },
       });
+      if (clash) throw new ConflictException('Username hoặc email đã tồn tại');
     }
 
-    if (!existingUser && userData.email) {
-      existingUser = await this.userRepository.findOne({
-        where: { email: userData.email },
-      });
-    }
+    const data: Prisma.usersUpdateInput = { ...userData };
+    if (password) (data as any).password = await bcrypt.hash(password, 10);
 
-    // Hash password mới nếu có
-    if (password) {
-      const saltRounds = 10;
-      (userData as any).password = await bcrypt.hash(password, saltRounds);
-    }
-
-    // Update user data
-    await this.userRepository.update(id, userData);
-
-    // Update roles nếu có
-    if (role_ids && role_ids.length > 0) {
-      // Xóa roles cũ
-      await this.userRoleRepository.delete({ user_id: id });
-      // Thêm roles mới
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      await this.assignRolesToUser(id, role_ids);
-    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.users.update({ where: { user_id: id }, data });
+      if (role_ids?.length) {
+        await tx.user_role.deleteMany({ where: { user_id: id } });
+        await tx.user_role.createMany({
+          data: role_ids.map((rid) => ({ user_id: id, role_id: rid })),
+          skipDuplicates: true,
+        });
+      }
+    });
 
     return this.findOne(id);
   }
 
+  // =========================
+  // Soft delete / Restore
+  // =========================
   async remove(id: number): Promise<void> {
-    await this.findOne(id); // Check if user exists
-
-    // Soft delete - chỉ update status
-    await this.userRepository.update(id, { status: 0 });
+    await this.ensureUserExists(id);
+    // ⚠️ status là boolean
+    await this.prisma.users.update({ where: { user_id: id }, data: { status: false } });
   }
 
-  async restore(id: number): Promise<User> {
-    await this.userRepository.update(id, { status: 1 });
+  async restore(id: number): Promise<Omit<users, 'password'>> {
+    await this.ensureUserExists(id);
+    await this.prisma.users.update({ where: { user_id: id }, data: { status: true } });
     return this.findOne(id);
   }
 
-  // Helper method để gán roles cho user
-  private async assignRolesToUser(userId: number, roleIds: number[]): Promise<void> {
-    const userRoles = roleIds.map((roleId) =>
-      this.userRoleRepository.create({
-        user_id: userId,
-        role_id: roleId,
-      }),
-    );
-
-    await this.userRoleRepository.save(userRoles);
-  }
-
-  // Tìm users theo role
-  async findByRole(roleName: string): Promise<User[]> {
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .innerJoin('user.userRoles', 'userRole')
-      .innerJoin('userRole.role', 'role')
-      .where('role.role_name = :roleName', { roleName })
-      .andWhere('user.status = :status', { status: 1 })
-      .getMany();
-  }
-
-  // Đếm số user theo status
-  async countByStatus(status: number): Promise<number> {
-    return await this.userRepository.count({ where: { status } });
-  }
-
-  // Tìm user với pagination
-  async findWithPagination(
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{
-    data: User[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const skip = (page - 1) * limit;
-
-    const [data, total] = await this.userRepository.findAndCount({
-      relations: ['userRoles', 'userRoles.role', 'customer'],
-      select: {
-        user_id: true,
-        username: true,
-        email: true,
-        phone: true,
-        full_name: true,
-        status: true,
-        created_at: true,
-        updated_at: true,
-      },
-      skip,
-      take: limit,
-      order: { created_at: 'DESC' },
+  // =========================
+  // Queries tiện ích
+  // =========================
+  async findByRole(roleName: string) {
+    const rows = await this.prisma.users.findMany({
+      where: { status: true, user_role: { some: { roles: { role_name: roleName } } } },
+      include: { user_role: { include: { roles: true } }, customers: true },
     });
+    return rows.map(withoutPassword);
+  }
 
+  async countByStatus(status: number | boolean): Promise<number> {
+    // chấp nhận 0/1 từ FE, convert sang boolean cho Prisma
+    const b = typeof status === 'boolean' ? status : status === 1;
+    return this.prisma.users.count({ where: { status: b } });
+  }
+
+  async findWithPagination(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.users.findMany({
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+        include: { user_role: { include: { roles: true } }, customers: true },
+      }),
+      this.prisma.users.count(),
+    ]);
     return {
-      data,
+      data: data.map(withoutPassword),
       total,
       page,
       limit,
@@ -314,30 +246,40 @@ export class UsersService {
     };
   }
 
-  // Search users
-  async search(keyword: string): Promise<User[]> {
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .where('user.username LIKE :keyword', { keyword: `%${keyword}%` })
-      .orWhere('user.email LIKE :keyword', { keyword: `%${keyword}%` })
-      .orWhere('user.full_name LIKE :keyword', { keyword: `%${keyword}%` })
-      .andWhere('user.status = :status', { status: 1 })
-      .leftJoinAndSelect('user.userRoles', 'userRoles')
-      .leftJoinAndSelect('userRoles.role', 'role')
-      .leftJoinAndSelect('user.customer', 'customer')
-      .getMany();
+  async search(keyword: string) {
+    const rows = await this.prisma.users.findMany({
+      where: {
+        status: true,
+        OR: [
+          { username: { contains: keyword, mode: 'insensitive' } },
+          { email: { contains: keyword, mode: 'insensitive' } },
+          { full_name: { contains: keyword, mode: 'insensitive' } },
+        ],
+      },
+      include: { user_role: { include: { roles: true } }, customers: true },
+      orderBy: { created_at: 'desc' },
+    });
+    return rows.map(withoutPassword);
   }
 
-  // src/users/users.service.ts
+  // Dùng cho CartController
   async findCustomerIdByUserId(userId: number): Promise<number> {
-    const customer = await this.customerRepository.findOne({
-      where: { user: { user_id: userId } },
+    const customer = await this.prisma.customers.findUnique({
+      where: { user_id: userId },
+      select: { customer_id: true },
     });
-
-    if (!customer) {
-      throw new UnauthorizedException('Token này không thuộc về customer nào');
-    }
-
+    if (!customer) throw new UnauthorizedException('Token này không thuộc về customer nào');
     return customer.customer_id;
+  }
+
+  // =========================
+  // Helpers
+  // =========================
+  private async ensureUserExists(id: number) {
+    const u = await this.prisma.users.findUnique({
+      where: { user_id: id },
+      select: { user_id: true },
+    });
+    if (!u) throw new NotFoundException(`User với ID ${id} không tìm thấy`);
   }
 }
