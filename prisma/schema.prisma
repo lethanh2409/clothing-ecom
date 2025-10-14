@@ -103,20 +103,20 @@ model addresses {
   customer_id     Int
   consignee_name  String
   consignee_phone String
-  province        String?
-  district        String?
-  ward            String?
-  street          String?
-  house_num       String?
+  province        String
+  district        String
+  ward            String
+  street          String   @default("")
+  house_num       String   @default("")
   is_default      Boolean  @default(false)
   status          Boolean  @default(true)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
-  customers customers @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  orders    orders[]
+  customers customers @relation(fields: [customer_id], references: [customer_id])
 
-  @@map("addresses")
+  @@index([customer_id])
+
   @@schema("clothing_ecom")
 }
 
@@ -412,7 +412,6 @@ model payments {
 model inventory_transactions {
   inventory_id     Int      @id @default(autoincrement())
   variant_id       Int
-  warehouse_id     Int
   change_quantity  Int
   reason           String?
   order_id         Int?
@@ -421,7 +420,6 @@ model inventory_transactions {
   // Quan hệ với các bảng khác
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
   orders           orders?          @relation(fields: [order_id], references: [order_id])
-  // warehouses       warehouses       @relation(fields: [warehouse_id], references: [warehouse_id])
 
   @@map("inventory_transactions")
   @@schema("clothing_ecom")
