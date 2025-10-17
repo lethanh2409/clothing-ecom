@@ -143,7 +143,6 @@ export class OrdersService {
         await tx.inventory_transactions.create({
           data: {
             variant_id: variant.variant_id,
-            warehouse_id: 1, // đảm bảo tồn tại kho id=1
             change_quantity: -item.quantity,
             reason: 'customer order',
             order_id: order.order_id,

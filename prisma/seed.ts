@@ -1008,7 +1008,6 @@ async function main() {
     await prisma.inventory_transactions.create({
       data: {
         variant_id: variant.variant_id,
-        warehouse_id: 1,
         change_quantity: 100,
         reason: 'initial stock',
       },

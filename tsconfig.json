@@ -21,7 +21,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "types": ["node", "cookie-parser", "express", "jest", "supertest"],
+    "types": ["node", "cookie-parser", "express", "jest", "supertest", "multer"],
     "typeRoots": ["./node_modules/@types", "./src/types"]
   }
 }

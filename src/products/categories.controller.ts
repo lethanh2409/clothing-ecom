@@ -1,9 +1,10 @@
 // src/products/categories.controller.ts
-import { Controller, Get, Param, Post, Patch, Delete, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Patch, Delete, Body, ParseIntPipe } from '@nestjs/common';
 import { CategoriesService } from './categories.services';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { Roles } from 'src/auth/roles.decorate';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('categories')
 export class CategoriesController {
@@ -37,6 +38,12 @@ export class CategoriesController {
   @Get(':id/sub')
   getSubCategories(@Param('id') id: number) {
     return this.categoriesService.getSubCategories(id);
+  }
+
+  @Public()
+  @Get(':id')
+  async getById(@Param('id', ParseIntPipe) id: number) {
+    return { success: true, data: await this.categoriesService.getCategoryById(id) };
   }
 
   // --- ADMIN CRUD ---

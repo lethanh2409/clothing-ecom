@@ -3,11 +3,13 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import express from 'express';
 import { JwtUser } from '../types/jwt-user.type';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('login')
   async login(
     @Body() body: { username: string; password: string },
@@ -27,6 +29,7 @@ export class AuthController {
     return { access_token, roles };
   }
 
+  @Public()
   @Post('refresh')
   async refresh(@Req() req: express.Request) {
     const refreshToken = (req.cookies?.['refresh_token'] as string) || undefined;

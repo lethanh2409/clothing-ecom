@@ -118,6 +118,7 @@ model addresses {
   @@index([customer_id])
 
   @@schema("clothing_ecom")
+  orders orders[]
 }
 
 /// BRANDS
@@ -213,21 +214,6 @@ model lookbook_items {
   @@schema("clothing_ecom")
 }
 
-/// VARIANT_ASSETS
-model variant_assets {
-  asset_id   Int @id @default(autoincrement())
-  variant_id Int
-  url        String?
-  type       String?
-  is_primary Boolean @default(false)
-
-  product_variants product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
-
-  @@unique([variant_id, url])
-  @@map("variant_assets")
-  @@schema("clothing_ecom")
-}
-
 /// SIZES
 model sizes {
   size_id       Int       @id @default(autoincrement())
@@ -275,6 +261,22 @@ model product_variants {
   @@map("product_variants")
   @@schema("clothing_ecom")
 }
+
+/// VARIANT_ASSETS
+model variant_assets {
+  asset_id   Int @id @default(autoincrement())
+  variant_id Int
+  url        String?
+  type       String?
+  is_primary Boolean @default(false)
+
+  product_variants product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
+
+  @@unique([variant_id, url])
+  @@map("variant_assets")
+  @@schema("clothing_ecom")
+}
+
 
 /// VOUCHERS
 model vouchers {

@@ -45,6 +45,16 @@ export class CategoriesService {
     });
   }
 
+  async getCategoryById(id: number): Promise<categories> {
+    const category = await this.prisma.categories.findUnique({
+      where: { category_id: id },
+      // Nếu muốn kèm quan hệ:
+      // include: { parent: true, children: true, products: true },
+    });
+    if (!category) throw new NotFoundException(`Category #${id} not found`);
+    return category;
+  }
+
   // --- ADMIN CRUD ---
   async create(dto: CreateCategoryDto): Promise<categories> {
     return this.prisma.categories.create({
