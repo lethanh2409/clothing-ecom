@@ -146,39 +146,6 @@ async function main() {
       house: '63',
       default: true,
     },
-    {
-      customerIdx: 2,
-      name: 'Nguyễn Văn C',
-      phone: '0900000005',
-      province: 'Tỉnh Bắc Giang',
-      district: 'Quận Hiệp Hòa',
-      ward: 'Thị trấn Thắng',
-      street: 'số 5 khu 3',
-      house: '19',
-      default: true,
-    },
-    {
-      customerIdx: 3,
-      name: 'Phạm Quang Y',
-      phone: '0900000012',
-      province: 'Tỉnh Bình Dương',
-      district: 'Thành phố Dĩ An',
-      ward: 'Phường Tân Bình',
-      street: 'Nguyễn Thị Minh Khai',
-      house: '979',
-      default: true,
-    },
-    {
-      customerIdx: 4,
-      name: 'Trần X',
-      phone: '0900000013',
-      province: 'Thành phố Cần Thơ',
-      district: 'Quận Cái Răng',
-      ward: 'Phường Lê Bình',
-      street: 'Phạm Hùng',
-      house: '164/2C',
-      default: true,
-    },
   ];
 
   for (const addr of addressesData) {
@@ -229,7 +196,6 @@ async function main() {
   // ================================
   console.log('📏 Seeding sizes...');
 
-  // Sizes cho Adidas (brand_id 1)
   const adidasSizes = [
     {
       gender: 'male',
@@ -289,170 +255,10 @@ async function main() {
     },
   ];
 
-  // Sizes cho Nike (brand_id 2)
-  const nikeSizes = [
-    {
-      gender: 'male',
-      label: 'S',
-      height: '1m60–1m68',
-      weight: '50–60kg',
-      measurements: { chest: 50, shoulder: 46, length: 67 },
-    },
-    {
-      gender: 'male',
-      label: 'M',
-      height: '1m68–1m75',
-      weight: '60–70kg',
-      measurements: { chest: 52, shoulder: 48, length: 69 },
-    },
-    {
-      gender: 'male',
-      label: 'L',
-      height: '1m75–1m82',
-      weight: '70–80kg',
-      measurements: { chest: 54, shoulder: 50, length: 71 },
-    },
-    {
-      gender: 'male',
-      label: 'XL',
-      height: '1m82–1m90',
-      weight: '80–90kg',
-      measurements: { chest: 56, shoulder: 52, length: 73 },
-    },
-    {
-      gender: 'female',
-      label: 'S',
-      height: '1m50–1m58',
-      weight: '40–50kg',
-      measurements: { chest: 45, shoulder: 41, length: 63 },
-    },
-    {
-      gender: 'female',
-      label: 'M',
-      height: '1m58–1m65',
-      weight: '50–60kg',
-      measurements: { chest: 47, shoulder: 43, length: 65 },
-    },
-    {
-      gender: 'female',
-      label: 'L',
-      height: '1m65–1m72',
-      weight: '60–70kg',
-      measurements: { chest: 49, shoulder: 45, length: 67 },
-    },
-    {
-      gender: 'female',
-      label: 'XL',
-      height: '1m72–1m80',
-      weight: '70–80kg',
-      measurements: { chest: 51, shoulder: 47, length: 69 },
-    },
-  ];
-
-  // Sizes cho Uniqlo (brand_id 3)
-  const uniqloSizes = [
-    {
-      gender: 'unisex',
-      label: 'XS',
-      height: '1m50–1m60',
-      weight: '40–50kg',
-      measurements: { chest: 44, shoulder: 40, length: 62 },
-    },
-    {
-      gender: 'unisex',
-      label: 'S',
-      height: '1m60–1m68',
-      weight: '50–60kg',
-      measurements: { chest: 48, shoulder: 44, length: 66 },
-    },
-    {
-      gender: 'unisex',
-      label: 'M',
-      height: '1m68–1m75',
-      weight: '60–70kg',
-      measurements: { chest: 52, shoulder: 48, length: 70 },
-    },
-    {
-      gender: 'unisex',
-      label: 'L',
-      height: '1m75–1m82',
-      weight: '70–80kg',
-      measurements: { chest: 56, shoulder: 52, length: 74 },
-    },
-    {
-      gender: 'unisex',
-      label: 'XL',
-      height: '1m82–1m90',
-      weight: '80–90kg',
-      measurements: { chest: 60, shoulder: 56, length: 78 },
-    },
-  ];
-
-  // Sizes cho Local Brands (The Bad Habit, Ssstuter, Degrey, Coolmate)
-  const localBrandSizes = [
-    {
-      gender: 'male',
-      label: 'S',
-      height: '1m58–1m65',
-      weight: '48–58kg',
-      measurements: { chest: 49, shoulder: 45, length: 67 },
-    },
-    {
-      gender: 'male',
-      label: 'M',
-      height: '1m65–1m73',
-      weight: '58–68kg',
-      measurements: { chest: 51, shoulder: 47, length: 69 },
-    },
-    {
-      gender: 'male',
-      label: 'L',
-      height: '1m73–1m80',
-      weight: '68–78kg',
-      measurements: { chest: 53, shoulder: 49, length: 71 },
-    },
-    {
-      gender: 'male',
-      label: 'XL',
-      height: '1m80–1m88',
-      weight: '78–88kg',
-      measurements: { chest: 55, shoulder: 51, length: 73 },
-    },
-    {
-      gender: 'female',
-      label: 'S',
-      height: '1m48–1m56',
-      weight: '38–48kg',
-      measurements: { chest: 44, shoulder: 40, length: 62 },
-    },
-    {
-      gender: 'female',
-      label: 'M',
-      height: '1m56–1m63',
-      weight: '48–58kg',
-      measurements: { chest: 46, shoulder: 42, length: 64 },
-    },
-    {
-      gender: 'female',
-      label: 'L',
-      height: '1m63–1m70',
-      weight: '58–68kg',
-      measurements: { chest: 48, shoulder: 44, length: 66 },
-    },
-    {
-      gender: 'female',
-      label: 'XL',
-      height: '1m70–1m78',
-      weight: '68–78kg',
-      measurements: { chest: 50, shoulder: 46, length: 68 },
-    },
-  ];
-
-  // Insert sizes cho từng brand
   for (const size of adidasSizes) {
     await prisma.sizes.create({
       data: {
-        brand_id: brands[0].brand_id, // Adidas
+        brand_id: brands[0].brand_id,
         gender: size.gender,
         size_label: size.label,
         height_range: size.height,
@@ -460,48 +266,6 @@ async function main() {
         measurements: size.measurements,
       },
     });
-  }
-
-  for (const size of nikeSizes) {
-    await prisma.sizes.create({
-      data: {
-        brand_id: brands[1].brand_id, // Nike
-        gender: size.gender,
-        size_label: size.label,
-        height_range: size.height,
-        weight_range: size.weight,
-        measurements: size.measurements,
-      },
-    });
-  }
-
-  for (const size of uniqloSizes) {
-    await prisma.sizes.create({
-      data: {
-        brand_id: brands[2].brand_id, // Uniqlo
-        gender: size.gender,
-        size_label: size.label,
-        height_range: size.height,
-        weight_range: size.weight,
-        measurements: size.measurements,
-      },
-    });
-  }
-
-  // Local brands (The Bad Habit, Ssstuter, Degrey, Coolmate)
-  for (let i = 6; i < 10; i++) {
-    for (const size of localBrandSizes) {
-      await prisma.sizes.create({
-        data: {
-          brand_id: brands[i].brand_id,
-          gender: size.gender,
-          size_label: size.label,
-          height_range: size.height,
-          weight_range: size.weight,
-          measurements: size.measurements,
-        },
-      });
-    }
   }
 
   // ================================
@@ -531,24 +295,6 @@ async function main() {
         parent_id: catDoNam.category_id,
       },
       {
-        category_name: 'Áo polo nam',
-        slug: 'ao-polo-nam',
-        description: 'Polo shirt classic',
-        parent_id: catDoNam.category_id,
-      },
-      {
-        category_name: 'Áo khoác nam',
-        slug: 'ao-khoac-nam',
-        description: 'Jacket, hoodie, blazer',
-        parent_id: catDoNam.category_id,
-      },
-      {
-        category_name: 'Quần jean nam',
-        slug: 'quan-jean-nam',
-        description: 'Denim pants',
-        parent_id: catDoNam.category_id,
-      },
-      {
         category_name: 'Quần short nam',
         slug: 'quan-short-nam',
         description: 'Summer shorts',
@@ -567,24 +313,6 @@ async function main() {
         parent_id: catDoNu.category_id,
       },
       {
-        category_name: 'Áo polo nữ',
-        slug: 'ao-polo-nu',
-        description: 'Polo shirt classic',
-        parent_id: catDoNu.category_id,
-      },
-      {
-        category_name: 'Áo khoác nữ',
-        slug: 'ao-khoac-nu',
-        description: 'Jacket, hoodie, blazer',
-        parent_id: catDoNu.category_id,
-      },
-      {
-        category_name: 'Quần jean nữ',
-        slug: 'quan-jean-nu',
-        description: 'Denim pants',
-        parent_id: catDoNu.category_id,
-      },
-      {
         category_name: 'Quần short nữ',
         slug: 'quan-short-nu',
         description: 'Summer shorts',
@@ -594,21 +322,77 @@ async function main() {
   });
 
   // ================================
-  // 9. Lookbooks
+  // 9. Products
   // ================================
-  console.log('📸 Seeding lookbooks...');
-  await prisma.lookbooks.create({
+  console.log('📦 Seeding products...');
+
+  const categories = await prisma.categories.findMany();
+  const catAoThunNam = categories.find((c) => c.slug === 'ao-thun-nam');
+  const catAoThunNu = categories.find((c) => c.slug === 'ao-thun-nu');
+
+  const prod1 = await prisma.products.create({
     data: {
-      title: 'Adiclub Days',
-      slug: 'adiclub-days',
-      description: 'BST mùa hè',
-      image:
-        'https://brand.assets.adidas.com/image/upload/f_auto,q_auto:best,fl_lossy/if_w_gt_1920,w_1920/6181380_CAM_Onsite_FW_25_adi_Club_Days_19_30_Sep_VN_Onsite_Masthed_Banner_DT_2880x1280_D_b9c97414b6.jpg',
+      brand_id: brands[0].brand_id,
+      category_id: catAoThunNu!.category_id,
+      product_name: 'GFX SAIGON 2 TEE WM',
+      slug: 'gfx-saigon-2-tee-wm',
+      description: 'Áo thun nữ Adidas cao cấp',
+    },
+  });
+
+  const prod2 = await prisma.products.create({
+    data: {
+      brand_id: brands[0].brand_id,
+      category_id: catAoThunNam!.category_id,
+      product_name: 'GFX SAIGON 2 TEE M',
+      slug: 'gfx-saigon-2-tee-m',
+      description: 'Áo thun nam Adidas cao cấp',
     },
   });
 
   // ================================
-  // 10. Vouchers
+  // 10. Product Variants
+  // ================================
+  console.log('🏷️  Seeding product variants...');
+
+  const adidasMaleSizes = await prisma.sizes.findMany({
+    where: { brand_id: brands[0].brand_id, gender: 'male' },
+  });
+
+  const adidasFemaleSizes = await prisma.sizes.findMany({
+    where: { brand_id: brands[0].brand_id, gender: 'female' },
+  });
+
+  for (const size of adidasFemaleSizes) {
+    await prisma.product_variants.create({
+      data: {
+        product_id: prod1.product_id,
+        size_id: size.size_id,
+        sku: `ADIDAS-GFXTEE-WM-BLK-${size.size_label}`,
+        cost_price: 200000,
+        base_price: 450000,
+        quantity: 50,
+        attribute: { color: 'Black', gender: 'Women', size: size.size_label },
+      },
+    });
+  }
+
+  for (const size of adidasMaleSizes) {
+    await prisma.product_variants.create({
+      data: {
+        product_id: prod2.product_id,
+        size_id: size.size_id,
+        sku: `ADIDAS-GFXTEE-M-WHT-${size.size_label}`,
+        cost_price: 200000,
+        base_price: 450000,
+        quantity: 50,
+        attribute: { color: 'White', gender: 'Men', size: size.size_label },
+      },
+    });
+  }
+
+  // ================================
+  // 11. Vouchers
   // ================================
   console.log('🎟️  Seeding vouchers...');
   await prisma.vouchers.createMany({
@@ -621,8 +405,6 @@ async function main() {
         min_order_value: 300000,
         max_discount: 50000,
         quantity: 100,
-        start_date: new Date('2025-01-01'),
-        end_date: new Date('2025-12-31'),
       },
       {
         title: 'Tru50000',
@@ -632,387 +414,180 @@ async function main() {
         min_order_value: 400000,
         max_discount: 50000,
         quantity: 50,
-        start_date: new Date('2025-01-01'),
-        end_date: new Date('2025-12-31'),
-      },
-      {
-        title: 'Giam20',
-        description: 'Giảm 20% đơn từ 500k',
-        discount_type: 'percent',
-        discount_value: 20,
-        min_order_value: 500000,
-        max_discount: 150000,
-        quantity: 100,
-        status: false,
-        start_date: new Date('2025-01-01'),
-        end_date: new Date('2025-12-31'),
-      },
-      {
-        title: 'Tru20000',
-        description: 'Giảm 20k đơn từ 200k',
-        discount_type: 'fixed',
-        discount_value: 20000,
-        min_order_value: 200000,
-        max_discount: 20000,
-        quantity: 50,
-        start_date: new Date('2025-01-01'),
-        end_date: new Date('2025-12-31'),
       },
     ],
   });
 
   // ================================
-  // 11. Products
+  // 12. Site Contents (FAQ, Policies)
   // ================================
-  console.log('📦 Seeding products...');
+  console.log('📄 Seeding site_contents (FAQ, Policies)...');
 
-  // Lấy brands từ DB
-  const allBrands = await prisma.brands.findMany();
-  const adidasBrand = allBrands.find((b) => b.slug === 'adidas');
+  const siteContents = [
+    // FAQ
+    {
+      slug: 'faq-shipping-time',
+      title: 'Thời gian giao hàng bao lâu?',
+      content: `Chúng tôi cung cấp giao hàng miễn phí cho các đơn hàng từ 100,000 VND.
 
-  // Lấy categories
-  const categories = await prisma.categories.findMany();
-  const catAoThunNam = categories.find((c) => c.slug === 'ao-thun-nam');
-  const catAoThunNu = categories.find((c) => c.slug === 'ao-thun-nu');
-  const catQuanShortNam = categories.find((c) => c.slug === 'quan-short-nam');
-  const catQuanShortNu = categories.find((c) => c.slug === 'quan-short-nu');
+Thời gian giao hàng:
+- Hà Nội & TP.HCM: 2-3 ngày làm việc
+- Các tỉnh khác: 3-5 ngày làm việc
+- Giao hàng ngoài giờ hành chính: +1 ngày
 
-  // Product 1: GFX SAIGON 2 TEE WM (Women)
-  const prod1 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id, // Adidas
-      category_id: catAoThunNu!.category_id,
-      product_name: 'GFX SAIGON 2 TEE WM',
-      slug: 'gfx-saigon-2-tee-wm',
-      description: 'Áo thun nữ Adidas',
+Lưu ý: Thời gian tính từ lúc đơn hàng được xác nhận thanh toán.`,
+      category: 'FAQ',
+      tags: ['giao-hang', 'shipping', 'thoi-gian'],
     },
-  });
+    {
+      slug: 'faq-return-policy',
+      title: 'Chính sách hoàn trả như thế nào?',
+      content: `Chúng tôi cấp 30 ngày hoàn tiền hoàn toàn nếu bạn không hài lòng.
 
-  // Product 2: GFX SAIGON 2 TEE M (Men)
-  const prod2 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catAoThunNam!.category_id,
-      product_name: 'GFX SAIGON 2 TEE M',
-      slug: 'gfx-saigon-2-tee-m',
-      description: 'Áo thun nam Adidas',
+Điều kiện hoàn trả:
+- Hàng hóa phải ở tình trạng nguyên bản
+- Chưa sử dụng hoặc giặt
+- Còn tag và packaging gốc
+- Hoàn tiền trong 5-7 ngày làm việc
+
+Hoàn trả miễn phí:
+- Chúng tôi cung cấp nhãn vận chuyển miễn phí
+- Không hỏi lý do hoàn trả`,
+      category: 'FAQ',
+      tags: ['hoan-tra', 'return', 'chinh-sach'],
     },
-  });
+    {
+      slug: 'faq-sizing-guide',
+      title: 'Cách chọn size phù hợp?',
+      content: `Để chọn size phù hợp, bạn cần biết:
+- Chiều cao (cm)
+- Cân nặng (kg)
+- Các số đo cơ thể (ngực, vai, dài áo)
 
-  // Product 3: GFX SAIGON 1 TEE WM
-  const prod3 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catAoThunNu!.category_id,
-      product_name: 'GFX SAIGON 1 TEE WM',
-      slug: 'gfx-saigon-1-tee-wm',
-      description: 'Áo thun nữ Adidas GFX SAIGON 1',
+Hướng dẫn chọn size:
+1. Xem bảng size chi tiết theo từng thương hiệu
+2. Đối chiếu với số đo cơ thể của bạn
+3. Nếu nằm giữa 2 size, chọn size lớn hơn để thoải mái
+4. Sử dụng tính năng "Size Recommendation" để được gợi ý
+
+Lưu ý: Mỗi thương hiệu có tiêu chí size khác nhau.`,
+      category: 'FAQ',
+      tags: ['size', 'fit', 'bang-size', 'huong-dan'],
     },
-  });
+    {
+      slug: 'faq-payment-methods',
+      title: 'Hỗ trợ những phương thức thanh toán nào?',
+      content: `Chúng tôi hỗ trợ nhiều phương thức thanh toán an toàn:
 
-  // Product 4: GFX SAIGON 1 TEE M
-  const prod4 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catAoThunNam!.category_id,
-      product_name: 'GFX SAIGON 1 TEE M',
-      slug: 'gfx-saigon-1-tee-m',
-      description: 'Áo thun nam Adidas GFX SAIGON 1',
+1. Thẻ tín dụng/ghi nợ: Visa, Mastercard, JCB
+2. Ví điện tử: Momo, ZaloPay, AirPay
+3. Chuyển khoản ngân hàng: Chuyển trong 1 giờ
+4. Thanh toán khi nhận hàng (COD): Áp dụng toàn quốc, phí 15,000 VND
+
+Tất cả giao dịch được mã hóa SSL bảo mật.`,
+      category: 'FAQ',
+      tags: ['thanh-toan', 'payment', 'the', 'vi-dien-tu'],
     },
-  });
+    {
+      slug: 'faq-exchange-policy',
+      title: 'Có thể đổi size không?',
+      content: `Có, bạn hoàn toàn có thể đổi size!
 
-  // Product 5: GFX HANOI M TEE
-  const prod5 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catAoThunNam!.category_id,
-      product_name: 'GFX HANOI M TEE',
-      slug: 'gfx-hanoi-m-tee',
-      description: 'Áo thun Adidas GFX HANOI (Men)',
+Điều kiện đổi:
+- Trong vòng 15 ngày kể từ ngày nhận hàng
+- Hàng phải ở tình trạng nguyên bản
+- Chưa sử dụng hoặc giặt
+
+Chi phí đổi:
+- Đổi cùng size/màu/sản phẩm: Miễn phí
+- Đổi size khác: Miễn phí (chúng tôi chịu phí vận chuyển)
+
+Quy trình:
+1. Liên hệ CS để thông báo muốn đổi
+2. Nhận nhãn vận chuyển miễn phí
+3. Gửi hàng về
+4. Nhận hàng mới trong 3-5 ngày`,
+      category: 'FAQ',
+      tags: ['doi', 'exchange', 'size-khac'],
     },
-  });
+    // POLICIES
+    {
+      slug: 'policy-customer-protection',
+      title: 'Chính sách bảo vệ khách hàng',
+      content: `CHÍNH SÁCH BẢO VỆ KHÁCH HÀNG - 100% AN TOÀN
 
-  // Product 6: GFX HOI AN M TEE
-  const prod6 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catAoThunNam!.category_id,
-      product_name: 'GFX HOI AN M TEE',
-      slug: 'gfx-hoi-an-m-tee',
-      description: 'Áo thun Adidas GFX HOI AN (Men)',
+1. Quyền bảo vệ
+   - Mọi khách hàng được bảo vệ tối đa 100% nếu sản phẩm không phù hợp mô tả
+   - Chúng tôi cam kết hàng chính hãng 100%
+
+2. Hoàn tiền
+   - Hoàn tiền trong 5-7 ngày làm việc
+   - Không câu hỏi, không phức tạp
+   - Hoàn lại toàn bộ số tiền thanh toán
+
+3. Không hỏi lý do
+   - Bạn không cần giải thích vì sao muốn trả
+   - Chúng tôi tin tưởng khách hàng
+
+4. Miễn phí vận chuyển
+   - Hoàn trả miễn phí cho khách hàng
+   - Chúng tôi cung cấp nhãn vận chuyển
+
+5. Hỗ trợ 24/7
+   - Email: support@shop.vn
+   - Live chat trên website`,
+      category: 'POLICY',
+      tags: ['bao-ve', 'customer-protection', 'chinh-sach'],
     },
-  });
+    {
+      slug: 'policy-data-security',
+      title: 'Chính sách bảo mật dữ liệu',
+      content: `CHÍNH SÁCH BẢO MẬT DỮ LIỆU CÁ NHÂN
 
-  // Product 7: Runners CLIMACOOL Shorts M
-  const prod7 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catQuanShortNam!.category_id,
-      product_name: 'Runners CLIMACOOL Shorts M',
-      slug: 'runners-climacool-shorts-m',
-      description: 'Quần short nam Adidas Runners CLIMACOOL',
+1. Bảo vệ thông tin cá nhân
+   - Không chia sẻ thông tin với bên thứ ba
+   - Chỉ dùng cho xử lý đơn hàng
+   - Không gửi quảng cáo nếu không đồng ý
+
+2. Mã hóa dữ liệu
+   - Mã hóa SSL cho tất cả giao dịch
+   - Database được bảo vệ nhiều lớp
+   - Backup hàng ngày
+
+3. Quyền của khách hàng
+   - Quyền truy cập: Xem dữ liệu của bạn
+   - Quyền sửa: Cập nhật thông tin cá nhân
+   - Quyền xóa: Yêu cầu xóa dữ liệu
+
+4. Tuân thủ pháp luật
+   - GDPR Compliant (EU)
+   - Tuân thủ luật Việt Nam`,
+      category: 'POLICY',
+      tags: ['bao-mat', 'data-security', 'privacy'],
     },
-  });
+  ];
 
-  // Product 8: Adicolor 3-Stripes Mini Skirt WM
-  const prod8 = await prisma.products.create({
-    data: {
-      brand_id: adidasBrand!.brand_id,
-      category_id: catQuanShortNu!.category_id,
-      product_name: 'Adicolor 3-Stripes Mini Skirt WM',
-      slug: 'adicolor-3-stripes-mini-skirt-wm',
-      description: 'Váy ngắn nữ Adidas Adicolor 3-Stripes Mini Skirt',
-    },
-  });
-
-  // ================================
-  // 12. Product Variants (với size_id)
-  // ================================
-  console.log('🏷️  Seeding product variants...');
-
-  // Lấy sizes của Adidas
-  const adidasMaleSizes = await prisma.sizes.findMany({
-    where: { brand_id: adidasBrand!.brand_id, gender: 'male' },
-    orderBy: { size_label: 'asc' },
-  });
-
-  const adidasFemaleSizes = await prisma.sizes.findMany({
-    where: { brand_id: adidasBrand!.brand_id, gender: 'female' },
-    orderBy: { size_label: 'asc' },
-  });
-
-  const sizeMap = {
-    male: {
-      S: adidasMaleSizes.find((s) => s.size_label === 'S')?.size_id,
-      M: adidasMaleSizes.find((s) => s.size_label === 'M')?.size_id,
-      L: adidasMaleSizes.find((s) => s.size_label === 'L')?.size_id,
-      XL: adidasMaleSizes.find((s) => s.size_label === 'XL')?.size_id,
-    },
-    female: {
-      S: adidasFemaleSizes.find((s) => s.size_label === 'S')?.size_id,
-      M: adidasFemaleSizes.find((s) => s.size_label === 'M')?.size_id,
-      L: adidasFemaleSizes.find((s) => s.size_label === 'L')?.size_id,
-      XL: adidasFemaleSizes.find((s) => s.size_label === 'XL')?.size_id,
-    },
-  };
-
-  // Variants cho prod1 (GFX SAIGON 2 TEE WM - Black)
-  const variantsProd1: any[] = [];
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    const variant = await prisma.product_variants.create({
-      data: {
-        product_id: prod1.product_id,
-        size_id: sizeMap.female[size as keyof typeof sizeMap.female],
-        sku: `ADIDAS-GFXTEE-WM-BLK-${size}`,
-        barcode: `3341${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 200000,
-        base_price: 450000,
-        quantity: 30,
-        attribute: { color: 'Black', gender: 'Women', size },
+  for (const content of siteContents) {
+    await prisma.site_contents.upsert({
+      where: { slug: content.slug },
+      update: {
+        title: content.title,
+        content: content.content,
+        category: content.category,
+        tags: content.tags,
       },
-    });
-    variantsProd1.push(variant);
-  }
-
-  // Variants cho prod2 (GFX SAIGON 2 TEE M - White)
-  const variantsProd2: any[] = [];
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    const variant = await prisma.product_variants.create({
-      data: {
-        product_id: prod2.product_id,
-        size_id: sizeMap.male[size as keyof typeof sizeMap.male],
-        sku: `ADIDAS-GFXTEE-M-WHT-${size}`,
-        barcode: `3351${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 200000,
-        base_price: 450000,
-        quantity: 30,
-        attribute: { color: 'White', gender: 'Men', size },
-      },
-    });
-    variantsProd2.push(variant);
-  }
-
-  // Variants cho prod3 (GFX SAIGON 1 TEE WM - White)
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    await prisma.product_variants.create({
-      data: {
-        product_id: prod3.product_id,
-        size_id: sizeMap.female[size as keyof typeof sizeMap.female],
-        sku: `ADIDAS-GFX1TEE-WM-WHT-${size}`,
-        barcode: `4101${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 200000,
-        base_price: 450000,
-        quantity: 30,
-        attribute: { color: 'White', size },
+      create: {
+        slug: content.slug,
+        title: content.title,
+        content: content.content,
+        category: content.category,
+        tags: content.tags,
+        status: true,
       },
     });
   }
 
-  // Variants cho prod4 (GFX SAIGON 1 TEE M - Black)
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    await prisma.product_variants.create({
-      data: {
-        product_id: prod4.product_id,
-        size_id: sizeMap.male[size as keyof typeof sizeMap.male],
-        sku: `ADIDAS-GFX1TEE-M-BLK-${size}`,
-        barcode: `4102${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 200000,
-        base_price: 450000,
-        quantity: 30,
-        attribute: { color: 'Black', size },
-      },
-    });
-  }
-
-  // Variants cho prod5 (GFX HANOI M TEE - White & Black)
-  const variantsProd5: any[] = [];
-  for (const color of ['White', 'Black']) {
-    for (const size of ['S', 'M', 'L', 'XL']) {
-      const variant = await prisma.product_variants.create({
-        data: {
-          product_id: prod5.product_id,
-          size_id: sizeMap.male[size as keyof typeof sizeMap.male],
-          sku: `ADIDAS-GFXHANOI-M-${color.substring(0, 3).toUpperCase()}-${size}`,
-          barcode: `420${color === 'White' ? '1' : '2'}${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-          cost_price: 200000,
-          base_price: 450000,
-          quantity: 30,
-          attribute: { color, gender: 'Men', size },
-        },
-      });
-      variantsProd5.push(variant);
-    }
-  }
-
-  // Variants cho prod6 (GFX HOI AN M TEE - White & Black)
-  const variantsProd6: any[] = [];
-  for (const color of ['White', 'Black']) {
-    for (const size of ['S', 'M', 'L', 'XL']) {
-      const variant = await prisma.product_variants.create({
-        data: {
-          product_id: prod6.product_id,
-          size_id: sizeMap.male[size as keyof typeof sizeMap.male],
-          sku: `ADIDAS-GFXHOIAN-M-${color.substring(0, 3).toUpperCase()}-${size}`,
-          barcode: `430${color === 'White' ? '1' : '2'}${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-          cost_price: 200000,
-          base_price: 450000,
-          quantity: 30,
-          attribute: { color, gender: 'Men', size },
-        },
-      });
-      variantsProd6.push(variant);
-    }
-  }
-
-  // Variants cho prod7 (Runners CLIMACOOL Shorts - Black)
-  const variantsProd7: any[] = [];
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    const variant = await prisma.product_variants.create({
-      data: {
-        product_id: prod7.product_id,
-        size_id: sizeMap.male[size as keyof typeof sizeMap.male],
-        sku: `ADIDAS-CLIMACOOL-M-BLK-${size}`,
-        barcode: `4401${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 300000,
-        base_price: 650000,
-        quantity: 20,
-        attribute: { color: 'Black', size },
-      },
-    });
-    variantsProd7.push(variant);
-  }
-
-  // Variants cho prod8 (Adicolor Mini Skirt - Black)
-  const variantsProd8: any[] = [];
-  for (const size of ['S', 'M', 'L', 'XL']) {
-    const variant = await prisma.product_variants.create({
-      data: {
-        product_id: prod8.product_id,
-        size_id: sizeMap.female[size as keyof typeof sizeMap.female],
-        sku: `ADIDAS-3STRIPES-WM-BLK-${size}`,
-        barcode: `4501${['S', 'M', 'L', 'XL'].indexOf(size) + 1}`,
-        cost_price: 350000,
-        base_price: 750000,
-        quantity: 15,
-        attribute: { color: 'Black', size },
-      },
-    });
-    variantsProd8.push(variant);
-  }
-
-  // ================================
-  // 13. Variant Assets
-  // ================================
-  console.log('🖼️  Seeding variant assets...');
-
-  // Assets cho prod1 (GFX SAIGON 2 TEE WM - Black)
-  for (const variant of variantsProd1) {
-    await prisma.variant_assets.create({
-      data: {
-        variant_id: variant.variant_id,
-        url: 'https://assets.adidas.com/images/h_840,f_auto,q_auto,fl_lossy,c_fill,g_auto/4f16047cd5c1449988f96425f804dfdb_9366/GFX_SAIGON_2_TEE_-_BLACK_Black_KL9336_21_model.jpg',
-        type: 'image',
-        is_primary: true,
-      },
-    });
-    await prisma.variant_assets.create({
-      data: {
-        variant_id: variant.variant_id,
-        url: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/e6b64e96d5aa410ebcd18dfd3e086ee7_9366/GFX_SAIGON_2_TEE_-_BLACK_Black_KL9336_41_detail_hover.jpg',
-        type: 'image',
-        is_primary: false,
-      },
-    });
-  }
-
-  // Assets cho prod2 (GFX SAIGON 2 TEE M - White)
-  for (const variant of variantsProd2) {
-    await prisma.variant_assets.create({
-      data: {
-        variant_id: variant.variant_id,
-        url: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/0495d476c92b4b37aab43364eb0038ce_9366/GFX_SAIGON_2_TEE_-_WHITE_White_KL9338_21_model.jpg',
-        type: 'image',
-        is_primary: true,
-      },
-    });
-    await prisma.variant_assets.create({
-      data: {
-        variant_id: variant.variant_id,
-        url: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/41b17988498b48f5b5da30d938ac016c_9366/GFX_SAIGON_2_TEE_-_WHITE_White_KL9338_41_detail_hover.jpg',
-        type: 'image',
-        is_primary: false,
-      },
-    });
-  }
-
-  // ================================
-  // 14. Cart cho mỗi customer
-  // ================================
-  console.log('🛒 Seeding carts...');
-  for (const customer of customerRecords) {
-    await prisma.cart.create({
-      data: {
-        customers: { connect: { customer_id: customer.customer_id } },
-        session_id: `session-${customer.customer_id}`,
-        total_price: 0,
-      },
-    });
-  }
-
-  // ================================
-  // 15. Inventory Transactions (Nhập kho ban đầu)
-  // ================================
-  console.log('📊 Seeding inventory transactions...');
-  const allVariants = await prisma.product_variants.findMany();
-  for (const variant of allVariants) {
-    await prisma.inventory_transactions.create({
-      data: {
-        variant_id: variant.variant_id,
-        change_quantity: 100,
-        reason: 'initial stock',
-      },
-    });
-  }
+  console.log(`✅ Seeded ${siteContents.length} site contents`);
 
   console.log('✅ Seed completed successfully!');
 }

@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { ClassSerializerInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
+import { Decimal } from '@prisma/client/runtime/library';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,5 +23,9 @@ async function bootstrap() {
   const port = Number(process.env.PORT) || 3618;
   await app.listen(port);
   console.log(`🚀 Server: http://localhost:${port}`);
+  (Decimal.prototype as any).toJSON = function () {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return this.toNumber();
+  };
 }
 void bootstrap();
