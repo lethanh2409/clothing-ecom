@@ -21,10 +21,36 @@ export class CartService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Convert Decimal to number (toJSON compatible)
+   */
+  private decimalToNumber(value: Prisma.Decimal | null | undefined): number {
+    if (!value) return 0;
+    return parseFloat(value.toString());
+  }
+
+  /**
+   * Format cart response - convert Decimal fields to number
+   */
+  private formatCartResponse(cart: CartWithItems) {
+    return {
+      ...cart,
+      total_price: this.decimalToNumber(cart.total_price),
+      cart_detail: cart.cart_detail.map((item) => ({
+        ...item,
+        sub_price: this.decimalToNumber(item.sub_price),
+        product_variants: {
+          ...item.product_variants,
+          base_price: this.decimalToNumber(item.product_variants?.base_price),
+          cost_price: this.decimalToNumber(item.product_variants?.cost_price),
+        },
+      })),
+    };
+  }
+
+  /**
    * Lấy giỏ hàng của customer (tạo nếu chưa có)
    */
-  async getCartByCustomer(customerId: number): Promise<CartWithItems> {
-    // findFirst an toàn hơn findUnique nếu customer_id KHÔNG có unique index
+  async getCartByCustomer(customerId: number) {
     let cart = await this.prisma.cart.findFirst({
       where: { customer_id: customerId },
       include: {
@@ -51,32 +77,26 @@ export class CartService {
       });
     }
 
-    return cart;
+    return this.formatCartResponse(cart as CartWithItems);
   }
 
   /**
    * Thêm sản phẩm (variant) vào giỏ
-   * - Nếu item đã có thì cộng dồn quantity
-   * - Tính lại total trong transaction
    */
-  async addToCart(customerId: number, variantId: number, quantity: number): Promise<CartWithItems> {
+  async addToCart(customerId: number, variantId: number, quantity: number) {
     if (quantity <= 0) throw new NotFoundException('Quantity must be > 0');
 
-    return await this.prisma.$transaction(async (tx) => {
-      // Đảm bảo giỏ tồn tại
+    const cart = await this.prisma.$transaction(async (tx) => {
       let cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
       if (!cart) {
         cart = await tx.cart.create({ data: { customer_id: customerId } });
       }
 
-      // Variant phải tồn tại
       const variant = await tx.product_variants.findUnique({
         where: { variant_id: variantId },
       });
       if (!variant) throw new NotFoundException('Variant not found');
 
-      // Lấy (hoặc tạo) item trong giỏ
-      // CẦN @@unique([cart_id, variant_id], name: "cart_id_variant_id") (xem ghi chú phía dưới)
       const existing = await tx.cart_detail.findUnique({
         where: {
           cart_id_variant_id: { cart_id: cart.cart_id, variant_id: variantId },
@@ -107,7 +127,6 @@ export class CartService {
 
       await this.recalculateTotalTx(tx, cart.cart_id);
 
-      // trả về giỏ đã include đầy đủ
       const full = await tx.cart.findUnique({
         where: { cart_id: cart.cart_id },
         include: {
@@ -119,22 +138,17 @@ export class CartService {
         },
       });
 
-      // full chắc chắn có vì vừa tạo/lấy ở trên
       return full as CartWithItems;
     });
+
+    return this.formatCartResponse(cart);
   }
 
   /**
    * Cập nhật số lượng item
-   * - quantity <= 0: xoá item
-   * - tính lại total trong transaction
    */
-  async updateQuantity(
-    customerId: number,
-    variantId: number,
-    quantity: number,
-  ): Promise<CartWithItems> {
-    return await this.prisma.$transaction(async (tx) => {
+  async updateQuantity(customerId: number, variantId: number, quantity: number) {
+    const cart = await this.prisma.$transaction(async (tx) => {
       const cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
       if (!cart) throw new NotFoundException('Cart not found');
 
@@ -171,13 +185,15 @@ export class CartService {
       });
       return full as CartWithItems;
     });
+
+    return this.formatCartResponse(cart);
   }
 
   /**
    * Xoá 1 item khỏi giỏ
    */
-  async removeFromCart(customerId: number, variantId: number): Promise<CartWithItems> {
-    return await this.prisma.$transaction(async (tx) => {
+  async removeFromCart(customerId: number, variantId: number) {
+    const cart = await this.prisma.$transaction(async (tx) => {
       const cart = await tx.cart.findFirst({ where: { customer_id: customerId } });
       if (!cart) throw new NotFoundException('Cart not found');
 
@@ -199,6 +215,8 @@ export class CartService {
       });
       return full as CartWithItems;
     });
+
+    return this.formatCartResponse(cart);
   }
 
   /**
