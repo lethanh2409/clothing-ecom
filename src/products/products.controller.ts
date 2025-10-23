@@ -41,7 +41,7 @@ export class ProductsController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ): Promise<ListResponse> {
-    const items = await this.productsService.getAllProductsWithFirstVariant();
+    const items = await this.productsService.getAllProductsWithVariants();
     const start = (page - 1) * limit;
     return {
       success: true,

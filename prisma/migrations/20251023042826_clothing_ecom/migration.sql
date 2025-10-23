@@ -1,9 +1,3 @@
--- CreateEnum
-CREATE TYPE "clothing_ecom"."product_status" AS ENUM ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK');
-
--- CreateEnum
-CREATE TYPE "clothing_ecom"."Gender" AS ENUM ('male', 'female', 'other', 'unisex');
-
 -- CreateTable
 CREATE TABLE "clothing_ecom"."roles" (
     "role_id" SERIAL NOT NULL,
@@ -25,8 +19,8 @@ CREATE TABLE "clothing_ecom"."users" (
     "status" BOOLEAN NOT NULL DEFAULT true,
     "refresh_token" TEXT,
     "expired_at" TIMESTAMP(3),
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("user_id")
 );
@@ -45,9 +39,9 @@ CREATE TABLE "clothing_ecom"."customers" (
     "customer_id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "birthday" TIMESTAMP(3),
-    "gender" "clothing_ecom"."Gender",
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "gender" TEXT,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "customers_pkey" PRIMARY KEY ("customer_id")
 );
@@ -58,15 +52,15 @@ CREATE TABLE "clothing_ecom"."addresses" (
     "customer_id" INTEGER NOT NULL,
     "consignee_name" TEXT NOT NULL,
     "consignee_phone" TEXT NOT NULL,
-    "province" TEXT,
-    "district" TEXT,
-    "ward" TEXT,
-    "street" TEXT,
-    "house_num" TEXT,
+    "province" TEXT NOT NULL,
+    "district" TEXT NOT NULL,
+    "ward" TEXT NOT NULL,
+    "street" TEXT NOT NULL DEFAULT '',
+    "house_num" TEXT NOT NULL DEFAULT '',
     "is_default" BOOLEAN NOT NULL DEFAULT false,
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "addresses_pkey" PRIMARY KEY ("address_id")
 );
@@ -79,8 +73,8 @@ CREATE TABLE "clothing_ecom"."brands" (
     "slug" TEXT,
     "description" TEXT,
     "logo_url" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "brands_pkey" PRIMARY KEY ("brand_id")
 );
@@ -93,8 +87,8 @@ CREATE TABLE "clothing_ecom"."categories" (
     "status" BOOLEAN NOT NULL DEFAULT true,
     "slug" TEXT,
     "description" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "categories_pkey" PRIMARY KEY ("category_id")
 );
@@ -106,8 +100,8 @@ CREATE TABLE "clothing_ecom"."lookbooks" (
     "slug" TEXT,
     "description" TEXT,
     "image" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "lookbooks_pkey" PRIMARY KEY ("lookbook_id")
 );
@@ -120,9 +114,9 @@ CREATE TABLE "clothing_ecom"."products" (
     "product_name" TEXT NOT NULL,
     "slug" TEXT,
     "description" TEXT,
-    "status" "clothing_ecom"."product_status" NOT NULL DEFAULT 'ACTIVE',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "products_pkey" PRIMARY KEY ("product_id")
 );
@@ -139,17 +133,6 @@ CREATE TABLE "clothing_ecom"."lookbook_items" (
 );
 
 -- CreateTable
-CREATE TABLE "clothing_ecom"."variant_assets" (
-    "asset_id" SERIAL NOT NULL,
-    "variant_id" INTEGER NOT NULL,
-    "url" TEXT,
-    "type" TEXT,
-    "is_primary" BOOLEAN NOT NULL DEFAULT false,
-
-    CONSTRAINT "variant_assets_pkey" PRIMARY KEY ("asset_id")
-);
-
--- CreateTable
 CREATE TABLE "clothing_ecom"."sizes" (
     "size_id" SERIAL NOT NULL,
     "brand_id" INTEGER,
@@ -158,9 +141,9 @@ CREATE TABLE "clothing_ecom"."sizes" (
     "height_range" TEXT,
     "weight_range" TEXT,
     "measurements" JSONB,
-    "note" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "type" TEXT,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "sizes_pkey" PRIMARY KEY ("size_id")
 );
@@ -169,17 +152,41 @@ CREATE TABLE "clothing_ecom"."sizes" (
 CREATE TABLE "clothing_ecom"."product_variants" (
     "variant_id" SERIAL NOT NULL,
     "product_id" INTEGER NOT NULL,
+    "size_id" INTEGER,
     "sku" TEXT NOT NULL,
     "barcode" TEXT,
-    "cost_price" DECIMAL(65,30),
-    "base_price" DECIMAL(65,30),
+    "base_price" DECIMAL(12,2),
     "quantity" INTEGER NOT NULL DEFAULT 0,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "attribute" JSONB,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "product_variants_pkey" PRIMARY KEY ("variant_id")
+);
+
+-- CreateTable
+CREATE TABLE "clothing_ecom"."product_variant_price_history" (
+    "id" SERIAL NOT NULL,
+    "variant_id" INTEGER NOT NULL,
+    "old_price" DECIMAL(12,2),
+    "new_price" DECIMAL(12,2),
+    "changed_by" INTEGER,
+    "reason" VARCHAR(255),
+    "changed_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "product_variant_price_history_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clothing_ecom"."variant_assets" (
+    "asset_id" SERIAL NOT NULL,
+    "variant_id" INTEGER NOT NULL,
+    "url" TEXT,
+    "type" TEXT,
+    "is_primary" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "variant_assets_pkey" PRIMARY KEY ("asset_id")
 );
 
 -- CreateTable
@@ -197,8 +204,8 @@ CREATE TABLE "clothing_ecom"."vouchers" (
     "start_date" TIMESTAMP(3),
     "end_date" TIMESTAMP(3),
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "vouchers_pkey" PRIMARY KEY ("voucher_id")
 );
@@ -235,8 +242,8 @@ CREATE TABLE "clothing_ecom"."orders" (
     "note" TEXT,
     "payment_status" TEXT NOT NULL DEFAULT 'pending',
     "order_status" TEXT NOT NULL DEFAULT 'pending',
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
     "voucher_id" INTEGER,
 
     CONSTRAINT "orders_pkey" PRIMARY KEY ("order_id")
@@ -248,7 +255,7 @@ CREATE TABLE "clothing_ecom"."order_status_history" (
     "order_id" INTEGER NOT NULL,
     "user_id" INTEGER,
     "status" TEXT NOT NULL,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "order_status_history_pkey" PRIMARY KEY ("order_update_id")
 );
@@ -274,8 +281,8 @@ CREATE TABLE "clothing_ecom"."payments" (
     "transaction_id" TEXT,
     "amount" DECIMAL(65,30),
     "raw_response" JSONB,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "payments_pkey" PRIMARY KEY ("payment_id")
 );
@@ -284,11 +291,10 @@ CREATE TABLE "clothing_ecom"."payments" (
 CREATE TABLE "clothing_ecom"."inventory_transactions" (
     "inventory_id" SERIAL NOT NULL,
     "variant_id" INTEGER NOT NULL,
-    "warehouse_id" INTEGER NOT NULL,
     "change_quantity" INTEGER NOT NULL,
     "reason" TEXT,
     "order_id" INTEGER,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "inventory_transactions_pkey" PRIMARY KEY ("inventory_id")
 );
@@ -302,8 +308,8 @@ CREATE TABLE "clothing_ecom"."returns" (
     "status" TEXT NOT NULL DEFAULT 'requested',
     "image" TEXT,
     "refund_amount" DECIMAL(65,30) NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "returns_pkey" PRIMARY KEY ("return_id")
 );
@@ -327,8 +333,8 @@ CREATE TABLE "clothing_ecom"."reviews" (
     "rating" INTEGER NOT NULL,
     "comment" TEXT,
     "image" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "reviews_pkey" PRIMARY KEY ("review_id")
@@ -344,9 +350,25 @@ CREATE TABLE "clothing_ecom"."audit_logs" (
     "details" JSONB,
     "ip_address" TEXT,
     "user_agent" TEXT,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "audit_logs_pkey" PRIMARY KEY ("audit_id")
+);
+
+-- CreateTable
+CREATE TABLE "clothing_ecom"."email_otps" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "purpose" TEXT NOT NULL,
+    "code_hash" TEXT NOT NULL,
+    "expires_at" TIMESTAMP(3) NOT NULL,
+    "consumed_at" TIMESTAMP(3),
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "sent_count" INTEGER NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
+
+    CONSTRAINT "email_otps_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -360,7 +382,8 @@ CREATE TABLE "clothing_ecom"."site_contents" (
     "status" BOOLEAN NOT NULL DEFAULT true,
     "vector" TEXT,
     "updated_by" INTEGER,
-    "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "site_contents_pkey" PRIMARY KEY ("content_id")
 );
@@ -371,17 +394,10 @@ CREATE TABLE "clothing_ecom"."content_embeddings" (
     "content_id" INTEGER NOT NULL,
     "chunk" TEXT NOT NULL,
     "embedding" JSONB,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "content_embeddings_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "clothing_ecom"."_product_variantsTosizes" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL,
-
-    CONSTRAINT "_product_variantsTosizes_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -398,6 +414,9 @@ CREATE UNIQUE INDEX "user_role_user_id_role_id_key" ON "clothing_ecom"."user_rol
 
 -- CreateIndex
 CREATE UNIQUE INDEX "customers_user_id_key" ON "clothing_ecom"."customers"("user_id");
+
+-- CreateIndex
+CREATE INDEX "addresses_customer_id_idx" ON "clothing_ecom"."addresses"("customer_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "brands_brand_name_key" ON "clothing_ecom"."brands"("brand_name");
@@ -418,13 +437,19 @@ CREATE UNIQUE INDEX "products_slug_key" ON "clothing_ecom"."products"("slug");
 CREATE UNIQUE INDEX "lookbook_items_lookbook_id_variant_id_key" ON "clothing_ecom"."lookbook_items"("lookbook_id", "variant_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "variant_assets_variant_id_url_key" ON "clothing_ecom"."variant_assets"("variant_id", "url");
-
--- CreateIndex
-CREATE UNIQUE INDEX "sizes_brand_id_gender_size_label_key" ON "clothing_ecom"."sizes"("brand_id", "gender", "size_label");
+CREATE UNIQUE INDEX "sizes_brand_id_gender_size_label_type_key" ON "clothing_ecom"."sizes"("brand_id", "gender", "size_label", "type");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "product_variants_sku_key" ON "clothing_ecom"."product_variants"("sku");
+
+-- CreateIndex
+CREATE INDEX "product_variant_price_history_variant_id_idx" ON "clothing_ecom"."product_variant_price_history"("variant_id");
+
+-- CreateIndex
+CREATE INDEX "product_variant_price_history_changed_by_idx" ON "clothing_ecom"."product_variant_price_history"("changed_by");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "variant_assets_variant_id_url_key" ON "clothing_ecom"."variant_assets"("variant_id", "url");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "cart_customer_id_key" ON "clothing_ecom"."cart"("customer_id");
@@ -433,10 +458,10 @@ CREATE UNIQUE INDEX "cart_customer_id_key" ON "clothing_ecom"."cart"("customer_i
 CREATE UNIQUE INDEX "cart_detail_cart_id_variant_id_key" ON "clothing_ecom"."cart_detail"("cart_id", "variant_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "site_contents_slug_key" ON "clothing_ecom"."site_contents"("slug");
+CREATE UNIQUE INDEX "email_otps_email_purpose_key" ON "clothing_ecom"."email_otps"("email", "purpose");
 
 -- CreateIndex
-CREATE INDEX "_product_variantsTosizes_B_index" ON "clothing_ecom"."_product_variantsTosizes"("B");
+CREATE UNIQUE INDEX "site_contents_slug_key" ON "clothing_ecom"."site_contents"("slug");
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."user_role" ADD CONSTRAINT "user_role_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -448,7 +473,7 @@ ALTER TABLE "clothing_ecom"."user_role" ADD CONSTRAINT "user_role_role_id_fkey" 
 ALTER TABLE "clothing_ecom"."customers" ADD CONSTRAINT "customers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."addresses" ADD CONSTRAINT "addresses_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."addresses" ADD CONSTRAINT "addresses_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."categories" ADD CONSTRAINT "categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "clothing_ecom"."categories"("category_id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -466,13 +491,22 @@ ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_look
 ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."variant_assets" ADD CONSTRAINT "variant_assets_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "clothing_ecom"."sizes" ADD CONSTRAINT "sizes_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "clothing_ecom"."products"("product_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_size_id_fkey" FOREIGN KEY ("size_id") REFERENCES "clothing_ecom"."sizes"("size_id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "product_variant_price_history_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "product_variant_price_history_changed_by_fkey" FOREIGN KEY ("changed_by") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clothing_ecom"."variant_assets" ADD CONSTRAINT "variant_assets_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."cart" ADD CONSTRAINT "cart_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -539,9 +573,3 @@ ALTER TABLE "clothing_ecom"."site_contents" ADD CONSTRAINT "site_contents_update
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."content_embeddings" ADD CONSTRAINT "content_embeddings_content_id_fkey" FOREIGN KEY ("content_id") REFERENCES "clothing_ecom"."site_contents"("content_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "clothing_ecom"."_product_variantsTosizes" ADD CONSTRAINT "_product_variantsTosizes_A_fkey" FOREIGN KEY ("A") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "clothing_ecom"."_product_variantsTosizes" ADD CONSTRAINT "_product_variantsTosizes_B_fkey" FOREIGN KEY ("B") REFERENCES "clothing_ecom"."sizes"("size_id") ON DELETE CASCADE ON UPDATE CASCADE;

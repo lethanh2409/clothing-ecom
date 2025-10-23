@@ -14,11 +14,12 @@ import { UpdateProductDto } from './dtos/update-product.dto';
 type VariantWithAssets = Prisma.product_variantsGetPayload<{
   include: { variant_assets: true; sizes: true };
 }>;
-type ProductWithRelations = Prisma.productsGetPayload<{
+
+// Thêm type này cho mapVariantFull
+type VariantWithRelations = Prisma.product_variantsGetPayload<{
   include: {
-    product_variants: { include: { variant_assets: true; sizes: true } };
-    brands: true;
-    categories: true;
+    variant_assets: true;
+    sizes: true;
   };
 }>;
 
@@ -34,12 +35,14 @@ export class ProductsService {
     const img = variant?.variant_assets?.find((a) => a.is_primary);
     return img?.url ?? null;
   }
+
   private readColor(variant?: { attribute: Prisma.JsonValue | null } | null): string | null {
     const j = variant?.attribute ?? null;
     if (!j || typeof j !== 'object' || Array.isArray(j)) return null;
     const obj = j as Record<string, unknown>;
     return typeof obj.color === 'string' ? obj.color : null;
   }
+
   private async generateUniqueSku(
     tx: Prisma.TransactionClient,
     product_id: number,
@@ -64,7 +67,6 @@ export class ProductsService {
     }
   }
 
-  // trong ProductsService
   private ean13Checksum(digits12: string): number {
     const ds = digits12.split('').map((n) => Number(n));
     const sum = ds.reduce((acc, d, i) => acc + d * (i % 2 === 0 ? 1 : 3), 0);
@@ -78,16 +80,14 @@ export class ProductsService {
     size_id: number,
     color: string,
   ): Promise<string> {
-    // tạo 12 số pseudo-unique từ ids + hash màu
-    const colorCode = Math.abs(this.simpleHash(color)) % 1000; // 3 số
+    const colorCode = Math.abs(this.simpleHash(color)) % 1000;
     const base =
       `${(product_id % 1000).toString().padStart(3, '0')}${(size_id % 100).toString().padStart(2, '0')}${Date.now() % 1_000_000}`
         .padStart(9, '0')
         .slice(-9);
-    let body = `200${base.slice(0, 6)}${colorCode.toString().padStart(3, '0')}`; // 12 số bắt đầu bằng 200
+    let body = `200${base.slice(0, 6)}${colorCode.toString().padStart(3, '0')}`;
     let ean = body + this.ean13Checksum(body);
 
-    // đảm bảo chưa đụng (nếu bạn có unique trên barcode thì càng chuẩn)
     let i = 0;
     while (await tx.product_variants.findFirst({ where: { barcode: ean } })) {
       const bump = (++i % 1000).toString().padStart(3, '0');
@@ -97,19 +97,47 @@ export class ProductsService {
     return ean;
   }
 
-  // hash nhanh cho màu
   private simpleHash(s: string): number {
     let h = 0;
     for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
     return h;
   }
 
-  // ================= Queries (rút gọn phần chính) =================
-  async getAllProductsWithFirstVariant() {
+  private mapVariantFull(v: VariantWithRelations) {
+    const price = v.base_price ? v.base_price.toNumber() : null;
+    const attr = v.attribute;
+
+    return {
+      variant_id: v.variant_id,
+      sku: v.sku,
+      barcode: v.barcode,
+      price,
+      quantity: v.quantity,
+      status: v.status,
+      size: v.sizes?.size_label ?? null,
+      gender: v.sizes?.gender ?? null,
+      size_type: v.sizes?.type ?? null,
+      attributes: attr,
+      color: this.readColor(v),
+      assets: v.variant_assets.map((a) => ({
+        asset_id: a.asset_id,
+        url: a.url,
+        type: a.type,
+        is_primary: a.is_primary,
+      })),
+      primary_image: this.pickPrimaryImage(v),
+    };
+  }
+
+  // ================= Queries =================
+  async getAllProductsWithVariants() {
     const items = await this.prisma.products.findMany({
       include: {
         product_variants: {
-          include: { variant_assets: true, sizes: true },
+          include: {
+            sizes: true,
+            variant_assets: true,
+          },
           orderBy: { variant_id: 'asc' },
         },
         brands: true,
@@ -117,23 +145,21 @@ export class ProductsService {
       },
       orderBy: { product_id: 'asc' },
     });
-    return (items as ProductWithRelations[]).map((p) => {
-      const v = p.product_variants?.[0] ?? null;
-      return {
-        product_id: p.product_id,
-        product_name: p.product_name,
-        brand: p.brands ? { brand_id: p.brands.brand_id, brand_name: p.brands.brand_name } : null,
-        category: p.categories
-          ? { category_id: p.categories.category_id, category_name: p.categories.category_name }
-          : null,
-        sku: v?.sku ?? null,
-        price: v?.base_price ? Number(v.base_price) : null,
-        size: v?.sizes?.size_label ?? null,
-        color: this.readColor(v),
-        image: this.pickPrimaryImage(v),
-        status: p.status,
-      };
-    });
+
+    return items.map((p) => ({
+      product_id: p.product_id,
+      product_name: p.product_name,
+      slug: p.slug,
+      description: p.description,
+      brand: p.brands ? { brand_id: p.brands.brand_id, brand_name: p.brands.brand_name } : null,
+      category: p.categories
+        ? { category_id: p.categories.category_id, category_name: p.categories.category_name }
+        : null,
+      status: p.status,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      variants: p.product_variants.map((v) => this.mapVariantFull(v)),
+    }));
   }
 
   async getProductsByStatus(status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK' = 'ACTIVE') {
@@ -141,7 +167,10 @@ export class ProductsService {
       where: { status },
       include: {
         product_variants: {
-          include: { variant_assets: true, sizes: true },
+          include: {
+            sizes: true,
+            variant_assets: true,
+          },
           orderBy: { variant_id: 'asc' },
         },
         brands: true,
@@ -149,52 +178,59 @@ export class ProductsService {
       },
       orderBy: { product_id: 'asc' },
     });
-    return (items as ProductWithRelations[]).map((p) => {
-      const v = p.product_variants?.[0] ?? null;
-      return {
-        product_id: p.product_id,
-        product_name: p.product_name,
-        brand: p.brands ? { brand_id: p.brands.brand_id, brand_name: p.brands.brand_name } : null,
-        category: p.categories
-          ? { category_id: p.categories.category_id, category_name: p.categories.category_name }
-          : null,
-        sku: v?.sku ?? null,
-        price: v?.base_price ? Number(v.base_price) : null,
-        size: v?.sizes?.size_label ?? null,
-        color: this.readColor(v),
-        image: this.pickPrimaryImage(v),
-        status: p.status,
-      };
-    });
+
+    return items.map((p) => ({
+      product_id: p.product_id,
+      product_name: p.product_name,
+      slug: p.slug,
+      description: p.description,
+      brand: p.brands ? { brand_id: p.brands.brand_id, brand_name: p.brands.brand_name } : null,
+      category: p.categories
+        ? { category_id: p.categories.category_id, category_name: p.categories.category_name }
+        : null,
+      status: p.status,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+      variants: p.product_variants.map((v) => this.mapVariantFull(v)),
+    }));
   }
 
   async getProductById(productId: number) {
     const product = await this.prisma.products.findUnique({
       where: { product_id: productId },
       include: {
-        product_variants: { include: { variant_assets: true, sizes: true } },
+        product_variants: {
+          include: {
+            sizes: true,
+            variant_assets: true,
+          },
+          orderBy: { variant_id: 'asc' },
+        },
         brands: true,
         categories: true,
       },
     });
+
     if (!product) throw new NotFoundException(`Product ${productId} không tồn tại`);
-    const p = product as ProductWithRelations;
+
     return {
-      product_id: p.product_id,
-      product_name: p.product_name,
-      brand: p.brands ? { brand_id: p.brands.brand_id, brand_name: p.brands.brand_name } : null,
-      category: p.categories
-        ? { category_id: p.categories.category_id, category_name: p.categories.category_name }
+      product_id: product.product_id,
+      product_name: product.product_name,
+      slug: product.slug,
+      description: product.description,
+      brand: product.brands
+        ? { brand_id: product.brands.brand_id, brand_name: product.brands.brand_name }
         : null,
-      status: p.status,
-      variants: p.product_variants.map((v) => ({
-        variant_id: v.variant_id,
-        sku: v.sku,
-        price: v.base_price ? Number(v.base_price) : null,
-        size: v.sizes?.size_label ?? null,
-        color: this.readColor(v),
-        image: this.pickPrimaryImage(v),
-      })),
+      category: product.categories
+        ? {
+            category_id: product.categories.category_id,
+            category_name: product.categories.category_name,
+          }
+        : null,
+      status: product.status,
+      created_at: product.created_at,
+      updated_at: product.updated_at,
+      variants: product.product_variants.map((v) => this.mapVariantFull(v)),
     };
   }
 
@@ -204,7 +240,6 @@ export class ProductsService {
       throw new BadRequestException('`variants` must be a non-empty array');
     }
 
-    // (tuỳ chọn) check sớm để trả 409 rõ ràng hơn
     if (input.slug) {
       const existedSlug = await this.prisma.products.findUnique({ where: { slug: input.slug } });
       if (existedSlug) {
@@ -225,7 +260,6 @@ export class ProductsService {
           },
         });
 
-        // de-dup (size,color)
         const seen = new Set<string>();
         for (const v of input.variants) {
           const key = `${Number(v.size_id)}::${String(v.color).trim().toLowerCase()}`;
@@ -233,7 +267,6 @@ export class ProductsService {
           seen.add(key);
         }
 
-        // tạo variants (không ảnh)
         for (const v of input.variants) {
           const color = String(v.color).trim();
           const sku =
@@ -254,8 +287,7 @@ export class ProductsService {
               product_id: product.product_id,
               size_id: Number(v.size_id),
               sku,
-              barcode, // 👈 auto barcode
-              cost_price: v.cost_price != null ? new Prisma.Decimal(Number(v.cost_price)) : null,
+              barcode,
               base_price: v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : null,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
@@ -276,10 +308,11 @@ export class ProductsService {
           },
         });
 
-        // chuẩn hoá Decimal -> number
         return {
           product_id: raw!.product_id,
           product_name: raw!.product_name,
+          slug: raw!.slug,
+          description: raw!.description,
           brand: raw!.brands
             ? { brand_id: raw!.brands.brand_id, brand_name: raw!.brands.brand_name }
             : null,
@@ -293,7 +326,9 @@ export class ProductsService {
           variants: raw!.product_variants.map((v) => ({
             variant_id: v.variant_id,
             sku: v.sku,
+            barcode: v.barcode,
             price: v.base_price != null ? Number(v.base_price) : null,
+            quantity: v.quantity,
             size: v.sizes?.size_label ?? null,
             color: this.readColor(v),
             image: this.pickPrimaryImage(v),
@@ -305,7 +340,6 @@ export class ProductsService {
         const target = Array.isArray(error.meta?.target)
           ? error.meta.target.join(', ')
           : 'unique field';
-        // ví dụ target là "slug"
         throw new ConflictException(`Product với ${target} đã tồn tại`);
       }
       throw error;
@@ -345,9 +379,7 @@ export class ProductsService {
             data: {
               size_id: v.size_id ?? undefined,
               sku: v.sku ?? undefined,
-              barcode: v.barcode ?? undefined, // cho phép update nếu gửi vào
-              cost_price:
-                v.cost_price != null ? new Prisma.Decimal(Number(v.cost_price)) : undefined,
+              barcode: v.barcode ?? undefined,
               base_price:
                 v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : undefined,
               quantity: v.quantity != null ? Number(v.quantity) : undefined,
@@ -357,7 +389,6 @@ export class ProductsService {
             },
           });
         } else {
-          // tạo mới
           const sizeId = Number(v.size_id);
           const color = String(v.color || '').trim();
           const sku =
@@ -377,7 +408,6 @@ export class ProductsService {
               size_id: sizeId,
               sku,
               barcode,
-              cost_price: v.cost_price != null ? new Prisma.Decimal(Number(v.cost_price)) : null,
               base_price: v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : null,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
@@ -448,11 +478,10 @@ export class ProductsService {
     variantId: number,
     files: Express.Multer.File[],
   ): Promise<variant_assets[]> {
-    // <-- khai báo return type
-    const results: variant_assets[] = []; // <-- mảng typed
+    const results: variant_assets[] = [];
     for (let i = 0; i < files.length; i++) {
       const created = await this.uploadVariantAsset(variantId, files[i], i === 0);
-      results.push(created); // created đã là variant_assets theo hàm trên
+      results.push(created);
     }
     return results;
   }
@@ -475,21 +504,17 @@ export class ProductsService {
     const remain = await this.prisma.variant_assets.count({ where: { variant_id: variantId } });
     if (remain <= 1) throw new BadRequestException('Variant phải còn ít nhất 1 ảnh');
 
-    // 1) Lấy asset cần xoá và kiểm tra thuộc đúng variant
     const asset = await this.prisma.variant_assets.findUnique({ where: { asset_id: assetId } });
     if (!asset || asset.variant_id !== variantId) {
       throw new NotFoundException('Asset không hợp lệ');
     }
 
-    // 2) Transaction: xoá asset; nếu nó là primary thì set primary cho phần tử đầu tiên còn lại
     await this.prisma.$transaction(async (tx) => {
       const wasPrimary = asset.is_primary;
 
-      // Xoá record
       await tx.variant_assets.delete({ where: { asset_id: assetId } });
 
       if (wasPrimary) {
-        // Lấy phần tử đầu tiên (asset_id nhỏ nhất) còn lại của variant
         const next = await tx.variant_assets.findFirst({
           where: { variant_id: variantId },
           orderBy: { asset_id: 'asc' },
@@ -500,8 +525,6 @@ export class ProductsService {
             data: { is_primary: true },
           });
         }
-        // Nếu không còn ảnh nào khác, đơn giản là variant không có primary nữa
-        // (nếu muốn chặn xoá khi chỉ còn 1 ảnh, có thể check count trước rồi throw)
       }
     });
 

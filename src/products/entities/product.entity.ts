@@ -17,7 +17,7 @@ export class Product {
 
   description: string;
 
-  status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
+  status: string;
 
   created_at: Date;
 

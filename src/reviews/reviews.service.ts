@@ -139,9 +139,6 @@ export class ReviewsService {
         discount_price: Number(review.order_detail.discount_price),
         product_variants: {
           ...review.order_detail.product_variants,
-          cost_price: review.order_detail.product_variants.cost_price
-            ? Number(review.order_detail.product_variants.cost_price)
-            : null,
           base_price: review.order_detail.product_variants.base_price
             ? Number(review.order_detail.product_variants.base_price)
             : null,

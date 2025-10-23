@@ -41,7 +41,6 @@ export class CartService {
         product_variants: {
           ...item.product_variants,
           base_price: this.decimalToNumber(item.product_variants?.base_price),
-          cost_price: this.decimalToNumber(item.product_variants?.cost_price),
         },
       })),
     };
