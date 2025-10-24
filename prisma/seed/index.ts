@@ -8,6 +8,7 @@ import { seedVariantsManualFull } from './05_variants';
 import { seedVouchers } from './06_vouchers';
 import { seedSiteContents } from './07_site_contents';
 import { seedVariantAssets } from './08_assets';
+import { seedOrdersComplete } from './09_orders';
 
 async function main() {
   console.log('🌱 Starting seed...');
@@ -20,6 +21,7 @@ async function main() {
   await seedVouchers(prisma);
   await seedSiteContents(prisma);
   await seedVariantAssets(prisma);
+  await seedOrdersComplete(prisma);
   console.log('✅ Seed completed!');
 }
 

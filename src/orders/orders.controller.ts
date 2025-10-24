@@ -1,3 +1,4 @@
+// src/orders/orders.controller.ts
 import {
   Controller,
   Get,
@@ -9,22 +10,33 @@ import {
   Body,
   Post,
   ForbiddenException,
+  Query,
+  Res,
 } from '@nestjs/common';
+import express from 'express'; // FIX: Import Response from express
 import { OrdersService } from './orders.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorate';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { VnpayService } from '../payment/vnpay.service';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ExportService } from './export.service';
+import {
+  RevenueQueryDto,
+  TopProductsQueryDto,
+  RevenueByCategoryQueryDto,
+  RevenueByBrandQueryDto,
+} from './dtos/revenue-query.dto';
 
 @Controller('orders')
-@UseGuards(AuthGuard('jwt'), RolesGuard) // áp cho toàn bộ controller
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly vnpayService: VnpayService,
     private readonly prisma: PrismaService,
+    private readonly exportService: ExportService,
   ) {}
 
   @Get()
@@ -38,9 +50,9 @@ export class OrdersController {
 
   // --- CUSTOMER: chỉ được xem đơn hàng của chính họ ---
   @Get('my-orders')
-  @Roles('CUSTOMER') // chỉ customer mới call được
-  async getOrdersByUser(@Req() req) {
-    const userId = Number(req.user?.userId); // hoặc req.user?.userId tùy payload bạn sign
+  @Roles('CUSTOMER')
+  async getOrdersByUser(@Req() req: any) {
+    const userId = Number(req.user?.userId);
     console.log(req.user);
     if (isNaN(userId)) {
       throw new BadRequestException('Invalid user id in token');
@@ -50,7 +62,7 @@ export class OrdersController {
 
   // --- ADMIN: xem đơn hàng của customer bất kỳ ---
   @Get('user-orders/:id')
-  @Roles('ADMIN') // chỉ admin mới call được
+  @Roles('ADMIN')
   async getOrdersByUserId(@Param('id') id: string) {
     const userId = Number(id);
     console.log(userId);
@@ -62,8 +74,8 @@ export class OrdersController {
 
   @Get(':id')
   @Roles('ADMIN')
-  async getOrderById(@Param('id') id: number) {
-    const order = await this.ordersService.getOrderById(id);
+  async getOrderById(@Param('id') id: string) {
+    const order = await this.ordersService.getOrderById(Number(id));
     if (!order) {
       throw new NotFoundException(`Order ${id} not found`);
     }
@@ -72,9 +84,8 @@ export class OrdersController {
 
   @Post()
   @Roles('CUSTOMER')
-  async create(@Body() dto: CreateOrderDto, @Req() req) {
-    const userId = Number(req.user?.userId); // hoặc req.user?.userId tùy payload bạn sign
-    // Tìm customer_id từ user_id
+  async create(@Body() dto: CreateOrderDto, @Req() req: any) {
+    const userId = Number(req.user?.userId);
     const customer = await this.prisma.customers.findUnique({
       where: { user_id: userId },
       select: { customer_id: true },
@@ -91,5 +102,246 @@ export class OrdersController {
   @Roles('CUSTOMER')
   async retryPayment(@Param('id') id: string) {
     return this.vnpayService.retryPayment(Number(id));
+  }
+
+  // ==================== THỐNG KÊ DOANH THU ====================
+
+  /**
+   * GET /orders/revenue/dashboard
+   * Tổng quan dashboard - dành cho admin
+   */
+  @Get('revenue/dashboard')
+  @Roles('ADMIN')
+  async getDashboard() {
+    const data = await this.ordersService.getDashboardOverview();
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/monthly?month=1&year=2025
+   * Doanh thu theo tháng cụ thể
+   */
+  @Get('revenue/monthly')
+  @Roles('ADMIN')
+  async getMonthlyRevenue(@Query() query: RevenueQueryDto) {
+    const now = new Date();
+    const month = query.month || now.getMonth() + 1;
+    const year = query.year || now.getFullYear();
+
+    const data = await this.ordersService.getRevenueByMonth(month, year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/yearly?year=2025
+   * Doanh thu theo năm
+   */
+  @Get('revenue/yearly')
+  @Roles('ADMIN')
+  async getYearlyRevenue(@Query() query: RevenueQueryDto) {
+    const year = query.year || new Date().getFullYear();
+
+    const data = await this.ordersService.getRevenueByYear(year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/statistics?year=2025
+   * Thống kê 12 tháng trong năm
+   */
+  @Get('revenue/statistics')
+  @Roles('ADMIN')
+  async getYearlyStatistics(@Query() query: RevenueQueryDto) {
+    const year = query.year || new Date().getFullYear();
+
+    const data = await this.ordersService.getYearlyStatistics(year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/top-products?limit=10&month=1&year=2025
+   * Top sản phẩm bán chạy
+   */
+  @Get('revenue/top-products')
+  @Roles('ADMIN')
+  async getTopProducts(@Query() query: TopProductsQueryDto) {
+    const limit = query.limit || 10;
+    const data = await this.ordersService.getTopProducts(limit, query.month, query.year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/by-category?month=1&year=2025
+   * Doanh thu theo category
+   */
+  @Get('revenue/by-category')
+  @Roles('ADMIN')
+  async getRevenueByCategory(@Query() query: RevenueByCategoryQueryDto) {
+    const data = await this.ordersService.getRevenueByCategory(query.month, query.year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * GET /orders/revenue/by-brand?month=1&year=2025
+   * Doanh thu theo brand
+   */
+  @Get('revenue/by-brand')
+  @Roles('ADMIN')
+  async getRevenueByBrand(@Query() query: RevenueByBrandQueryDto) {
+    const data = await this.ordersService.getRevenueByBrand(query.month, query.year);
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // ==================== EXPORT EXCEL/CSV ====================
+
+  /**
+   * GET /orders/export/monthly-revenue-excel?year=2025
+   * Export doanh thu theo tháng ra Excel
+   */
+  @Get('export/monthly-revenue-excel')
+  @Roles('ADMIN')
+  async exportMonthlyRevenueExcel(@Query() query: RevenueQueryDto, @Res() res: express.Response) {
+    const year = query.year || new Date().getFullYear();
+    const buffer = await this.exportService.exportMonthlyRevenueExcel(year);
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="doanh-thu-thang-${year}.xlsx"`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.send(buffer);
+  }
+
+  /**
+   * GET /orders/export/top-products-excel?limit=20&month=1&year=2025
+   * Export top sản phẩm ra Excel
+   */
+  @Get('export/top-products-excel')
+  @Roles('ADMIN')
+  async exportTopProductsExcel(@Query() query: TopProductsQueryDto, @Res() res: express.Response) {
+    const limit = query.limit || 20;
+    const buffer = await this.exportService.exportTopProductsExcel(limit, query.month, query.year);
+
+    const filename = query.month
+      ? `top-san-pham-${query.month}-${query.year}.xlsx`
+      : `top-san-pham-${query.year || 'all'}.xlsx`;
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.send(buffer);
+  }
+
+  /**
+   * GET /orders/export/category-revenue-excel?month=1&year=2025
+   * Export doanh thu theo category ra Excel
+   */
+  @Get('export/category-revenue-excel')
+  @Roles('ADMIN')
+  async exportCategoryRevenueExcel(
+    @Query() query: RevenueByCategoryQueryDto,
+    @Res() res: express.Response,
+  ) {
+    const buffer = await this.exportService.exportCategoryRevenueExcel(query.month, query.year);
+
+    const filename = query.month
+      ? `doanh-thu-danh-muc-${query.month}-${query.year}.xlsx`
+      : `doanh-thu-danh-muc-${query.year || 'all'}.xlsx`;
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.send(buffer);
+  }
+
+  /**
+   * GET /orders/export/brand-revenue-excel?month=1&year=2025
+   * Export doanh thu theo brand ra Excel
+   */
+  @Get('export/brand-revenue-excel')
+  @Roles('ADMIN')
+  async exportBrandRevenueExcel(
+    @Query() query: RevenueByBrandQueryDto,
+    @Res() res: express.Response,
+  ) {
+    const buffer = await this.exportService.exportBrandRevenueExcel(query.month, query.year);
+
+    const filename = query.month
+      ? `doanh-thu-thuong-hieu-${query.month}-${query.year}.xlsx`
+      : `doanh-thu-thuong-hieu-${query.year || 'all'}.xlsx`;
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.send(buffer);
+  }
+
+  /**
+   * GET /orders/export/complete-year-report?year=2025
+   * Export báo cáo tổng hợp cả năm (nhiều sheets)
+   */
+  @Get('export/complete-year-report')
+  @Roles('ADMIN')
+  async exportCompleteYearReport(@Query() query: RevenueQueryDto, @Res() res: express.Response) {
+    const year = query.year || new Date().getFullYear();
+    const buffer = await this.exportService.exportCompleteYearReport(year);
+
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="bao-cao-tong-hop-${year}.xlsx"`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.send(buffer);
+  }
+
+  /**
+   * GET /orders/export/monthly-revenue-csv?year=2025
+   * Export doanh thu theo tháng ra CSV
+   */
+  @Get('export/monthly-revenue-csv')
+  @Roles('ADMIN')
+  async exportMonthlyRevenueCSV(@Query() query: RevenueQueryDto, @Res() res: express.Response) {
+    const year = query.year || new Date().getFullYear();
+    const csv = await this.exportService.exportMonthlyRevenueCSV(year);
+
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="doanh-thu-thang-${year}.csv"`,
+    });
+
+    // Thêm BOM để Excel đọc đúng tiếng Việt
+    res.send('\uFEFF' + csv);
   }
 }

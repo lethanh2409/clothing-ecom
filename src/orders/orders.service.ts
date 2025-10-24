@@ -190,6 +190,476 @@ export class OrdersService {
     });
   }
 
+  // ============================================
+  // DASHBOARD & STATISTICS METHODS
+  // ============================================
+
+  /**
+   * Dashboard tổng quan
+   */
+  async getDashboardOverview() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+
+    // Doanh thu tháng này
+    const monthRevenue = await this.getRevenueByMonth(currentMonth, currentYear);
+
+    // Doanh thu năm này
+    const yearRevenue = await this.getRevenueByYear(currentYear);
+
+    // Top 5 sản phẩm tháng này
+    const topProducts = await this.getTopProducts(5, currentMonth, currentYear);
+
+    // Tổng số đơn hàng
+    const totalOrders = await this.prisma.orders.count();
+
+    // Đơn hàng pending
+    const pendingOrders = await this.prisma.orders.count({
+      where: { order_status: 'pending' },
+    });
+
+    return {
+      monthRevenue,
+      yearRevenue,
+      topProducts: topProducts.products,
+      totalOrders,
+      pendingOrders,
+    };
+  }
+
+  /**
+   * Doanh thu theo tháng cụ thể
+   */
+  async getRevenueByMonth(month: number, year: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        created_at: {
+          gte: startDate,
+          lt: endDate,
+        },
+        order_status: { in: ['completed', 'delivered'] },
+      },
+      select: {
+        total_price: true,
+        shipping_fee: true,
+      },
+    });
+
+    const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+    const totalShipping = orders.reduce((sum, o) => sum + Number(o.shipping_fee || 0), 0);
+    const orderCount = orders.length;
+
+    return {
+      month,
+      year,
+      totalRevenue,
+      totalShipping,
+      orderCount,
+      averageOrderValue: orderCount > 0 ? totalRevenue / orderCount : 0,
+    };
+  }
+
+  /**
+   * Doanh thu theo năm
+   */
+  async getRevenueByYear(year: number) {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year + 1, 0, 1);
+
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        created_at: {
+          gte: startDate,
+          lt: endDate,
+        },
+        order_status: { in: ['completed', 'delivered'] },
+      },
+      select: {
+        total_price: true,
+        shipping_fee: true,
+      },
+    });
+
+    const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
+    const totalShipping = orders.reduce((sum, o) => sum + Number(o.shipping_fee || 0), 0);
+    const orderCount = orders.length;
+
+    return {
+      year,
+      totalRevenue,
+      totalShipping,
+      orderCount,
+      averageOrderValue: orderCount > 0 ? totalRevenue / orderCount : 0,
+    };
+  }
+
+  /**
+   * Lấy thống kê doanh thu theo năm (chia theo tháng)
+   */
+  async getYearlyStatistics(year: number) {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year + 1, 0, 1);
+
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        created_at: {
+          gte: startDate,
+          lt: endDate,
+        },
+        order_status: { in: ['completed', 'delivered'] },
+      },
+      select: {
+        order_id: true,
+        total_price: true,
+        shipping_fee: true,
+        created_at: true,
+      },
+    });
+
+    // Group by month
+    const monthlyMap = new Map<number, { revenue: number; shipping: number; count: number }>();
+
+    for (let m = 1; m <= 12; m++) {
+      monthlyMap.set(m, { revenue: 0, shipping: 0, count: 0 });
+    }
+
+    orders.forEach((order) => {
+      const month = order.created_at.getMonth() + 1;
+      const data = monthlyMap.get(month)!;
+      data.revenue += Number(order.total_price || 0);
+      data.shipping += Number(order.shipping_fee || 0);
+      data.count += 1;
+    });
+
+    const monthNames = [
+      'Tháng 1',
+      'Tháng 2',
+      'Tháng 3',
+      'Tháng 4',
+      'Tháng 5',
+      'Tháng 6',
+      'Tháng 7',
+      'Tháng 8',
+      'Tháng 9',
+      'Tháng 10',
+      'Tháng 11',
+      'Tháng 12',
+    ];
+
+    const monthlyData = Array.from(monthlyMap.entries()).map(([month, data]) => ({
+      month,
+      monthName: monthNames[month - 1],
+      revenue: data.revenue,
+      shipping: data.shipping,
+      orderCount: data.count,
+      averageOrderValue: data.count > 0 ? data.revenue / data.count : 0,
+    }));
+
+    const totalRevenue = monthlyData.reduce((sum, m) => sum + m.revenue, 0);
+    const totalOrders = monthlyData.reduce((sum, m) => sum + m.orderCount, 0);
+
+    return {
+      year,
+      totalRevenue,
+      totalOrders,
+      averageMonthlyRevenue: totalRevenue / 12,
+      monthlyData,
+    };
+  }
+
+  /**
+   * Lấy top sản phẩm bán chạy
+   */
+  async getTopProducts(limit: number = 10, month?: number, year?: number) {
+    const whereClause: any = {
+      orders: {
+        order_status: { in: ['completed', 'delivered'] },
+      },
+    };
+
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
+      whereClause.orders.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    } else if (year) {
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year + 1, 0, 1);
+      whereClause.orders.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    const orderDetails = await this.prisma.order_detail.findMany({
+      where: whereClause,
+      include: {
+        product_variants: {
+          include: {
+            products: {
+              include: {
+                brands: true,
+                categories: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const productMap = new Map<
+      number,
+      {
+        variant_id: number;
+        sku: string;
+        product_name: string;
+        brand: string;
+        category: string;
+        totalQuantity: number;
+        totalRevenue: number;
+        orderCount: number;
+      }
+    >();
+
+    orderDetails.forEach((detail) => {
+      const variantId = detail.variant_id;
+      const existing = productMap.get(variantId);
+      const revenue = Number(detail.total_price || 0);
+      const quantity = detail.quantity;
+
+      if (existing) {
+        existing.totalQuantity += quantity;
+        existing.totalRevenue += revenue;
+        existing.orderCount += 1;
+      } else {
+        productMap.set(variantId, {
+          variant_id: variantId,
+          sku: detail.product_variants?.sku || '',
+          product_name: detail.product_variants?.products?.product_name || 'N/A',
+          brand: detail.product_variants?.products?.brands?.brand_name || 'N/A',
+          category: detail.product_variants?.products?.categories?.category_name || 'N/A',
+          totalQuantity: quantity,
+          totalRevenue: revenue,
+          orderCount: 1,
+        });
+      }
+    });
+
+    const sorted = Array.from(productMap.values())
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, limit);
+
+    const products = sorted.map((p, index) => ({
+      rank: index + 1,
+      ...p,
+      averagePrice: p.totalQuantity > 0 ? p.totalRevenue / p.totalQuantity : 0,
+    }));
+
+    let period = 'Toàn bộ';
+    if (month && year) {
+      period = `Tháng ${month}/${year}`;
+    } else if (year) {
+      period = `Năm ${year}`;
+    }
+
+    return { products, period };
+  }
+
+  /**
+   * Lấy doanh thu theo danh mục
+   */
+  async getRevenueByCategory(month?: number, year?: number) {
+    const whereClause: any = {
+      order_status: { in: ['completed', 'delivered'] },
+    };
+
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
+      whereClause.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    } else if (year) {
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year + 1, 0, 1);
+      whereClause.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    const orders = await this.prisma.orders.findMany({
+      where: whereClause,
+      include: {
+        order_detail: {
+          include: {
+            product_variants: {
+              include: {
+                products: {
+                  include: {
+                    categories: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const categoryMap = new Map<
+      number,
+      {
+        category_id: number;
+        category_name: string;
+        totalRevenue: number;
+        totalQuantity: number;
+        orderCount: number;
+      }
+    >();
+
+    orders.forEach((order) => {
+      order.order_detail.forEach((detail) => {
+        const category = detail.product_variants?.products?.categories;
+        if (!category) return;
+
+        const catId = category.category_id;
+        const revenue = Number(detail.total_price || 0);
+        const quantity = detail.quantity;
+
+        const existing = categoryMap.get(catId);
+        if (existing) {
+          existing.totalRevenue += revenue;
+          existing.totalQuantity += quantity;
+          existing.orderCount += 1;
+        } else {
+          categoryMap.set(catId, {
+            category_id: catId,
+            category_name: category.category_name,
+            totalRevenue: revenue,
+            totalQuantity: quantity,
+            orderCount: 1,
+          });
+        }
+      });
+    });
+
+    const totalRevenue = Array.from(categoryMap.values()).reduce(
+      (sum, c) => sum + c.totalRevenue,
+      0,
+    );
+
+    const categories = Array.from(categoryMap.values())
+      .map((c) => ({
+        ...c,
+        percentage: totalRevenue > 0 ? (c.totalRevenue / totalRevenue) * 100 : 0,
+        averageOrderValue: c.orderCount > 0 ? c.totalRevenue / c.orderCount : 0,
+      }))
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    return { categories, totalRevenue };
+  }
+
+  /**
+   * Lấy doanh thu theo thương hiệu
+   */
+  async getRevenueByBrand(month?: number, year?: number) {
+    const whereClause: any = {
+      order_status: { in: ['completed', 'delivered'] },
+    };
+
+    if (month && year) {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
+      whereClause.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    } else if (year) {
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year + 1, 0, 1);
+      whereClause.created_at = {
+        gte: startDate,
+        lt: endDate,
+      };
+    }
+
+    const orders = await this.prisma.orders.findMany({
+      where: whereClause,
+      include: {
+        order_detail: {
+          include: {
+            product_variants: {
+              include: {
+                products: {
+                  include: {
+                    brands: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const brandMap = new Map<
+      number,
+      {
+        brand_id: number;
+        brand_name: string;
+        totalRevenue: number;
+        totalQuantity: number;
+        orderCount: number;
+      }
+    >();
+
+    orders.forEach((order) => {
+      order.order_detail.forEach((detail) => {
+        const brand = detail.product_variants?.products?.brands;
+        if (!brand) return;
+
+        const brandId = brand.brand_id;
+        const revenue = Number(detail.total_price || 0);
+        const quantity = detail.quantity;
+
+        const existing = brandMap.get(brandId);
+        if (existing) {
+          existing.totalRevenue += revenue;
+          existing.totalQuantity += quantity;
+          existing.orderCount += 1;
+        } else {
+          brandMap.set(brandId, {
+            brand_id: brandId,
+            brand_name: brand.brand_name,
+            totalRevenue: revenue,
+            totalQuantity: quantity,
+            orderCount: 1,
+          });
+        }
+      });
+    });
+
+    const totalRevenue = Array.from(brandMap.values()).reduce((sum, b) => sum + b.totalRevenue, 0);
+
+    const brands = Array.from(brandMap.values())
+      .map((b) => ({
+        ...b,
+        percentage: totalRevenue > 0 ? (b.totalRevenue / totalRevenue) * 100 : 0,
+        averageOrderValue: b.orderCount > 0 ? b.totalRevenue / b.orderCount : 0,
+      }))
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    return { brands, totalRevenue };
+  }
+
   // -------------------
   // Helpers (transform)
   // -------------------

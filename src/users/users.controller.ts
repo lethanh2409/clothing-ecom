@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, Patch, Delete, Query } from '@nestj
 import { UsersService } from './users.service';
 import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-
+import { Roles } from '../auth/roles.decorate';
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
@@ -14,6 +14,7 @@ export class UsersController {
   }
 
   @Get('/all')
+  @Roles('ADMIN')
   async findAll() {
     const users = await this.userService.findAll();
     return {

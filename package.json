@@ -43,6 +43,7 @@
     "cookie-parse": "^0.4.0",
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "mysql2": "^3.15.0",
