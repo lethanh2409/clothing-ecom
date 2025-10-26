@@ -4,7 +4,7 @@ import { CreateOrderDto } from './dtos/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { VnpayService } from '../payment/vnpay.service';
 import { format } from 'date-fns';
-import { orders, payments, order_detail, product_variants } from '@prisma/client';
+import { orders, payments, order_detail, product_variants, Prisma } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -173,6 +173,41 @@ export class OrdersService {
           amount: total,
         },
       });
+
+      // 5) Xóa cart_detail của customer (BƯỚC MỚI)
+      const cart = await tx.cart.findFirst({
+        where: { customer_id: customerId },
+        select: { cart_id: true },
+      });
+
+      if (cart) {
+        // Xóa các items trong dto.items khỏi cart
+        const variantIds = dto.items.map((item) => item.variantId);
+
+        await tx.cart_detail.deleteMany({
+          where: {
+            cart_id: cart.cart_id,
+            variant_id: { in: variantIds },
+          },
+        });
+
+        // Tính lại total_price của cart
+        const remainingDetails = await tx.cart_detail.findMany({
+          where: { cart_id: cart.cart_id },
+          include: { product_variants: true },
+        });
+
+        let newTotal = new Prisma.Decimal(0);
+        for (const d of remainingDetails) {
+          const price = d.product_variants?.base_price ?? new Prisma.Decimal(0);
+          newTotal = newTotal.add(price.mul(d.quantity));
+        }
+
+        await tx.cart.update({
+          where: { cart_id: cart.cart_id },
+          data: { total_price: newTotal },
+        });
+      }
 
       // 5) Link thanh toán
       const qrUrl = this.vnpayService.generatePaymentUrl({
