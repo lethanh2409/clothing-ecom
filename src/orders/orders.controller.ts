@@ -213,6 +213,89 @@ export class OrdersController {
     };
   }
 
+  // Thêm vào orders.controller.ts
+  @Get('revenue/date-range')
+  @Roles('ADMIN')
+  async getRevenueByDateRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate và endDate là bắt buộc');
+    }
+    return this.ordersService.getRevenueByDateRange(new Date(startDate), new Date(endDate));
+  }
+
+  /**
+   * 2️⃣ Thống kê chi tiết theo ngày
+   * GET /orders/statistics/daily?startDate=2024-12-01&endDate=2025-01-30
+   */
+  @Get('daily')
+  @Roles('ADMIN')
+  async getDailyStatistics(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate và endDate là bắt buộc');
+    }
+    return this.ordersService.getRevenueByDateRange(new Date(startDate), new Date(endDate));
+  }
+
+  /**
+   * 3️⃣ Top sản phẩm bán chạy
+   * GET /orders/statistics/top-products/date-range?startDate=2024-12-01&endDate=2025-01-30&limit=10
+   */
+  @Get('top-products/date-range')
+  @Roles('ADMIN')
+  async getTopProductsByDateRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('limit') limit?: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate và endDate là bắt buộc');
+    }
+    const limitNum = limit ? parseInt(limit) : 10;
+    return this.ordersService.getTopProductsByDateRange(
+      new Date(startDate),
+      new Date(endDate),
+      limitNum,
+    );
+  }
+
+  /**
+   * 4️⃣ Doanh thu theo danh mục
+   * GET /orders/statistics/category/date-range?startDate=2024-12-01&endDate=2025-01-30
+   */
+  @Get('category/date-range')
+  @Roles('ADMIN')
+  async getRevenueByCategoryDateRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate và endDate là bắt buộc');
+    }
+    return this.ordersService.getRevenueByCategoryDateRange(new Date(startDate), new Date(endDate));
+  }
+
+  /**
+   * 5️⃣ Doanh thu theo thương hiệu
+   * GET /orders/statistics/brand/date-range?startDate=2024-12-01&endDate=2025-01-30
+   */
+  @Get('brand/date-range')
+  @Roles('ADMIN')
+  async getRevenueByBrandDateRange(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate và endDate là bắt buộc');
+    }
+    return this.ordersService.getRevenueByBrandDateRange(new Date(startDate), new Date(endDate));
+  }
+
   // ==================== EXPORT EXCEL/CSV ====================
 
   /**

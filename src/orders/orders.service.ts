@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { VnpayService } from '../payment/vnpay.service';
 import { format } from 'date-fns';
 import { orders, payments, order_detail, product_variants, Prisma } from '@prisma/client';
+import { prisma } from 'prisma/seed/db';
 
 @Injectable()
 export class OrdersService {
@@ -747,4 +748,233 @@ export class OrdersService {
   private formatDate(date: Date | string): string {
     return format(new Date(date), 'HH:mm:ss dd/MM/yyyy');
   }
+
+  getTopProductsByDateRange = async (startDate: Date, endDate: Date, limit = 10) => {
+    // Dữ liệu tạm lưu theo variant
+    const productMap = new Map<
+      number,
+      {
+        variant_id: number;
+        sku: string;
+        product_name: string;
+        brand: string;
+        category: string;
+        totalQuantity: number;
+        totalRevenue: number;
+        orderCount: number;
+      }
+    >();
+
+    // Lấy dữ liệu chi tiết đơn hàng trong khoảng ngày
+    const orderDetails = await this.prisma.order_detail.findMany({
+      where: {
+        orders: {
+          created_at: {
+            gte: startDate,
+            lte: endDate,
+          },
+          order_status: { not: 'cancelled' },
+        },
+      },
+      include: {
+        product_variants: {
+          include: {
+            products: {
+              include: {
+                brands: true,
+                categories: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    for (const detail of orderDetails) {
+      const variant = detail.product_variants;
+      const product = variant.products;
+
+      if (!variant || !product) continue;
+
+      const brandName = product.brands?.brand_name ?? 'Unknown';
+      const categoryName = product.categories?.category_name ?? 'Uncategorized';
+
+      if (!productMap.has(variant.variant_id)) {
+        productMap.set(variant.variant_id, {
+          variant_id: variant.variant_id,
+          sku: variant.sku,
+          product_name: product.product_name,
+          brand: brandName,
+          category: categoryName,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          orderCount: 0,
+        });
+      }
+
+      const item = productMap.get(variant.variant_id)!;
+      item.totalQuantity += detail.quantity;
+      item.totalRevenue += Number(detail.total_price);
+      item.orderCount += 1;
+    }
+
+    // Chuyển Map -> mảng và sắp xếp
+    const result = Array.from(productMap.values())
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, limit);
+
+    return result;
+  };
+
+  /**
+   * 2️⃣ Doanh thu theo ngày (vẽ biểu đồ)
+   */
+  getRevenueByDateRange = async (startDate: Date, endDate: Date) => {
+    const orders = await this.prisma.orders.findMany({
+      where: {
+        created_at: { gte: startDate, lte: endDate },
+        order_status: { not: 'cancelled' },
+      },
+      include: { order_detail: true },
+    });
+
+    const dayMap = new Map<string, { revenue: number; shipping: number; count: number }>();
+
+    for (const order of orders) {
+      const dayKey = format(order.created_at, 'yyyy-MM-dd');
+      if (!dayMap.has(dayKey)) dayMap.set(dayKey, { revenue: 0, shipping: 0, count: 0 });
+
+      const sumDetail = order.order_detail.reduce((acc, d) => acc + Number(d.total_price), 0);
+      const dayData = dayMap.get(dayKey)!;
+
+      dayData.revenue += sumDetail;
+      dayData.shipping += Number(order.shipping_fee ?? 0);
+      dayData.count += 1;
+    }
+
+    const dailyData = Array.from(dayMap.entries())
+      .map(([dateKey, data]) => ({
+        date: format(new Date(dateKey), 'dd/MM/yyyy'),
+        dateKey,
+        revenue: data.revenue,
+        shipping: data.shipping,
+        orderCount: data.count,
+        averageOrderValue: data.count ? data.revenue / data.count : 0,
+      }))
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+
+    return dailyData;
+  };
+
+  /**
+   * 3️⃣ Doanh thu theo danh mục sản phẩm
+   */
+  getRevenueByCategoryDateRange = async (startDate: Date, endDate: Date) => {
+    const categoryMap = new Map<
+      number,
+      {
+        category_id: number;
+        category_name: string;
+        totalRevenue: number;
+        totalQuantity: number;
+        orderCount: number;
+      }
+    >();
+
+    const orderDetails = await prisma.order_detail.findMany({
+      where: {
+        orders: {
+          created_at: { gte: startDate, lte: endDate },
+          order_status: { not: 'cancelled' },
+        },
+      },
+      include: {
+        product_variants: {
+          include: {
+            products: {
+              include: { categories: true },
+            },
+          },
+        },
+      },
+    });
+
+    for (const detail of orderDetails) {
+      const category = detail.product_variants?.products?.categories;
+      if (!category) continue;
+
+      if (!categoryMap.has(category.category_id)) {
+        categoryMap.set(category.category_id, {
+          category_id: category.category_id,
+          category_name: category.category_name,
+          totalRevenue: 0,
+          totalQuantity: 0,
+          orderCount: 0,
+        });
+      }
+
+      const item = categoryMap.get(category.category_id)!;
+      item.totalRevenue += Number(detail.total_price);
+      item.totalQuantity += detail.quantity;
+      item.orderCount += 1;
+    }
+
+    return Array.from(categoryMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity);
+  };
+
+  /**
+   * 4️⃣ Doanh thu theo thương hiệu sản phẩm
+   */
+  getRevenueByBrandDateRange = async (startDate: Date, endDate: Date) => {
+    const brandMap = new Map<
+      number,
+      {
+        brand_id: number;
+        brand_name: string;
+        totalRevenue: number;
+        totalQuantity: number;
+        orderCount: number;
+      }
+    >();
+
+    const orderDetails = await prisma.order_detail.findMany({
+      where: {
+        orders: {
+          created_at: { gte: startDate, lte: endDate },
+          order_status: { not: 'cancelled' },
+        },
+      },
+      include: {
+        product_variants: {
+          include: {
+            products: {
+              include: { brands: true },
+            },
+          },
+        },
+      },
+    });
+
+    for (const detail of orderDetails) {
+      const brand = detail.product_variants?.products?.brands;
+      if (!brand) continue;
+
+      if (!brandMap.has(brand.brand_id)) {
+        brandMap.set(brand.brand_id, {
+          brand_id: brand.brand_id,
+          brand_name: brand.brand_name,
+          totalRevenue: 0,
+          totalQuantity: 0,
+          orderCount: 0,
+        });
+      }
+
+      const item = brandMap.get(brand.brand_id)!;
+      item.totalRevenue += Number(detail.total_price);
+      item.totalQuantity += detail.quantity;
+      item.orderCount += 1;
+    }
+
+    return Array.from(brandMap.values()).sort((a, b) => b.totalQuantity - a.totalQuantity);
+  };
 }
