@@ -179,7 +179,7 @@ export class VnpayService {
       throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
-    if (order.order_status !== 'pending' || order.payment_status !== 'pending') {
+    if (order.payment_status !== 'pending') {
       throw new BadRequestException('Đơn hàng này không thể thanh toán lại');
     }
 
@@ -202,15 +202,12 @@ export class VnpayService {
       txnRef,
     });
 
-    return { order, payment, qrUrl };
+    return {
+      payment: {
+        ...payment,
+        amount: Number(payment.amount), // ✅ Convert Decimal sang number
+      },
+      qrUrl,
+    };
   }
-
-  //   private transformPayment(payment: any) {
-  //   return {
-  //     ...payment,
-  //     amount: Number(payment.amount),
-  //     created_at: this.formatDate(payment.created_at),
-  //     updated_at: this.formatDate(payment.updated_at),
-  //   };
-  // }
 }

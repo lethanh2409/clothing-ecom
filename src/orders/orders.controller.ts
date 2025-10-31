@@ -98,7 +98,8 @@ export class OrdersController {
     return this.ordersService.createOrder(dto, customer.customer_id);
   }
 
-  @Post(':id/pay')
+  // ==================== THANH TOÁN LẠI VNPAY ====================
+  @Post(':id/repay')
   @Roles('CUSTOMER')
   async retryPayment(@Param('id') id: string) {
     return this.vnpayService.retryPayment(Number(id));

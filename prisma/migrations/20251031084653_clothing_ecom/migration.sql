@@ -374,30 +374,17 @@ CREATE TABLE "clothing_ecom"."email_otps" (
 -- CreateTable
 CREATE TABLE "clothing_ecom"."site_contents" (
     "content_id" SERIAL NOT NULL,
-    "slug" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
+    "slug" VARCHAR(255) NOT NULL,
+    "title" VARCHAR(500) NOT NULL,
     "content" TEXT NOT NULL,
-    "category" TEXT,
-    "tags" TEXT[],
+    "category" VARCHAR(100),
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "vector" TEXT,
     "updated_by" INTEGER,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
     CONSTRAINT "site_contents_pkey" PRIMARY KEY ("content_id")
-);
-
--- CreateTable
-CREATE TABLE "clothing_ecom"."content_embeddings" (
-    "id" SERIAL NOT NULL,
-    "content_id" INTEGER NOT NULL,
-    "chunk" TEXT NOT NULL,
-    "embedding" JSONB,
-    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(0) NOT NULL,
-
-    CONSTRAINT "content_embeddings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -462,6 +449,18 @@ CREATE UNIQUE INDEX "email_otps_email_purpose_key" ON "clothing_ecom"."email_otp
 
 -- CreateIndex
 CREATE UNIQUE INDEX "site_contents_slug_key" ON "clothing_ecom"."site_contents"("slug");
+
+-- CreateIndex
+CREATE INDEX "site_contents_slug_idx" ON "clothing_ecom"."site_contents"("slug");
+
+-- CreateIndex
+CREATE INDEX "site_contents_category_idx" ON "clothing_ecom"."site_contents"("category");
+
+-- CreateIndex
+CREATE INDEX "site_contents_status_idx" ON "clothing_ecom"."site_contents"("status");
+
+-- CreateIndex
+CREATE INDEX "site_contents_created_at_idx" ON "clothing_ecom"."site_contents"("created_at");
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."user_role" ADD CONSTRAINT "user_role_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -570,6 +569,3 @@ ALTER TABLE "clothing_ecom"."audit_logs" ADD CONSTRAINT "audit_logs_user_id_fkey
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."site_contents" ADD CONSTRAINT "site_contents_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "clothing_ecom"."content_embeddings" ADD CONSTRAINT "content_embeddings_content_id_fkey" FOREIGN KEY ("content_id") REFERENCES "clothing_ecom"."site_contents"("content_id") ON DELETE CASCADE ON UPDATE CASCADE;
