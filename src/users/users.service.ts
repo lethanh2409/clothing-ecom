@@ -4,12 +4,14 @@ import {
   NotFoundException,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Prisma, users, customers } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UpdateProfileDto } from './dtos/update-profile';
 
 // helper: bỏ password an toàn, không tạo biến 'password' thừa
 function withoutPassword<T extends { password?: unknown }>(u: T): Omit<T, 'password'> {
@@ -281,5 +283,132 @@ export class UsersService {
       select: { user_id: true },
     });
     if (!u) throw new NotFoundException(`User với ID ${id} không tìm thấy`);
+  }
+
+  async updateProfile(userId: number, updateData: UpdateProfileDto) {
+    // Kiểm tra user có tồn tại không
+    const user = await this.prisma.users.findUnique({
+      where: { user_id: userId },
+      include: { customers: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    if (!user.status) {
+      throw new BadRequestException('Tài khoản đã bị vô hiệu hóa');
+    }
+
+    // Kiểm tra email trùng lặp (nếu có thay đổi)
+    if (updateData.email && updateData.email !== user.email) {
+      const existingEmail = await this.prisma.users.findUnique({
+        where: { email: updateData.email },
+      });
+
+      if (existingEmail) {
+        throw new ConflictException('Email đã được sử dụng');
+      }
+    }
+
+    // Kiểm tra số điện thoại trùng lặp (nếu có thay đổi)
+    if (updateData.phone && updateData.phone !== user.phone) {
+      const existingPhone = await this.prisma.users.findFirst({
+        where: {
+          phone: updateData.phone,
+          user_id: { not: userId },
+        },
+      });
+
+      if (existingPhone) {
+        throw new ConflictException('Số điện thoại đã được sử dụng');
+      }
+    }
+
+    // Tách dữ liệu cho bảng users và customers
+    const { full_name, email, phone, birthday, gender } = updateData;
+
+    // Cập nhật trong transaction để đảm bảo tính toàn vẹn dữ liệu
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Cập nhật bảng users
+      const updatedUser = await tx.users.update({
+        where: { user_id: userId },
+        data: {
+          full_name,
+          email,
+          phone,
+          updated_at: new Date(),
+        },
+      });
+
+      // Cập nhật hoặc tạo mới customer
+      const updatedCustomer = await tx.customers.upsert({
+        where: { user_id: userId },
+        update: {
+          birthday: birthday ? new Date(birthday) : undefined,
+          gender,
+          updated_at: new Date(),
+        },
+        create: {
+          user_id: userId,
+          birthday: birthday ? new Date(birthday) : null,
+          gender: gender || null,
+        },
+      });
+
+      return { user: updatedUser, customer: updatedCustomer };
+    });
+
+    // Trả về thông tin đã cập nhật (loại bỏ các trường nhạy cảm)
+    return {
+      user_id: result.user.user_id,
+      username: result.user.username,
+      email: result.user.email,
+      phone: result.user.phone,
+      full_name: result.user.full_name,
+      birthday: result.customer.birthday,
+      gender: result.customer.gender,
+      updated_at: result.user.updated_at,
+    };
+  }
+
+  async getProfile(userId: number) {
+    const user = await this.prisma.users.findUnique({
+      where: { user_id: userId },
+      select: {
+        user_id: true,
+        username: true,
+        email: true,
+        phone: true,
+        full_name: true,
+        status: true,
+        created_at: true,
+        updated_at: true,
+        customers: {
+          select: {
+            customer_id: true,
+            birthday: true,
+            gender: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    return {
+      user_id: user.user_id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      full_name: user.full_name,
+      birthday: user.customers?.birthday,
+      gender: user.customers?.gender,
+      status: user.status,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    };
   }
 }

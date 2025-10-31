@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Patch, Delete, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Patch, Delete, Put, Req } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Roles } from '../auth/roles.decorate';
+import { UpdateProfileDto } from './dtos/update-profile';
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
@@ -26,7 +27,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     const user = await this.userService.findOne(+id);
     return {
       success: true,
@@ -80,17 +81,27 @@ export class UsersController {
     return this.userService.countByStatus(+status);
   }
 
-  // Pagination
-  @Get('paginate')
-  findWithPagination(@Query('page') page = 1, @Query('limit') limit = 10) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.userService.findWithPagination(+page, +limit);
+  @Get('profile')
+  async getProfile(@Req() req) {
+    // ✅ Lấy user_id từ JWT payload
+    const userId = Number(req.user.userId || req.user.user_id || req.user.id);
+
+    if (!userId) {
+      throw new Error('User ID not found in token');
+    }
+
+    return this.userService.getProfile(userId);
   }
 
-  // Search
-  @Get('search/:keyword')
-  search(@Param('keyword') keyword: string) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.userService.search(keyword);
-  }
+  @Put('profile')
+  async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
+    // ✅ Lấy user_id từ JWT payload
+    const userId = Number(req.user.userId || req.user.user_id || req.user.id);
+
+    if (!userId) {
+      throw new Error('User ID not found in token');
+    }
+
+    return this.userService.updateProfile(userId, updateProfileDto);
+  } 
 }

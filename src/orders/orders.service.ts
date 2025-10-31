@@ -329,7 +329,7 @@ export class OrdersService {
       totalRevenue,
       totalShipping,
       orderCount,
-      averageOrderValue: orderCount > 0 ? totalRevenue / orderCount : 0,
+      averageOrderValue: orderCount > 0 ? Math.round(totalRevenue / orderCount) : 0,
     };
   }
 
