@@ -11,27 +11,44 @@ import { seedVariantAssets } from './08_assets';
 import { seedOrdersComplete } from './09_orders';
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('🌱 Starting seed...\n');
+
+  console.log('=== Step 1: Users ===');
   await seedUsers(prisma);
+
+  console.log('\n=== Step 2: Brands & Categories ===');
   await seedBrands(prisma);
   await seedCategories(prisma);
+
+  console.log('\n=== Step 3: Sizes ===');
   await seedSizes(prisma);
+
+  console.log('\n=== Step 4: Products ===');
   await seedProducts(prisma);
+
+  console.log('\n=== Step 5: Variants ===');
   await seedVariantsManualFull(prisma);
+
+  console.log('\n=== Step 6: Vouchers ===');
   await seedVouchers(prisma);
+
+  console.log('\n=== Step 7: Site Contents ===');
   await seedSiteContents(prisma);
+
+  console.log('\n=== Step 8: Variant Assets ===');
   await seedVariantAssets(prisma);
+
+  console.log('\n=== Step 9: Orders ===');
   await seedOrdersComplete(prisma);
-  console.log('✅ Seed completed!');
+
+  console.log('\n✅ Seed completed successfully!');
 }
 
 main()
   .catch((err) => {
     console.error('❌ Seed failed:', err);
-    // Đặt exitCode để vẫn chạy finally (disconnect)
     process.exitCode = 1;
   })
   .finally(() => {
-    // Không trả Promise trong callback finally
     void disconnect();
   });

@@ -23,14 +23,14 @@ export class CreateVariantDto {
   @IsString() @IsNotEmpty() color: string;
   @IsOptional() @IsString() sku?: string;
   @IsOptional() @IsString() barcode?: string;
-  @IsOptional() @IsNumber() @Type(() => Number) base_price?: number;
+  @IsOptional() @IsNumber() @Type(() => Number) base_price: number;
   @IsOptional() @IsNumber() @Type(() => Number) cost_price?: number;
   @IsOptional() @IsInt() @Type(() => Number) quantity?: number;
 }
 
 export class CreateProductDto {
-  @IsOptional() @IsInt() @Type(() => Number) brand_id?: number;
-  @IsOptional() @IsInt() @Type(() => Number) category_id?: number;
+  @IsOptional() @IsInt() @Type(() => Number) brand_id: number;
+  @IsOptional() @IsInt() @Type(() => Number) category_id: number;
   @IsString() @IsNotEmpty() product_name: string;
   @IsOptional() @IsString() slug?: string;
   @IsOptional() @IsString() description?: string;

@@ -11,7 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Bật CORS cho toàn bộ origin
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3002'], // FE Next.js
+    origin: ['http://localhost:3000', 'http://localhost:3001'], // FE Next.js
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

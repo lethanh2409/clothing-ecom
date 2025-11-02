@@ -54,8 +54,8 @@ export class BrandsService {
       return await this.prisma.brands.create({
         data: {
           brand_name: dto.brand_name,
-          slug: dto.slug,
-          description: dto.description,
+          slug: dto.slug ?? dto.brand_name.toLowerCase().replace(/\s+/g, '-'),
+          description: dto.description ?? '',
           status: dto.status ?? true,
           logo_url,
         },

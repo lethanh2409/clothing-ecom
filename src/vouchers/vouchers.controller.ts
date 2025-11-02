@@ -7,11 +7,9 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('vouchers')
-@UseGuards(AuthGuard('jwt'), RolesGuard) // 👈 Áp dụng guard cho toàn bộ controller
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class VouchersController {
   constructor(private readonly vouchersService: VouchersService) {}
-
-  // --- ADMIN CRUD ---
 
   @Post()
   @Roles('ADMIN')
@@ -23,6 +21,12 @@ export class VouchersController {
   @Roles('ADMIN')
   async findAll() {
     return this.vouchersService.findAll();
+  }
+
+  @Get('active/list')
+  @Roles('CUSTOMER', 'ADMIN')
+  async getActiveVouchers() {
+    return this.vouchersService.findActive();
   }
 
   @Get(':id')
@@ -40,12 +44,5 @@ export class VouchersController {
   @Roles('ADMIN')
   async remove(@Param('id') id: string) {
     return this.vouchersService.remove(+id);
-  }
-
-  // --- CUSTOMER API ---
-  @Get('active/list')
-  @Roles('CUSTOMER', 'ADMIN') // customer & admin đều xem được
-  async getActiveVouchers() {
-    return this.vouchersService.findActive();
   }
 }

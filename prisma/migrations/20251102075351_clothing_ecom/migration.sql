@@ -70,8 +70,8 @@ CREATE TABLE "clothing_ecom"."brands" (
     "brand_id" SERIAL NOT NULL,
     "brand_name" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "slug" TEXT,
-    "description" TEXT,
+    "slug" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "logo_url" TEXT,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -85,8 +85,8 @@ CREATE TABLE "clothing_ecom"."categories" (
     "category_name" TEXT NOT NULL,
     "parent_id" INTEGER,
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "slug" TEXT,
-    "description" TEXT,
+    "slug" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -97,8 +97,8 @@ CREATE TABLE "clothing_ecom"."categories" (
 CREATE TABLE "clothing_ecom"."lookbooks" (
     "lookbook_id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
-    "slug" TEXT,
-    "description" TEXT,
+    "slug" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "image" TEXT,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -109,11 +109,11 @@ CREATE TABLE "clothing_ecom"."lookbooks" (
 -- CreateTable
 CREATE TABLE "clothing_ecom"."products" (
     "product_id" SERIAL NOT NULL,
-    "brand_id" INTEGER,
-    "category_id" INTEGER,
+    "brand_id" INTEGER NOT NULL,
+    "category_id" INTEGER NOT NULL,
     "product_name" TEXT NOT NULL,
-    "slug" TEXT,
-    "description" TEXT,
+    "slug" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'ACTIVE',
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -135,13 +135,13 @@ CREATE TABLE "clothing_ecom"."lookbook_items" (
 -- CreateTable
 CREATE TABLE "clothing_ecom"."sizes" (
     "size_id" SERIAL NOT NULL,
-    "brand_id" INTEGER,
+    "brand_id" INTEGER NOT NULL,
     "gender" TEXT NOT NULL,
     "size_label" TEXT NOT NULL,
-    "height_range" TEXT,
-    "weight_range" TEXT,
-    "measurements" JSONB,
-    "type" TEXT,
+    "height_range" TEXT NOT NULL,
+    "weight_range" TEXT NOT NULL,
+    "measurements" JSONB NOT NULL,
+    "type" TEXT NOT NULL,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -152,13 +152,13 @@ CREATE TABLE "clothing_ecom"."sizes" (
 CREATE TABLE "clothing_ecom"."product_variants" (
     "variant_id" SERIAL NOT NULL,
     "product_id" INTEGER NOT NULL,
-    "size_id" INTEGER,
+    "size_id" INTEGER NOT NULL,
     "sku" TEXT NOT NULL,
-    "barcode" TEXT,
-    "base_price" DECIMAL(12,2),
+    "barcode" TEXT NOT NULL,
+    "base_price" DECIMAL(12,2) NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 0,
     "status" BOOLEAN NOT NULL DEFAULT true,
-    "attribute" JSONB,
+    "attribute" JSONB NOT NULL,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -169,10 +169,10 @@ CREATE TABLE "clothing_ecom"."product_variants" (
 CREATE TABLE "clothing_ecom"."product_variant_price_history" (
     "id" SERIAL NOT NULL,
     "variant_id" INTEGER NOT NULL,
-    "old_price" DECIMAL(12,2),
-    "new_price" DECIMAL(12,2),
-    "changed_by" INTEGER,
-    "reason" VARCHAR(255),
+    "old_price" DECIMAL(12,2) NOT NULL,
+    "new_price" DECIMAL(12,2) NOT NULL,
+    "changed_by" INTEGER NOT NULL,
+    "reason" VARCHAR(255) NOT NULL,
     "changed_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "product_variant_price_history_pkey" PRIMARY KEY ("id")
@@ -195,9 +195,9 @@ CREATE TABLE "clothing_ecom"."vouchers" (
     "title" TEXT NOT NULL,
     "description" TEXT,
     "discount_type" TEXT NOT NULL,
-    "discount_value" DECIMAL(65,30) NOT NULL,
-    "min_order_value" DECIMAL(65,30),
-    "max_discount" DECIMAL(65,30),
+    "discount_value" DECIMAL(12,2) NOT NULL,
+    "min_order_value" DECIMAL(12,2) NOT NULL,
+    "max_discount" DECIMAL(12,2) NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 0,
     "used_count" INTEGER NOT NULL DEFAULT 0,
     "per_customer_limit" INTEGER NOT NULL DEFAULT 1,
@@ -216,7 +216,7 @@ CREATE TABLE "clothing_ecom"."cart" (
     "customer_id" INTEGER NOT NULL,
     "session_id" TEXT,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "total_price" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "total_price" DECIMAL(12,2) NOT NULL DEFAULT 0,
 
     CONSTRAINT "cart_pkey" PRIMARY KEY ("cart_id")
 );
@@ -226,7 +226,7 @@ CREATE TABLE "clothing_ecom"."cart_detail" (
     "cart_detail_id" SERIAL NOT NULL,
     "cart_id" INTEGER NOT NULL,
     "variant_id" INTEGER NOT NULL,
-    "sub_price" DECIMAL(65,30) NOT NULL,
+    "sub_price" DECIMAL(12,2) NOT NULL,
     "quantity" INTEGER NOT NULL,
 
     CONSTRAINT "cart_detail_pkey" PRIMARY KEY ("cart_detail_id")
@@ -237,8 +237,8 @@ CREATE TABLE "clothing_ecom"."orders" (
     "order_id" SERIAL NOT NULL,
     "customer_id" INTEGER,
     "address_id" INTEGER,
-    "total_price" DECIMAL(65,30),
-    "shipping_fee" DECIMAL(65,30),
+    "total_price" DECIMAL(12,2) NOT NULL,
+    "shipping_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "note" TEXT,
     "payment_status" TEXT NOT NULL DEFAULT 'pending',
     "order_status" TEXT NOT NULL DEFAULT 'pending',
@@ -266,8 +266,8 @@ CREATE TABLE "clothing_ecom"."order_detail" (
     "order_id" INTEGER NOT NULL,
     "variant_id" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
-    "total_price" DECIMAL(65,30) NOT NULL,
-    "discount_price" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "total_price" DECIMAL(12,2) NOT NULL,
+    "discount_price" DECIMAL(12,2) NOT NULL DEFAULT 0,
 
     CONSTRAINT "order_detail_pkey" PRIMARY KEY ("order_detail_id")
 );
@@ -279,7 +279,7 @@ CREATE TABLE "clothing_ecom"."payments" (
     "method" TEXT,
     "status" TEXT,
     "transaction_id" TEXT,
-    "amount" DECIMAL(65,30),
+    "amount" DECIMAL(12,2) NOT NULL,
     "raw_response" JSONB,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -307,7 +307,7 @@ CREATE TABLE "clothing_ecom"."returns" (
     "reason" TEXT,
     "status" TEXT NOT NULL DEFAULT 'requested',
     "image" TEXT,
-    "refund_amount" DECIMAL(65,30) NOT NULL DEFAULT 0,
+    "refund_amount" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -478,10 +478,10 @@ ALTER TABLE "clothing_ecom"."addresses" ADD CONSTRAINT "addresses_customer_id_fk
 ALTER TABLE "clothing_ecom"."categories" ADD CONSTRAINT "categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "clothing_ecom"."categories"("category_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "clothing_ecom"."categories"("category_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "clothing_ecom"."categories"("category_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_lookbook_id_fkey" FOREIGN KEY ("lookbook_id") REFERENCES "clothing_ecom"."lookbooks"("lookbook_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -490,19 +490,19 @@ ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_look
 ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."sizes" ADD CONSTRAINT "sizes_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."sizes" ADD CONSTRAINT "sizes_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "clothing_ecom"."products"("product_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_size_id_fkey" FOREIGN KEY ("size_id") REFERENCES "clothing_ecom"."sizes"("size_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_size_id_fkey" FOREIGN KEY ("size_id") REFERENCES "clothing_ecom"."sizes"("size_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "product_variant_price_history_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "product_variant_price_history_changed_by_fkey" FOREIGN KEY ("changed_by") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "product_variant_price_history_changed_by_fkey" FOREIGN KEY ("changed_by") REFERENCES "clothing_ecom"."users"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."variant_assets" ADD CONSTRAINT "variant_assets_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;

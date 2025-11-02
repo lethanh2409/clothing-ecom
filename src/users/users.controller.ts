@@ -81,18 +81,6 @@ export class UsersController {
     return this.userService.countByStatus(+status);
   }
 
-  @Get('profile')
-  async getProfile(@Req() req) {
-    // ✅ Lấy user_id từ JWT payload
-    const userId = Number(req.user.userId || req.user.user_id || req.user.id);
-
-    if (!userId) {
-      throw new Error('User ID not found in token');
-    }
-
-    return this.userService.getProfile(userId);
-  }
-
   @Put('profile')
   async updateProfile(@Req() req, @Body() updateProfileDto: UpdateProfileDto) {
     // ✅ Lấy user_id từ JWT payload
@@ -103,5 +91,5 @@ export class UsersController {
     }
 
     return this.userService.updateProfile(userId, updateProfileDto);
-  } 
+  }
 }

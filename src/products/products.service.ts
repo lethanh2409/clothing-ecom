@@ -251,11 +251,11 @@ export class ProductsService {
       return await this.prisma.$transaction(async (tx) => {
         const product = await tx.products.create({
           data: {
-            brand_id: input.brand_id ?? null,
-            category_id: input.category_id ?? null,
+            brand_id: input.brand_id,
+            category_id: input.category_id,
             product_name: String(input.product_name),
-            slug: input.slug ?? null,
-            description: input.description ?? null,
+            slug: input.slug ?? String(input.product_name).toLowerCase().replace(/\s+/g, '-'),
+            description: input.description ?? '',
             status: (input.status as any) ?? 'ACTIVE',
           },
         });
@@ -288,7 +288,7 @@ export class ProductsService {
               size_id: Number(v.size_id),
               sku,
               barcode,
-              base_price: v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : null,
+              base_price: v.base_price,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
               attribute: { color } as Prisma.InputJsonValue,
@@ -408,7 +408,7 @@ export class ProductsService {
               size_id: sizeId,
               sku,
               barcode,
-              base_price: v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : null,
+              base_price: v.base_price ?? 0,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
               attribute: { color } as Prisma.InputJsonValue,

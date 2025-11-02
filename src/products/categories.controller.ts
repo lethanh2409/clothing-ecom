@@ -1,5 +1,15 @@
 // src/products/categories.controller.ts
-import { Controller, Get, Param, Post, Patch, Delete, Body, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  ParseIntPipe,
+  HttpStatus,
+} from '@nestjs/common';
 import { CategoriesService } from './categories.services';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CreateCategoryDto } from './dtos/create-category.dto';
@@ -10,13 +20,28 @@ import { Public } from 'src/auth/public.decorator';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // GET /categories/admin → admin xem tất cả
+  // GET /categories/admin
   @Get('/admin')
   async getAll() {
-    return {
-      success: true,
-      data: await this.categoriesService.getAllCategories(),
-    };
+    try {
+      const data = await this.categoriesService.getAllCategories();
+      return {
+        success: true,
+        data,
+        status: HttpStatus.OK, // 200
+        message: 'Lấy danh sách thành công',
+      };
+    } catch (err) {
+      // Log lỗi nếu cần
+      console.error('getAll categories error', err);
+
+      return {
+        success: false,
+        data: null,
+        status: HttpStatus.INTERNAL_SERVER_ERROR, // 500
+        message: err?.message || 'Lỗi khi lấy danh sách',
+      };
+    }
   }
 
   // GET /categories/active → FE hiển thị danh mục đang active

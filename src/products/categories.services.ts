@@ -60,8 +60,8 @@ export class CategoriesService {
     return this.prisma.categories.create({
       data: {
         category_name: dto.category_name,
-        slug: dto.slug,
-        description: dto.description,
+        slug: dto.slug ?? dto.category_name.toLowerCase().replace(/\s+/g, '-'),
+        description: dto.description ?? '',
         parent_id: dto.parent_id ?? null,
         status: dto.status ?? true,
       },

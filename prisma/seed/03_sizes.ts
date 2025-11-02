@@ -1,9 +1,70 @@
 import type { PrismaClient } from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+
+// ========== GEMINI EMBEDDING ==========
+interface GeminiResponse {
+  embedding?: {
+    values: number[];
+  };
+}
+
+async function embedText(text: string) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'text-embedding-004',
+        content: {
+          parts: [{ text }],
+        },
+      }),
+    },
+  );
+
+  const data = (await res.json()) as GeminiResponse;
+
+  if (!data.embedding?.values) {
+    console.error('Gemini embedding failed:', data);
+    throw new Error('Gemini embedding failed');
+  }
+
+  return data.embedding.values;
+}
+
+// ========== UPSERT HELPER ==========
+async function upsertDocument(
+  sourceId: string,
+  content: string,
+  metadata: any,
+  sourceTable: string,
+) {
+  const embedding = await embedText(content);
+  const { error } = await supabase.from('documents').upsert(
+    {
+      source_id: sourceId,
+      content,
+      metadata,
+      embedding,
+      source_table: sourceTable,
+    },
+    { onConflict: 'source_id' },
+  );
+
+  if (error) {
+    console.error(`❌ Supabase error on ${sourceId}`, error);
+  } else {
+    console.log(`✅ Vector upserted: ${sourceId}`);
+  }
+}
+
+// ========== SIZES DATA ==========
 const sizesData = [
   // Adidas (brand_id=1) – áo nam S/M/L/XL
   {
-    // 1
     brand_id: 1,
     gender: 'male',
     size_label: 'S',
@@ -13,7 +74,6 @@ const sizesData = [
     measurements: { chest: '87cm', waist: '75cm', hip: '86cm', length: '68cm' },
   },
   {
-    // 2
     brand_id: 1,
     gender: 'male',
     size_label: 'M',
@@ -23,7 +83,6 @@ const sizesData = [
     measurements: { chest: '93cm', waist: '81cm', hip: '92cm', length: '71cm' },
   },
   {
-    // 3
     brand_id: 1,
     gender: 'male',
     size_label: 'L',
@@ -33,7 +92,6 @@ const sizesData = [
     measurements: { chest: '101cm', waist: '89cm', hip: '100cm', length: '74cm' },
   },
   {
-    // 4
     brand_id: 1,
     gender: 'male',
     size_label: 'XL',
@@ -45,7 +103,6 @@ const sizesData = [
 
   // Adidas (brand_id=1) – quần (S/ M/ L/ XL)
   {
-    // 5
     brand_id: 1,
     gender: 'male',
     type: 'pants',
@@ -55,7 +112,6 @@ const sizesData = [
     measurements: { waist: '71cm', hip: '82cm', length: '96cm' },
   },
   {
-    // 6
     brand_id: 1,
     gender: 'male',
     type: 'pants',
@@ -65,7 +121,6 @@ const sizesData = [
     measurements: { waist: '75cm', hip: '86cm', length: '98cm' },
   },
   {
-    // 7
     brand_id: 1,
     gender: 'male',
     type: 'pants',
@@ -75,7 +130,6 @@ const sizesData = [
     measurements: { waist: '79cm', hip: '90cm', length: '100cm' },
   },
   {
-    // 8
     brand_id: 1,
     gender: 'male',
     type: 'pants',
@@ -85,7 +139,6 @@ const sizesData = [
     measurements: { waist: '83cm', hip: '94cm', length: '102cm' },
   },
   {
-    // 9
     brand_id: 1,
     gender: 'male',
     type: 'pants',
@@ -97,7 +150,6 @@ const sizesData = [
 
   // Nike (brand_id=2) – áo nam S/M/L/XL
   {
-    // 10
     brand_id: 2,
     gender: 'male',
     size_label: 'S',
@@ -107,7 +159,6 @@ const sizesData = [
     measurements: { chest: '88cm', waist: '76cm', hip: '87cm', length: '69cm' },
   },
   {
-    // 11
     brand_id: 2,
     gender: 'male',
     size_label: 'M',
@@ -117,7 +168,6 @@ const sizesData = [
     measurements: { chest: '94cm', waist: '82cm', hip: '93cm', length: '72cm' },
   },
   {
-    // 12
     brand_id: 2,
     gender: 'male',
     size_label: 'L',
@@ -127,7 +177,6 @@ const sizesData = [
     measurements: { chest: '102cm', waist: '90cm', hip: '101cm', length: '75cm' },
   },
   {
-    // 13
     brand_id: 2,
     gender: 'male',
     size_label: 'XL',
@@ -139,7 +188,6 @@ const sizesData = [
 
   // Nike (brand_id=2) – quần (S/ M/ L/ XL)
   {
-    // 14
     brand_id: 2,
     gender: 'male',
     type: 'pants',
@@ -149,7 +197,6 @@ const sizesData = [
     measurements: { waist: '72cm', hip: '83cm', length: '95cm' },
   },
   {
-    // 15
     brand_id: 2,
     gender: 'male',
     type: 'pants',
@@ -159,7 +206,6 @@ const sizesData = [
     measurements: { waist: '76cm', hip: '87cm', length: '97cm' },
   },
   {
-    // 16
     brand_id: 2,
     gender: 'male',
     type: 'pants',
@@ -169,7 +215,6 @@ const sizesData = [
     measurements: { waist: '80cm', hip: '91cm', length: '99cm' },
   },
   {
-    // 17
     brand_id: 2,
     gender: 'male',
     type: 'pants',
@@ -179,7 +224,6 @@ const sizesData = [
     measurements: { waist: '84cm', hip: '95cm', length: '101cm' },
   },
   {
-    // 18
     brand_id: 2,
     gender: 'male',
     type: 'pants',
@@ -191,7 +235,6 @@ const sizesData = [
 
   // Uniqlo (brand_id=3) – áo nam S/M/L/XL
   {
-    // 19
     brand_id: 3,
     gender: 'male',
     size_label: 'S',
@@ -201,7 +244,6 @@ const sizesData = [
     measurements: { chest: '89cm', waist: '77cm', hip: '88cm', length: '70cm' },
   },
   {
-    // 20
     brand_id: 3,
     gender: 'male',
     size_label: 'M',
@@ -211,7 +253,6 @@ const sizesData = [
     measurements: { chest: '95cm', waist: '83cm', hip: '94cm', length: '73cm' },
   },
   {
-    // 21
     brand_id: 3,
     gender: 'male',
     size_label: 'L',
@@ -221,7 +262,6 @@ const sizesData = [
     measurements: { chest: '103cm', waist: '91cm', hip: '102cm', length: '76cm' },
   },
   {
-    // 22
     brand_id: 3,
     gender: 'male',
     size_label: 'XL',
@@ -233,7 +273,6 @@ const sizesData = [
 
   // Uniqlo (brand_id=3) – quần (S/ M/ L/ XL)
   {
-    // 23
     brand_id: 3,
     gender: 'male',
     type: 'pants',
@@ -243,7 +282,6 @@ const sizesData = [
     measurements: { waist: '73cm', hip: '84cm', length: '94cm' },
   },
   {
-    // 24
     brand_id: 3,
     gender: 'male',
     type: 'pants',
@@ -253,7 +291,6 @@ const sizesData = [
     measurements: { waist: '77cm', hip: '88cm', length: '96cm' },
   },
   {
-    // 25
     brand_id: 3,
     gender: 'male',
     type: 'pants',
@@ -263,7 +300,6 @@ const sizesData = [
     measurements: { waist: '81cm', hip: '92cm', length: '98cm' },
   },
   {
-    // 26
     brand_id: 3,
     gender: 'male',
     type: 'pants',
@@ -273,7 +309,6 @@ const sizesData = [
     measurements: { waist: '85cm', hip: '96cm', length: '100cm' },
   },
   {
-    // 27
     brand_id: 3,
     gender: 'male',
     type: 'pants',
@@ -284,9 +319,7 @@ const sizesData = [
   },
 
   // Adidas (brand_id = 1) – ÁO nữ S/M/L/XL
-  // -----------------------------
   {
-    // 28
     brand_id: 1,
     gender: 'female',
     size_label: 'S',
@@ -296,7 +329,6 @@ const sizesData = [
     measurements: { chest: '83cm', waist: '71cm', hip: '82cm', length: '66cm' },
   },
   {
-    // 29
     brand_id: 1,
     gender: 'female',
     size_label: 'M',
@@ -306,7 +338,6 @@ const sizesData = [
     measurements: { chest: '89cm', waist: '77cm', hip: '88cm', length: '69cm' },
   },
   {
-    // 30
     brand_id: 1,
     gender: 'female',
     size_label: 'L',
@@ -327,7 +358,6 @@ const sizesData = [
 
   // Adidas – QUẦN nữ XS/S/M/L/XL
   {
-    // 31
     brand_id: 1,
     gender: 'female',
     type: 'pants',
@@ -337,7 +367,6 @@ const sizesData = [
     measurements: { waist: '65cm', hip: '80cm', length: '94cm' },
   },
   {
-    // 32
     brand_id: 1,
     gender: 'female',
     type: 'pants',
@@ -347,7 +376,6 @@ const sizesData = [
     measurements: { waist: '69cm', hip: '84cm', length: '96cm' },
   },
   {
-    // 33
     brand_id: 1,
     gender: 'female',
     type: 'pants',
@@ -357,7 +385,6 @@ const sizesData = [
     measurements: { waist: '73cm', hip: '88cm', length: '98cm' },
   },
   {
-    // 34
     brand_id: 1,
     gender: 'female',
     type: 'pants',
@@ -367,7 +394,6 @@ const sizesData = [
     measurements: { waist: '77cm', hip: '92cm', length: '100cm' },
   },
   {
-    // 35
     brand_id: 1,
     gender: 'female',
     type: 'pants',
@@ -377,11 +403,8 @@ const sizesData = [
     measurements: { waist: '81cm', hip: '96cm', length: '102cm' },
   },
 
-  // -----------------------------
   // Nike (brand_id = 2) – ÁO nữ S/M/L/XL
-  // -----------------------------
   {
-    // 36
     brand_id: 2,
     gender: 'female',
     size_label: 'S',
@@ -391,7 +414,6 @@ const sizesData = [
     measurements: { chest: '84cm', waist: '74cm', hip: '85cm', length: '67cm' },
   },
   {
-    // 37
     brand_id: 2,
     gender: 'female',
     size_label: 'M',
@@ -401,7 +423,6 @@ const sizesData = [
     measurements: { chest: '90cm', waist: '80cm', hip: '91cm', length: '70cm' },
   },
   {
-    // 38
     brand_id: 2,
     gender: 'female',
     size_label: 'L',
@@ -411,7 +432,6 @@ const sizesData = [
     measurements: { chest: '98cm', waist: '88cm', hip: '99cm', length: '73cm' },
   },
   {
-    // 39
     brand_id: 2,
     gender: 'female',
     size_label: 'XL',
@@ -423,7 +443,6 @@ const sizesData = [
 
   // Nike – QUẦN nữ XS/S/M/L/XL
   {
-    // 40
     brand_id: 2,
     gender: 'female',
     type: 'pants',
@@ -433,7 +452,6 @@ const sizesData = [
     measurements: { waist: '66cm', hip: '81cm', length: '93cm' },
   },
   {
-    // 41
     brand_id: 2,
     gender: 'female',
     type: 'pants',
@@ -443,7 +461,6 @@ const sizesData = [
     measurements: { waist: '70cm', hip: '85cm', length: '95cm' },
   },
   {
-    // 42
     brand_id: 2,
     gender: 'female',
     type: 'pants',
@@ -453,7 +470,6 @@ const sizesData = [
     measurements: { waist: '74cm', hip: '89cm', length: '97cm' },
   },
   {
-    // 43
     brand_id: 2,
     gender: 'female',
     type: 'pants',
@@ -463,7 +479,6 @@ const sizesData = [
     measurements: { waist: '78cm', hip: '93cm', length: '99cm' },
   },
   {
-    // 44
     brand_id: 2,
     gender: 'female',
     type: 'pants',
@@ -473,11 +488,8 @@ const sizesData = [
     measurements: { waist: '82cm', hip: '97cm', length: '101cm' },
   },
 
-  // -----------------------------
   // Uniqlo (brand_id = 3) – ÁO nữ S/M/L/XL
-  // -----------------------------
   {
-    // 45
     brand_id: 3,
     gender: 'female',
     size_label: 'S',
@@ -487,7 +499,6 @@ const sizesData = [
     measurements: { chest: '85cm', waist: '75cm', hip: '86cm', length: '68cm' },
   },
   {
-    // 46
     brand_id: 3,
     gender: 'female',
     size_label: 'M',
@@ -497,7 +508,6 @@ const sizesData = [
     measurements: { chest: '91cm', waist: '81cm', hip: '92cm', length: '71cm' },
   },
   {
-    // 47
     brand_id: 3,
     gender: 'female',
     size_label: 'L',
@@ -507,7 +517,6 @@ const sizesData = [
     measurements: { chest: '99cm', waist: '89cm', hip: '100cm', length: '74cm' },
   },
   {
-    // 48
     brand_id: 3,
     gender: 'female',
     size_label: 'XL',
@@ -519,7 +528,6 @@ const sizesData = [
 
   // Uniqlo – QUẦN nữ XS/S/M/L/XL
   {
-    // 49
     brand_id: 3,
     gender: 'female',
     type: 'pants',
@@ -529,7 +537,6 @@ const sizesData = [
     measurements: { waist: '67cm', hip: '82cm', length: '92cm' },
   },
   {
-    // 50
     brand_id: 3,
     gender: 'female',
     type: 'pants',
@@ -539,7 +546,6 @@ const sizesData = [
     measurements: { waist: '71cm', hip: '86cm', length: '94cm' },
   },
   {
-    // 51
     brand_id: 3,
     gender: 'female',
     type: 'pants',
@@ -549,7 +555,6 @@ const sizesData = [
     measurements: { waist: '75cm', hip: '90cm', length: '96cm' },
   },
   {
-    // 52
     brand_id: 3,
     gender: 'female',
     type: 'pants',
@@ -559,7 +564,6 @@ const sizesData = [
     measurements: { waist: '79cm', hip: '94cm', length: '98cm' },
   },
   {
-    // 53
     brand_id: 3,
     gender: 'female',
     type: 'pants',
@@ -570,8 +574,45 @@ const sizesData = [
   },
 ];
 
-// ---- SEED ----
+// ========== SEED SIZES ==========
 export async function seedSizes(prisma: PrismaClient) {
-  console.log('📏 Seeding sizes…');
-  await prisma.sizes.createMany({ data: sizesData, skipDuplicates: true });
+  console.log('📏 Seeding local DB sizes...');
+  await prisma.sizes.createMany({
+    data: sizesData,
+    skipDuplicates: true,
+  });
+
+  console.log('🧠 Syncing sizes to Supabase Vector...');
+
+  for (const size of sizesData) {
+    const sourceId = `size-${size.brand_id}-${size.gender}-${size.type.replace(/\s+/g, '-')}-${size.size_label}`;
+
+    const { data: exists } = await supabase
+      .from('documents')
+      .select('source_id')
+      .eq('source_id', sourceId)
+      .maybeSingle();
+
+    if (exists) {
+      console.log(`⏭️ Skip exists: ${sourceId}`);
+      continue;
+    }
+
+    const text = `Size ${size.size_label} ${size.gender} ${size.type} brand ${size.brand_id}. Chiều cao ${size.height_range}, cân nặng ${size.weight_range}. Số đo: ${JSON.stringify(size.measurements)}`;
+
+    await upsertDocument(
+      sourceId,
+      text,
+      {
+        brand_id: size.brand_id,
+        gender: size.gender,
+        size_label: size.size_label,
+        type: size.type,
+        type_doc: 'size',
+      },
+      'sizes',
+    );
+  }
+
+  console.log('🎉 Sizes seed & embedding DONE!');
 }

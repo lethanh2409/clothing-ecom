@@ -12,15 +12,15 @@ generator client {
 }
 
 model roles {
-  role_id     Int      @id @default(autoincrement())
-  role_name   String   @unique
+  role_id     Int     @id @default(autoincrement())
+  role_name   String  @unique
   description String?
-  status      Boolean  @default(true)
+  status      Boolean @default(true)
 
-  user_role   user_role[]
+  user_role user_role[]
 
   @@map("roles")
-  @@schema("clothing_ecom")  // ✅ Thêm vào mọi model
+  @@schema("clothing_ecom") // ✅ Thêm vào mọi model
 }
 
 model users {
@@ -36,20 +36,20 @@ model users {
   created_at    DateTime  @default(now()) @db.Timestamp(0)
   updated_at    DateTime  @updatedAt @db.Timestamp(0)
 
-  user_role     user_role[]
-  customers     customers?
-  order_status_history order_status_history[]
-  audit_logs    audit_logs[]
-  site_contents site_contents[] @relation("UserUpdatedContents")
+  user_role                     user_role[]
+  customers                     customers?
+  order_status_history          order_status_history[]
+  audit_logs                    audit_logs[]
+  site_contents                 site_contents[]                 @relation("UserUpdatedContents")
+  product_variant_price_history product_variant_price_history[]
 
   @@map("users")
-  @@schema("clothing_ecom")  // ✅ Thêm vào mọi model
-  product_variant_price_history product_variant_price_history[]
+  @@schema("clothing_ecom") // ✅ Thêm vào mọi model
 }
 
 // ✅ Thêm @@schema("clothing_ecom") vào TẤT CẢ các model còn lại...
 model user_role {
-  user_role_id Int  @id @default(autoincrement())
+  user_role_id Int @id @default(autoincrement())
   user_id      Int
   role_id      Int
 
@@ -66,15 +66,15 @@ model customers {
   user_id     Int       @unique
   birthday    DateTime?
   gender      String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime  @updatedAt @db.Timestamp(0)
 
-  users      users      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-  addresses  addresses[]
-  cart       cart?
-  orders     orders[]
-  reviews    reviews[]
-  returns    returns[]  
+  users     users       @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  addresses addresses[]
+  cart      cart?
+  orders    orders[]
+  reviews   reviews[]
+  returns   returns[]
 
   @@map("customers")
   @@schema("clothing_ecom")
@@ -93,15 +93,14 @@ model addresses {
   house_num       String   @default("")
   is_default      Boolean  @default(false)
   status          Boolean  @default(true)
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+  updated_at      DateTime @updatedAt @db.Timestamp(0)
 
   customers customers @relation(fields: [customer_id], references: [customer_id])
+  orders    orders[]
 
   @@index([customer_id])
-
   @@schema("clothing_ecom")
-  orders orders[]
 }
 
 /// BRANDS
@@ -109,14 +108,14 @@ model brands {
   brand_id    Int      @id @default(autoincrement())
   brand_name  String   @unique
   status      Boolean  @default(true)
-  slug        String?  @unique
-  description String?
+  slug        String  @unique
+  description String
   logo_url    String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @updatedAt @db.Timestamp(0)
 
-  products    products[]
-  sizes       sizes[]
+  products products[]
+  sizes    sizes[]
 
   @@map("brands")
   @@schema("clothing_ecom")
@@ -124,19 +123,19 @@ model brands {
 
 /// CATEGORIES
 model categories {
-  category_id  Int       @id @default(autoincrement())
+  category_id   Int     @id @default(autoincrement())
   category_name String
-  parent_id    Int?
-  status       Boolean @default(true)
+  parent_id     Int?
+  status        Boolean @default(true)
 
-  slug         String?   @unique
-  description  String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  slug        String  @unique
+  description String
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @updatedAt @db.Timestamp(0)
 
   products products[]
 
-  parent   categories? @relation("CategoryParent", fields: [parent_id], references: [category_id])
+  parent   categories?  @relation("CategoryParent", fields: [parent_id], references: [category_id])
   children categories[] @relation("CategoryParent")
 
   @@map("categories")
@@ -145,13 +144,13 @@ model categories {
 
 /// LOOKBOOKS
 model lookbooks {
-  lookbook_id Int      @id @default(autoincrement())
+  lookbook_id Int     @id @default(autoincrement())
   title       String
-  slug        String?  @unique
-  description String?
+  slug        String  @unique
+  description String
   image       String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @updatedAt @db.Timestamp(0)
 
   lookbook_items lookbook_items[]
 
@@ -161,56 +160,54 @@ model lookbooks {
 
 /// PRODUCTS
 model products {
-  product_id   Int             @id @default(autoincrement())
-  brand_id     Int?
-  category_id  Int?
+  product_id   Int      @id @default(autoincrement())
+  brand_id     Int
+  category_id  Int
   product_name String
-  slug         String?         @unique
-  description  String?
-  status       String           @default("ACTIVE")
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  slug         String  @unique
+  description  String
+  status       String   @default("ACTIVE")
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+  updated_at   DateTime @updatedAt @db.Timestamp(0)
 
-  brands     brands?     @relation(fields: [brand_id], references: [brand_id])
-  categories categories? @relation(fields: [category_id], references: [category_id])
+  brands           brands             @relation(fields: [brand_id], references: [brand_id])
+  categories       categories         @relation(fields: [category_id], references: [category_id])
   product_variants product_variants[]
 
   @@map("products")
   @@schema("clothing_ecom")
 }
 
-
 /// LOOKBOOK_ITEMS
 model lookbook_items {
-  item_id     Int @id @default(autoincrement())
+  item_id     Int     @id @default(autoincrement())
   lookbook_id Int
   variant_id  Int
   position    Int?
   note        String?
 
-  lookbooks lookbooks @relation(fields: [lookbook_id], references: [lookbook_id], onDelete: Cascade)
+  lookbooks        lookbooks        @relation(fields: [lookbook_id], references: [lookbook_id], onDelete: Cascade)
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
 
   @@unique([lookbook_id, variant_id])
-
   @@map("lookbook_items")
   @@schema("clothing_ecom")
 }
 
 /// SIZES
 model sizes {
-  size_id       Int       @id @default(autoincrement())
-  brand_id      Int?
-  gender        String
-  size_label    String
-  height_range  String?
-  weight_range  String?
-  measurements  Json?
-  type          String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  size_id      Int      @id @default(autoincrement())
+  brand_id     Int
+  gender       String
+  size_label   String
+  height_range String
+  weight_range String
+  measurements Json
+  type         String
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+  updated_at   DateTime @updatedAt @db.Timestamp(0)
 
-  brands        brands?   @relation(fields: [brand_id], references: [brand_id])
+  brands           brands            @relation(fields: [brand_id], references: [brand_id])
   product_variants product_variants[]
 
   @@unique([brand_id, gender, size_label, type])
@@ -219,40 +216,40 @@ model sizes {
 }
 
 model product_variants {
-  variant_id  Int      @id @default(autoincrement())
-  product_id  Int
-  size_id     Int?     // Thêm field này
-  sku         String   @unique
-  barcode     String?
-  base_price  Decimal? @db.Decimal(12, 2)
-  quantity    Int      @default(0)
-  status      Boolean  @default(true)
-  attribute   Json?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  variant_id Int      @id @default(autoincrement())
+  product_id Int
+  size_id    Int // Thêm field này
+  sku        String   @unique
+  barcode    String
+  base_price Decimal  @db.Decimal(12, 2)
+  quantity   Int      @default(0)
+  status     Boolean  @default(true)
+  attribute  Json
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @updatedAt @db.Timestamp(0)
 
-  products    products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
-  sizes       sizes?   @relation(fields: [size_id], references: [size_id]) // Quan hệ 1:1 với size
-  variant_assets variant_assets[]
-  lookbook_items lookbook_items[]
-  order_detail   order_detail[]
-  inventory_transactions inventory_transactions[]
-  return_detail return_detail[]
-  cart_detail cart_detail[]
+  products                      products                        @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
+  sizes                         sizes                           @relation(fields: [size_id], references: [size_id]) // Quan hệ 1:1 với size
+  variant_assets                variant_assets[]
+  lookbook_items                lookbook_items[]
+  order_detail                  order_detail[]
+  inventory_transactions        inventory_transactions[]
+  return_detail                 return_detail[]
+  cart_detail                   cart_detail[]
+  product_variant_price_history product_variant_price_history[]
 
   @@map("product_variants")
   @@schema("clothing_ecom")
-  product_variant_price_history product_variant_price_history[]
 }
 
 model product_variant_price_history {
-  id         Int       @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   variant_id Int
-  old_price  Decimal?  @db.Decimal(12, 2)
-  new_price  Decimal?  @db.Decimal(12, 2)
-  changed_by Int?      // users.user_id (nếu có)
-  reason     String?   @db.VarChar(255)
-  changed_at DateTime  @default(now()) @db.Timestamp(0)
+  old_price  Decimal @db.Decimal(12, 2)
+  new_price  Decimal @db.Decimal(12, 2)
+  changed_by Int // users.user_id (nếu có)
+  reason     String  @db.VarChar(255)
+  changed_at DateTime @default(now()) @db.Timestamp(0)
 
   variant product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
   user    users?           @relation(fields: [changed_by], references: [user_id])
@@ -265,7 +262,7 @@ model product_variant_price_history {
 
 /// VARIANT_ASSETS
 model variant_assets {
-  asset_id   Int @id @default(autoincrement())
+  asset_id   Int     @id @default(autoincrement())
   variant_id Int
   url        String?
   type       String?
@@ -278,24 +275,23 @@ model variant_assets {
   @@schema("clothing_ecom")
 }
 
-
 /// VOUCHERS
 model vouchers {
-  voucher_id        Int      @id @default(autoincrement())
-  title             String    
-  description       String?
-  discount_type     String
-  discount_value    Decimal
-  min_order_value   Decimal?
-  max_discount      Decimal?
-  quantity          Int      @default(0)
-  used_count        Int      @default(0)
-  per_customer_limit Int     @default(1)
-  start_date        DateTime?
-  end_date          DateTime?
-  status            Boolean  @default(true)
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  voucher_id         Int       @id @default(autoincrement())
+  title              String
+  description        String?
+  discount_type      String
+  discount_value     Decimal   @db.Decimal(12, 2)
+  min_order_value    Decimal   @db.Decimal(12, 2)
+  max_discount       Decimal   @db.Decimal(12, 2)
+  quantity           Int       @default(0)
+  used_count         Int       @default(0)
+  per_customer_limit Int       @default(1)
+  start_date         DateTime?
+  end_date           DateTime?
+  status             Boolean   @default(true)
+  created_at         DateTime  @default(now()) @db.Timestamp(0)
+  updated_at         DateTime  @updatedAt @db.Timestamp(0)
 
   orders orders[]
 
@@ -309,9 +305,9 @@ model cart {
   customer_id Int      @unique
   session_id  String?
   updated_at  DateTime @default(now())
-  total_price Decimal  @default(0)
+  total_price Decimal  @db.Decimal(12, 2) @default(0)
 
-  customers customers @relation(fields: [customer_id], references: [customer_id])
+  customers   customers     @relation(fields: [customer_id], references: [customer_id])
   cart_detail cart_detail[]
 
   @@map("cart")
@@ -320,13 +316,13 @@ model cart {
 
 /// CART_DETAIL
 model cart_detail {
-  cart_detail_id Int @id @default(autoincrement())
+  cart_detail_id Int     @id @default(autoincrement())
   cart_id        Int
   variant_id     Int
-  sub_price      Decimal
+  sub_price      Decimal @db.Decimal(12, 2)
   quantity       Int
 
-  cart            cart            @relation(fields: [cart_id], references: [cart_id], onDelete: Cascade)
+  cart             cart             @relation(fields: [cart_id], references: [cart_id], onDelete: Cascade)
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
 
   @@unique([cart_id, variant_id])
@@ -339,21 +335,21 @@ model orders {
   order_id       Int      @id @default(autoincrement())
   customer_id    Int?
   address_id     Int?
-  total_price    Decimal?
-  shipping_fee   Decimal?
+  total_price    Decimal @db.Decimal(12, 2)
+  shipping_fee   Decimal @db.Decimal(12, 2) @default(0)
   note           String?
   payment_status String   @default("pending")
   order_status   String   @default("pending")
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @updatedAt @db.Timestamp(0)
   voucher_id     Int?
 
-  customers customers? @relation(fields: [customer_id], references: [customer_id])
-  addresses addresses? @relation(fields: [address_id], references: [address_id])
-  vouchers  vouchers?  @relation(fields: [voucher_id], references: [voucher_id])
-  order_detail order_detail[]
-  order_status_history order_status_history[]
-  payments payments[]
+  customers              customers?               @relation(fields: [customer_id], references: [customer_id])
+  addresses              addresses?               @relation(fields: [address_id], references: [address_id])
+  vouchers               vouchers?                @relation(fields: [voucher_id], references: [voucher_id])
+  order_detail           order_detail[]
+  order_status_history   order_status_history[]
+  payments               payments[]
   inventory_transactions inventory_transactions[]
 
   @@map("orders")
@@ -362,13 +358,13 @@ model orders {
 
 /// ORDER_STATUS_HISTORY
 model order_status_history {
-  order_update_id Int @id @default(autoincrement())
-  order_id Int
-  user_id  Int?
-  status   String
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  orders orders @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
-  users  users? @relation(fields: [user_id], references: [user_id])
+  order_update_id Int      @id @default(autoincrement())
+  order_id        Int
+  user_id         Int?
+  status          String
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+  orders          orders   @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  users           users?   @relation(fields: [user_id], references: [user_id])
 
   @@map("order_status_history")
   @@schema("clothing_ecom")
@@ -376,17 +372,17 @@ model order_status_history {
 
 /// ORDER_DETAIL
 model order_detail {
-  order_detail_id Int @id @default(autoincrement())
-  order_id Int
-  variant_id Int
-  quantity Int
-  total_price Decimal
-  discount_price Decimal @default(0)
+  order_detail_id Int     @id @default(autoincrement())
+  order_id        Int
+  variant_id      Int
+  quantity        Int
+  total_price     Decimal @db.Decimal(12, 2)
+  discount_price  Decimal @db.Decimal(12, 2) @default(0)
 
-  orders orders @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
+  orders           orders           @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
-  reviews reviews[]
-  return_detail return_detail[]
+  reviews          reviews[]
+  return_detail    return_detail[]
 
   @@map("order_detail")
   @@schema("clothing_ecom")
@@ -399,10 +395,10 @@ model payments {
   method         String?
   status         String?
   transaction_id String?
-  amount         Decimal?
+  amount         Decimal  @db.Decimal(12, 2)
   raw_response   Json?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @updatedAt @db.Timestamp(0)
 
   orders orders @relation(fields: [order_id], references: [order_id], onDelete: Cascade)
 
@@ -412,13 +408,13 @@ model payments {
 
 /// INVENTORY_TRANSACTIONS
 model inventory_transactions {
-  inventory_id     Int      @id @default(autoincrement())
-  variant_id       Int
-  change_quantity  Int
-  reason           String?
-  order_id         Int?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  
+  inventory_id    Int      @id @default(autoincrement())
+  variant_id      Int
+  change_quantity Int
+  reason          String?
+  order_id        Int?
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+
   // Quan hệ với các bảng khác
   product_variants product_variants @relation(fields: [variant_id], references: [variant_id])
   orders           orders?          @relation(fields: [order_id], references: [order_id])
@@ -427,37 +423,35 @@ model inventory_transactions {
   @@schema("clothing_ecom")
 }
 
-
 /// RETURNS
 model returns {
   return_id     Int      @id @default(autoincrement())
   return_type   String
-  customer_id   Int?                        // 👈 link với customers
+  customer_id   Int? // 👈 link với customers
   reason        String?
   status        String   @default("requested")
   image         String?
-  refund_amount Decimal  @default(0)
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  refund_amount Decimal  @db.Decimal(12, 2) @default(0)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+  updated_at    DateTime @updatedAt @db.Timestamp(0)
 
-  customers     customers? @relation(fields: [customer_id], references: [customer_id])
+  customers     customers?      @relation(fields: [customer_id], references: [customer_id])
   return_detail return_detail[]
 
   @@map("returns")
   @@schema("clothing_ecom")
 }
 
-
 /// RETURN_DETAIL
 model return_detail {
-  return_detail_id Int @id @default(autoincrement())
-  return_id Int
-  order_detail_id Int
-  new_variant_id Int?
-  quantity Int
+  return_detail_id Int  @id @default(autoincrement())
+  return_id        Int
+  order_detail_id  Int
+  new_variant_id   Int?
+  quantity         Int
 
-  returns returns @relation(fields: [return_id], references: [return_id], onDelete: Cascade)
-  order_detail order_detail @relation(fields: [order_detail_id], references: [order_detail_id])
+  returns          returns           @relation(fields: [return_id], references: [return_id], onDelete: Cascade)
+  order_detail     order_detail      @relation(fields: [order_detail_id], references: [order_detail_id])
   product_variants product_variants? @relation(fields: [new_variant_id], references: [variant_id])
 
   @@map("return_detail")
@@ -466,23 +460,22 @@ model return_detail {
 
 /// REVIEWS
 model reviews {
-  review_id      Int      @id @default(autoincrement())
-  customer_id    Int
+  review_id       Int      @id @default(autoincrement())
+  customer_id     Int
   order_detail_id Int
-  rating         Int
-  comment        String?
-  image          String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
-  status         Boolean  @default(true)
+  rating          Int
+  comment         String?
+  image           String?
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+  updated_at      DateTime @updatedAt @db.Timestamp(0)
+  status          Boolean  @default(true)
 
-  customers customers @relation(fields: [customer_id], references: [customer_id])
+  customers    customers    @relation(fields: [customer_id], references: [customer_id])
   order_detail order_detail @relation(fields: [order_detail_id], references: [order_detail_id])
 
   @@map("reviews")
   @@schema("clothing_ecom")
 }
-
 
 model audit_logs {
   audit_id    Int      @id @default(autoincrement())
@@ -493,9 +486,10 @@ model audit_logs {
   details     Json?
   ip_address  String?
   user_agent  String?
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
 
   users users? @relation(fields: [user_id], references: [user_id])
+
   @@map("audit_logs")
   @@schema("clothing_ecom")
 }
@@ -504,16 +498,16 @@ model audit_logs {
 model email_otps {
   id          Int       @id @default(autoincrement())
   email       String
-  purpose     String    // 'register' | 'reset' ... tuỳ bạn
+  purpose     String // 'register' | 'reset' ... tuỳ bạn
   code_hash   String
   expires_at  DateTime
   consumed_at DateTime?
-  attempts    Int        @default(0)
-  sent_count  Int        @default(0)
-  created_at    DateTime  @default(now()) @db.Timestamp(0)
-  updated_at    DateTime  @updatedAt @db.Timestamp(0)
+  attempts    Int       @default(0)
+  sent_count  Int       @default(0)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  updated_at  DateTime  @updatedAt @db.Timestamp(0)
 
-  @@unique([email, purpose])  // mỗi email/purpose 1 bản ghi đang hoạt động
+  @@unique([email, purpose]) // mỗi email/purpose 1 bản ghi đang hoạt động
   @@map("email_otps")
   @@schema("clothing_ecom")
 }
@@ -522,14 +516,14 @@ model site_contents {
   content_id Int      @id @default(autoincrement())
   slug       String   @unique @db.VarChar(255)
   title      String   @db.VarChar(500)
-  content    String   @db.Text  
+  content    String   @db.Text
   category   String?  @db.VarChar(100)
   tags       String[] @default([])
   status     Boolean  @default(true)
   updated_by Int?
   created_at DateTime @default(now()) @db.Timestamp(0)
   updated_at DateTime @updatedAt @db.Timestamp(0)
-  
+
   users users? @relation("UserUpdatedContents", fields: [updated_by], references: [user_id], onDelete: SetNull)
 
   @@index([slug])
