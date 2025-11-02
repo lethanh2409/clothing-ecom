@@ -48,88 +48,88 @@ export class VouchersService {
     };
   }
 
-  async create(dto: CreateVoucherDto): Promise<VoucherResponseDto> {
+  async create(dto: CreateVoucherDto) {
     const voucher = await this.prisma.vouchers.create({
       data: {
         title: dto.title,
-        description: dto.description,
+        description: dto.description ?? '',
         discount_type: dto.discount_type,
         discount_value: dto.discount_value,
-        min_order_value: dto.min_order_value || 0,
-        max_discount: dto.max_discount || 10000000,
+
+        min_order_value: dto.min_order_value ?? 0,
+        max_discount: dto.max_discount ?? 10000000,
+
         quantity: dto.quantity,
         used_count: 0,
-        per_customer_limit: dto.per_customer_limit,
-        start_date: dto.start_date ? new Date(dto.start_date) : undefined,
-        end_date: dto.end_date ? new Date(dto.end_date) : undefined,
-        status: dto.status !== undefined ? dto.status : true,
+        per_customer_limit: dto.per_customer_limit ?? 1,
+
+        start_date: dto.start_date ? new Date(dto.start_date) : new Date(),
+        end_date: dto.end_date ? new Date(dto.end_date) : null,
+
+        status: dto.status ?? true,
       },
     });
-    return this.transformVoucher(voucher);
+
+    return {
+      message: 'Voucher created successfully',
+      data: this.transformVoucher(voucher),
+    };
   }
 
-  async findAll(): Promise<VoucherResponseDto[]> {
+  async findAll() {
     const vouchers = await this.prisma.vouchers.findMany();
-    return vouchers.map((v) => this.transformVoucher(v));
+    return {
+      message: 'Get voucher list successfully',
+      data: vouchers.map((v) => this.transformVoucher(v)),
+    };
   }
 
-  async findOne(id: number): Promise<VoucherResponseDto> {
-    const voucher = await this.prisma.vouchers.findUnique({
-      where: { voucher_id: id },
-    });
-    if (!voucher) {
-      throw new NotFoundException(`Voucher #${id} not found`);
-    }
-    return this.transformVoucher(voucher);
+  async findOne(id: number) {
+    const voucher = await this.prisma.vouchers.findUnique({ where: { voucher_id: id } });
+
+    if (!voucher) throw new NotFoundException(`Voucher #${id} not found`);
+
+    return {
+      message: 'Get voucher detail successfully',
+      data: this.transformVoucher(voucher),
+    };
   }
 
-  async update(id: number, dto: UpdateVoucherDto): Promise<VoucherResponseDto> {
-    // Kiểm tra tồn tại
-    const exists = await this.prisma.vouchers.findUnique({
-      where: { voucher_id: id },
-    });
-    if (!exists) {
-      throw new NotFoundException(`Voucher #${id} not found`);
-    }
+  async update(id: number, dto: UpdateVoucherDto) {
+    await this.findOne(id);
 
-    // Update
     const voucher = await this.prisma.vouchers.update({
       where: { voucher_id: id },
       data: {
-        title: dto.title,
-        description: dto.description,
-        discount_type: dto.discount_type,
-        discount_value: dto.discount_value,
-        min_order_value: dto.min_order_value,
-        max_discount: dto.max_discount,
-        quantity: dto.quantity,
-        per_customer_limit: dto.per_customer_limit,
+        ...dto,
         start_date: dto.start_date ? new Date(dto.start_date) : undefined,
         end_date: dto.end_date ? new Date(dto.end_date) : undefined,
-        status: dto.status,
       },
     });
-    return this.transformVoucher(voucher);
+
+    return {
+      message: 'Voucher updated successfully',
+      data: this.transformVoucher(voucher),
+    };
   }
 
-  async remove(id: number): Promise<VoucherResponseDto> {
-    // Kiểm tra tồn tại
-    const exists = await this.prisma.vouchers.findUnique({
-      where: { voucher_id: id },
-    });
-    if (!exists) {
-      throw new NotFoundException(`Voucher #${id} not found`);
-    }
+  async remove(id: number) {
+    await this.findOne(id);
 
-    // Soft delete
-    const voucher = await this.prisma.vouchers.update({
+    await this.prisma.vouchers.update({
       where: { voucher_id: id },
       data: { status: false },
     });
-    return this.transformVoucher(voucher);
+
+    const list = await this.prisma.vouchers.findMany();
+
+    return {
+      message: 'Voucher disabled successfully',
+      data: list.map((voucher) => this.transformVoucher(voucher)),
+    };
   }
 
-  async findActive(): Promise<VoucherResponseDto[]> {
+  async findActive() {
     const today = new Date();
     const vouchers = await this.prisma.vouchers.findMany({
       where: {
@@ -137,8 +137,11 @@ export class VouchersService {
         start_date: { lte: today },
         end_date: { gte: today },
       },
-      orderBy: { voucher_id: 'asc' },
     });
-    return vouchers.map((v) => this.transformVoucher(v));
+
+    return {
+      message: 'Get active vouchers successfully',
+      data: vouchers.map((v) => this.transformVoucher(v)),
+    };
   }
 }
