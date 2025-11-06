@@ -20,6 +20,7 @@ import { Roles } from 'src/auth/roles.decorate';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
+import { VariantFilterDto } from './dtos/variant-filter.dto';
 
 type ListResponse<T = any> = {
   success: true;
@@ -35,6 +36,25 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   // ======== GET ========
+  @Get('variants')
+  async getAllVariants() {
+    return this.productsService.getAllVariants();
+  }
+
+  @Get('variants/filter')
+  async getVariantsWithFilters(@Query() filters: VariantFilterDto) {
+    return this.productsService.getVariantsWithFilters(filters);
+  }
+
+  @Get('variants/low-stock')
+  async getLowStockVariants(@Query('threshold') threshold?: string) {
+    const thresholdNum = threshold ? parseInt(threshold, 10) : 10;
+    return this.productsService.getVariantsWithFilters({
+      low_stock: thresholdNum,
+      status: true, // Chỉ lấy variants đang active
+    });
+  }
+
   @Public()
   @Get('admin')
   async getAllProducts(

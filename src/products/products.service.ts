@@ -130,6 +130,201 @@ export class ProductsService {
   }
 
   // ================= Queries =================
+  // src/products/products.service.ts
+  // THÊM CÁC METHODS NÀY VÀO PHẦN // ================= Queries =================
+
+  /**
+   * Lấy tất cả variants kèm thông tin product (cho màn hình quản lý tồn kho)
+   * Return: Danh sách variants với đầy đủ thông tin product, brand, category
+   */
+  async getAllVariants() {
+    const variants = await this.prisma.product_variants.findMany({
+      include: {
+        sizes: true,
+        variant_assets: true,
+        products: {
+          include: {
+            brands: true,
+            categories: true,
+          },
+        },
+      },
+      orderBy: [{ product_id: 'asc' }, { variant_id: 'asc' }],
+    });
+
+    return variants.map((v) => ({
+      // Variant info
+      variant_id: v.variant_id,
+      sku: v.sku,
+      barcode: v.barcode,
+      price: v.base_price ? v.base_price.toNumber() : null,
+      quantity: v.quantity,
+      status: v.status,
+      created_at: v.created_at,
+      updated_at: v.updated_at,
+
+      // Size info
+      size: v.sizes
+        ? {
+            size_id: v.sizes.size_id,
+            size_label: v.sizes.size_label,
+            gender: v.sizes.gender,
+            type: v.sizes.type,
+          }
+        : null,
+
+      // Attributes (color, material, etc.)
+      attributes: v.attribute,
+      color: this.readColor(v),
+
+      // Images
+      primary_image: this.pickPrimaryImage(v),
+      assets: v.variant_assets.map((a) => ({
+        asset_id: a.asset_id,
+        url: a.url,
+        type: a.type,
+        is_primary: a.is_primary,
+      })),
+
+      // Product info
+      product: {
+        product_id: v.products.product_id,
+        product_name: v.products.product_name,
+        slug: v.products.slug,
+        description: v.products.description,
+        status: v.products.status,
+        brand: v.products.brands
+          ? {
+              brand_id: v.products.brands.brand_id,
+              brand_name: v.products.brands.brand_name,
+              slug: v.products.brands.slug,
+            }
+          : null,
+        category: v.products.categories
+          ? {
+              category_id: v.products.categories.category_id,
+              category_name: v.products.categories.category_name,
+              slug: v.products.categories.slug,
+            }
+          : null,
+      },
+    }));
+  }
+
+  /**
+   * Lấy variants theo filter (cho quản lý tồn kho với search/filter)
+   */
+  async getVariantsWithFilters(filters?: {
+    brand_id?: number;
+    category_id?: number;
+    status?: boolean;
+    search?: string; // Search by product name, SKU, barcode
+    low_stock?: number; // Variants có quantity <= threshold
+  }) {
+    const where: Prisma.product_variantsWhereInput = {};
+
+    if (filters?.status !== undefined) {
+      where.status = filters.status;
+    }
+
+    if (filters?.low_stock !== undefined) {
+      where.quantity = { lte: filters.low_stock };
+    }
+
+    if (filters?.search) {
+      const search = filters.search.trim();
+      where.OR = [
+        { sku: { contains: search, mode: 'insensitive' } },
+        { barcode: { contains: search, mode: 'insensitive' } },
+        {
+          products: {
+            product_name: { contains: search, mode: 'insensitive' },
+          },
+        },
+      ];
+    }
+
+    // Build products filter object
+    const productsFilter: Prisma.productsWhereInput = {};
+
+    if (filters?.brand_id) {
+      productsFilter.brand_id = filters.brand_id;
+    }
+
+    if (filters?.category_id) {
+      productsFilter.category_id = filters.category_id;
+    }
+
+    // Only add products filter if there are conditions
+    if (Object.keys(productsFilter).length > 0) {
+      where.products = productsFilter;
+    }
+
+    const variants = await this.prisma.product_variants.findMany({
+      where,
+      include: {
+        sizes: true,
+        variant_assets: true,
+        products: {
+          include: {
+            brands: true,
+            categories: true,
+          },
+        },
+      },
+      orderBy: [{ product_id: 'asc' }, { variant_id: 'asc' }],
+    });
+
+    return variants.map((v) => ({
+      variant_id: v.variant_id,
+      sku: v.sku,
+      barcode: v.barcode,
+      price: v.base_price ? v.base_price.toNumber() : null,
+      quantity: v.quantity,
+      status: v.status,
+      created_at: v.created_at,
+      updated_at: v.updated_at,
+      size: v.sizes
+        ? {
+            size_id: v.sizes.size_id,
+            size_label: v.sizes.size_label,
+            gender: v.sizes.gender,
+            type: v.sizes.type,
+          }
+        : null,
+      attributes: v.attribute,
+      color: this.readColor(v),
+      primary_image: this.pickPrimaryImage(v),
+      assets: v.variant_assets.map((a) => ({
+        asset_id: a.asset_id,
+        url: a.url,
+        type: a.type,
+        is_primary: a.is_primary,
+      })),
+      product: {
+        product_id: v.products.product_id,
+        product_name: v.products.product_name,
+        slug: v.products.slug,
+        description: v.products.description,
+        status: v.products.status,
+        brand: v.products.brands
+          ? {
+              brand_id: v.products.brands.brand_id,
+              brand_name: v.products.brands.brand_name,
+              slug: v.products.brands.slug,
+            }
+          : null,
+        category: v.products.categories
+          ? {
+              category_id: v.products.categories.category_id,
+              category_name: v.products.categories.category_name,
+              slug: v.products.categories.slug,
+            }
+          : null,
+      },
+    }));
+  }
+
   async getAllProductsWithVariants() {
     const items = await this.prisma.products.findMany({
       include: {

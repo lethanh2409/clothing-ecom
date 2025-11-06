@@ -18,9 +18,11 @@ import { RolesGuard } from './auth/roles.guard';
 import { MailModule } from './mail/mail.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { OrdersCronService } from './orders/orders.cron.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     // Load .env sớm, global
     ConfigModule.forRoot({
       isGlobal: true,
