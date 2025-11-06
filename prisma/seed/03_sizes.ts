@@ -574,7 +574,7 @@ const sizesData = [
   },
 ];
 
-// ========== SEED SIZES ==========
+// ========== SEED SIZES (CẢI THIỆN LỚN) ==========
 export async function seedSizes(prisma: PrismaClient) {
   console.log('📏 Seeding local DB sizes...');
   await prisma.sizes.createMany({
@@ -598,17 +598,38 @@ export async function seedSizes(prisma: PrismaClient) {
       continue;
     }
 
-    const text = `Size ${size.size_label} ${size.gender} ${size.type} brand ${size.brand_id}. Chiều cao ${size.height_range}, cân nặng ${size.weight_range}. Số đo: ${JSON.stringify(size.measurements)}`;
+    // Lấy tên brand
+    const brandsData = await prisma.brands.findMany();
+    const brandName =
+      brandsData.find((b) => b.brand_id === size.brand_id)?.brand_name || `Brand ${size.brand_id}`;
+    const genderText = size.gender === 'male' ? 'nam' : 'nữ';
+
+    // Content CỰC KỲ chi tiết để AI hiểu
+    const measurements = size.measurements;
+    const measText =
+      size.type === 'pants'
+        ? `Vòng eo: ${measurements.waist}, Vòng mông: ${measurements.hip}, Chiều dài quần: ${measurements.length}`
+        : `Vòng ngực: ${measurements.chest}, Vòng eo: ${measurements.waist}, Vòng mông: ${measurements.hip}, Chiều dài áo: ${measurements.length}`;
+
+    const text = `Bảng size ${brandName} - ${size.type} ${genderText} - Size ${size.size_label}.
+Phù hợp với người cao ${size.height_range}, cân nặng ${size.weight_range}.
+Số đo chi tiết: ${measText}.
+Loại sản phẩm: ${size.type === 'pants' ? 'quần dài, quần short, jeans' : 'áo thun, áo polo, áo sơ mi'}.
+Khách hàng có thể chọn size ${size.size_label} nếu ${genderText === 'nam' ? 'anh' : 'chị'} cao khoảng ${size.height_range} và nặng khoảng ${size.weight_range}.`;
 
     await upsertDocument(
       sourceId,
       text,
       {
+        type: 'size',
         brand_id: size.brand_id,
+        brand_name: brandName,
         gender: size.gender,
         size_label: size.size_label,
-        type: size.type,
-        type_doc: 'size',
+        product_type: size.type,
+        height_range: size.height_range,
+        weight_range: size.weight_range,
+        measurements: size.measurements,
       },
       'sizes',
     );

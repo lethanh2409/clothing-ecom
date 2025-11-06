@@ -11,8 +11,8 @@ import { HttpExceptionFilter } from './common/filter/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalFilters(new HttpExceptionFilter());
+  // app.useGlobalInterceptors(new ResponseInterceptor());
+  // app.useGlobalFilters(new HttpExceptionFilter());
   // Bật CORS cho toàn bộ origin
   app.enableCors({
     origin: ['http://localhost:3000', 'http://localhost:3001'], // FE Next.js

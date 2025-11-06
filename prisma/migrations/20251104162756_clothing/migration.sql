@@ -190,6 +190,17 @@ CREATE TABLE "clothing_ecom"."variant_assets" (
 );
 
 -- CreateTable
+CREATE TABLE "clothing_ecom"."inventory_snapshots" (
+    "snapshot_id" SERIAL NOT NULL,
+    "variant_id" INTEGER NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "snapshot_date" DATE NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "inventory_snapshots_pkey" PRIMARY KEY ("snapshot_id")
+);
+
+-- CreateTable
 CREATE TABLE "clothing_ecom"."vouchers" (
     "voucher_id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
@@ -237,6 +248,8 @@ CREATE TABLE "clothing_ecom"."orders" (
     "order_id" SERIAL NOT NULL,
     "customer_id" INTEGER,
     "address_id" INTEGER,
+    "subtotal_price" DECIMAL(12,2) NOT NULL,
+    "discount_price" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "total_price" DECIMAL(12,2) NOT NULL,
     "shipping_fee" DECIMAL(12,2) NOT NULL DEFAULT 0,
     "note" TEXT,
@@ -267,7 +280,6 @@ CREATE TABLE "clothing_ecom"."order_detail" (
     "variant_id" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
     "total_price" DECIMAL(12,2) NOT NULL,
-    "discount_price" DECIMAL(12,2) NOT NULL DEFAULT 0,
 
     CONSTRAINT "order_detail_pkey" PRIMARY KEY ("order_detail_id")
 );
@@ -377,7 +389,7 @@ CREATE TABLE "clothing_ecom"."site_contents" (
     "slug" VARCHAR(255) NOT NULL,
     "title" VARCHAR(500) NOT NULL,
     "content" TEXT NOT NULL,
-    "category" VARCHAR(100),
+    "category" VARCHAR(100) NOT NULL,
     "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "status" BOOLEAN NOT NULL DEFAULT true,
     "updated_by" INTEGER,
@@ -437,6 +449,15 @@ CREATE INDEX "product_variant_price_history_changed_by_idx" ON "clothing_ecom"."
 
 -- CreateIndex
 CREATE UNIQUE INDEX "variant_assets_variant_id_url_key" ON "clothing_ecom"."variant_assets"("variant_id", "url");
+
+-- CreateIndex
+CREATE INDEX "inventory_snapshots_variant_id_idx" ON "clothing_ecom"."inventory_snapshots"("variant_id");
+
+-- CreateIndex
+CREATE INDEX "inventory_snapshots_snapshot_date_idx" ON "clothing_ecom"."inventory_snapshots"("snapshot_date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "inventory_snapshots_variant_id_snapshot_date_key" ON "clothing_ecom"."inventory_snapshots"("variant_id", "snapshot_date");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "cart_customer_id_key" ON "clothing_ecom"."cart"("customer_id");
@@ -506,6 +527,9 @@ ALTER TABLE "clothing_ecom"."product_variant_price_history" ADD CONSTRAINT "prod
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."variant_assets" ADD CONSTRAINT "variant_assets_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clothing_ecom"."inventory_snapshots" ADD CONSTRAINT "inventory_snapshots_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."cart" ADD CONSTRAINT "cart_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE RESTRICT ON UPDATE CASCADE;

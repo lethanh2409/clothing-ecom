@@ -136,7 +136,6 @@ export class ReviewsService {
       order_detail: {
         ...review.order_detail,
         total_price: Number(review.order_detail.total_price),
-        discount_price: Number(review.order_detail.discount_price),
         product_variants: {
           ...review.order_detail.product_variants,
           base_price: review.order_detail.product_variants.base_price

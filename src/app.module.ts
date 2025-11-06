@@ -16,6 +16,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { MailModule } from './mail/mail.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { OrdersCronService } from './orders/orders.cron.service';
 
 @Module({
   imports: [
@@ -48,11 +50,14 @@ import { MailModule } from './mail/mail.module';
     CloudinaryModule,
 
     MailModule,
+
+    InventoryModule,
   ],
   providers: [
     VnpayService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    OrdersCronService,
   ],
 })
 export class AppModule {}

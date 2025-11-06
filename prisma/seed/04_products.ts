@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
-import { createClient } from '@supabase/supabase-js';
+//import { createClient } from '@supabase/supabase-js';
 
 // ---- DATASET ----
 const productsData = [
@@ -185,66 +185,66 @@ const productsData = [
   },
 ];
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!, // phải là service key để upsert
-);
+// const supabase = createClient(
+//   process.env.SUPABASE_URL!,
+//   process.env.SUPABASE_SERVICE_KEY!, // phải là service key để upsert
+// );
 
-// ---- EMBEDDING CALL ----
-interface GeminiResponse {
-  embedding?: {
-    values: number[];
-  };
-}
+// // ---- EMBEDDING CALL ----
+// interface GeminiResponse {
+//   embedding?: {
+//     values: number[];
+//   };
+// }
 
-async function embedText(text: string) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'text-embedding-004',
-        content: {
-          parts: [{ text }],
-        },
-      }),
-    },
-  );
+// async function embedText(text: string) {
+//   const res = await fetch(
+//     `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
+//     {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({
+//         model: 'text-embedding-004',
+//         content: {
+//           parts: [{ text }],
+//         },
+//       }),
+//     },
+//   );
 
-  const data = (await res.json()) as GeminiResponse;
+//   const data = (await res.json()) as GeminiResponse;
 
-  if (!data.embedding?.values) {
-    console.error('Gemini embedding failed:', data);
-    throw new Error('Gemini embedding failed');
-  }
+//   if (!data.embedding?.values) {
+//     console.error('Gemini embedding failed:', data);
+//     throw new Error('Gemini embedding failed');
+//   }
 
-  return data.embedding.values;
-}
+//   return data.embedding.values;
+// }
 
 // ---- UPSERT VECTOR ----
-async function upsertDocument(product, embedding) {
-  const { error } = await supabase.from('documents').upsert(
-    {
-      source_id: product.slug, // unique key
-      content: `${product.product_name}. ${product.description}`,
-      metadata: {
-        brand_id: product.brand_id,
-        category_id: product.category_id,
-        type: 'product',
-      },
-      embedding,
-      source_table: 'products',
-    },
-    { onConflict: 'source_id' },
-  );
+// async function upsertDocument(product, embedding) {
+//   const { error } = await supabase.from('documents').upsert(
+//     {
+//       source_id: product.slug, // unique key
+//       content: `${product.product_name}. ${product.description}`,
+//       metadata: {
+//         brand_id: product.brand_id,
+//         category_id: product.category_id,
+//         type: 'product',
+//       },
+//       embedding,
+//       source_table: 'products',
+//     },
+//     { onConflict: 'source_id' },
+//   );
 
-  if (error) {
-    console.error(`❌ Supabase error on ${product.slug}`, error);
-  } else {
-    console.log(`✅ Vector upserted: ${product.slug}`);
-  }
-}
+//   if (error) {
+//     console.error(`❌ Supabase error on ${product.slug}`, error);
+//   } else {
+//     console.log(`✅ Vector upserted: ${product.slug}`);
+//   }
+// }
 
 // ---- MAIN SEED FUNCTION ----
 export async function seedProducts(prisma: PrismaClient) {
@@ -254,25 +254,25 @@ export async function seedProducts(prisma: PrismaClient) {
     skipDuplicates: true,
   });
 
-  console.log('🧠 Syncing products to Supabase Vector...');
+  // console.log('🧠 Syncing products to Supabase Vector...');
 
-  for (const product of productsData) {
-    // check exists
-    const { data: exists } = await supabase
-      .from('documents')
-      .select('source_id')
-      .eq('source_id', product.slug)
-      .maybeSingle();
+  // for (const product of productsData) {
+  //   // check exists
+  //   const { data: exists } = await supabase
+  //     .from('documents')
+  //     .select('source_id')
+  //     .eq('source_id', product.slug)
+  //     .maybeSingle();
 
-    if (exists) {
-      console.log(`⏭️ Skip exists: ${product.slug}`);
-      continue;
-    }
+  //   if (exists) {
+  //     console.log(`⏭️ Skip exists: ${product.slug}`);
+  //     continue;
+  //   }
 
-    const text = `${product.product_name}. ${product.description}`;
-    const embedding = await embedText(text);
-    await upsertDocument(product, embedding);
-  }
+  //   const text = `${product.product_name}. ${product.description}`;
+  //   const embedding = await embedText(text);
+  //   await upsertDocument(product, embedding);
+  // }
 
   console.log('🎉 Product seed & embedding DONE!');
 }

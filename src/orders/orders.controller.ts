@@ -12,6 +12,8 @@ import {
   ForbiddenException,
   Query,
   Res,
+  Patch,
+  ParseIntPipe,
 } from '@nestjs/common';
 import express from 'express'; // FIX: Import Response from express
 import { OrdersService } from './orders.service';
@@ -28,6 +30,7 @@ import {
   RevenueByCategoryQueryDto,
   RevenueByBrandQueryDto,
 } from './dtos/revenue-query.dto';
+import { UpdateOrderStatusDto } from './dtos/update-order-status';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -72,16 +75,6 @@ export class OrdersController {
     return this.ordersService.getOrdersByUserId(userId);
   }
 
-  @Get(':id')
-  @Roles('ADMIN')
-  async getOrderById(@Param('id') id: string) {
-    const order = await this.ordersService.getOrderById(Number(id));
-    if (!order) {
-      throw new NotFoundException(`Order ${id} not found`);
-    }
-    return order;
-  }
-
   @Post()
   @Roles('CUSTOMER')
   async create(@Body() dto: CreateOrderDto, @Req() req: any) {
@@ -96,6 +89,23 @@ export class OrdersController {
     }
 
     return this.ordersService.createOrder(dto, customer.customer_id);
+  }
+
+  @Patch(':id/status')
+  @Roles('ADMIN', 'STAFF') // Chỉ admin/staff mới được cập nhật
+  async updateOrderStatus(
+    @Param('id', ParseIntPipe) orderId: number,
+    @Body() dto: UpdateOrderStatusDto,
+    @Req() req: any,
+  ) {
+    const userId = Number(req.user?.userId);
+    return this.ordersService.updateOrderStatus(orderId, dto, userId);
+  }
+
+  @Get(':id/history')
+  @Roles('ADMIN', 'STAFF')
+  async getOrderStatusHistory(@Param('id', ParseIntPipe) orderId: number) {
+    return this.ordersService.getOrderStatusHistory(orderId);
   }
 
   // ==================== THANH TOÁN LẠI VNPAY ====================
@@ -427,5 +437,15 @@ export class OrdersController {
 
     // Thêm BOM để Excel đọc đúng tiếng Việt
     res.send('\uFEFF' + csv);
+  }
+
+  @Get(':id')
+  @Roles('ADMIN')
+  async getOrderById(@Param('id') id: string) {
+    const order = await this.ordersService.getOrderById(Number(id));
+    if (!order) {
+      throw new NotFoundException(`Order ${id} not found`);
+    }
+    return order;
   }
 }

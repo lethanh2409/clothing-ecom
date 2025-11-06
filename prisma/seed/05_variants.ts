@@ -1,5 +1,13 @@
 // seed/06.variants.manual.full.ts
-import { PrismaClient } from '@prisma/client';
+import {
+  brands,
+  PrismaClient,
+  product_variants,
+  products,
+  categories,
+  sizes,
+} from '@prisma/client';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * NHẬP TAY 100% — KHÔNG map, KHÔNG generate.
@@ -928,36 +936,295 @@ const variantsData = [
   },
 ];
 
-// ===== HÀM ĐẨY LÊN DB (idempotent theo SKU) =====
-export async function seedVariantsManualFull(prisma: PrismaClient) {
-  console.log(`🏷️  Upsert ${variantsData.length} product_variants (manual full)`);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 
-  for (const row of variantsData) {
-    await prisma.product_variants.upsert({
-      where: { sku: row.sku },
-      update: {
-        base_price: row.base_price,
-        quantity: row.quantity,
-        status: row.status,
-        attribute: row.attribute,
-        barcode: row.barcode,
-        size_id: row.size_id, // để null (bạn sửa tay khi biết ID)
-        product_id: row.product_id, // bạn sửa tay nếu product_id khác
-      },
-      create: {
-        product_id: row.product_id,
-        size_id: row.size_id, // để null
-        sku: row.sku,
-        barcode: row.barcode,
-        base_price: row.base_price,
-        quantity: row.quantity,
-        status: row.status,
-        attribute: row.attribute,
-      },
-    });
-  }
-
-  console.log('✅ Done manual full variants.');
+// ---- EMBEDDING CALL ----
+interface GeminiResponse {
+  embedding?: {
+    values: number[];
+  };
 }
 
-// seedVariantsManualFull().finally(() => prisma.$disconnect());
+async function embedText(text: string) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'text-embedding-004',
+        content: {
+          parts: [{ text }],
+        },
+      }),
+    },
+  );
+
+  const data = (await res.json()) as GeminiResponse;
+
+  if (!data.embedding?.values) {
+    console.error('Gemini embedding failed:', data);
+    throw new Error('Gemini embedding failed');
+  }
+
+  return data.embedding.values;
+}
+
+// ---- BUILD RICH CONTENT FOR VARIANT ----
+function buildVariantContent(
+  variant: product_variants,
+  product: products,
+  brand: brands,
+  category: categories,
+  size: sizes,
+): string {
+  const parts: string[] = [];
+
+  // Tên sản phẩm
+  parts.push(product.product_name);
+
+  // Mô tả sản phẩm
+  if (product.description) {
+    parts.push(product.description);
+  }
+
+  // Thương hiệu
+  if (brand?.brand_name) {
+    parts.push(`Thương hiệu: ${brand.brand_name}`);
+  }
+
+  // Danh mục
+  if (category?.category_name) {
+    parts.push(`Danh mục: ${category.category_name}`);
+  }
+
+  // Size
+  if (size?.size_label) {
+    parts.push(`Size: ${size.size_label}`);
+  }
+
+  // Giá
+  parts.push(`Giá: ${(+variant.base_price).toLocaleString('vi-VN')}đ`);
+
+  // Attributes (màu, chất liệu, form, v.v.)
+  if (variant.attribute && typeof variant.attribute === 'object') {
+    const attrs = variant.attribute;
+
+    // Màu
+    if (attrs['màu']) {
+      parts.push(`Màu: ${attrs['màu']}`);
+    }
+
+    // Chất liệu
+    if (attrs['chất liệu']) {
+      parts.push(`Chất liệu: ${attrs['chất liệu']}`);
+    }
+
+    // Form/Phom
+    if (attrs['form']) {
+      parts.push(`Form: ${attrs['form']}`);
+    } else if (attrs['phom']) {
+      parts.push(`Phom: ${attrs['phom']}`);
+    }
+
+    // Phong cách
+    if (attrs['phong cách']) {
+      parts.push(`Phong cách: ${attrs['phong cách']}`);
+    }
+
+    // Công nghệ
+    if (attrs['công nghệ']) {
+      parts.push(`Công nghệ: ${attrs['công nghệ']}`);
+    }
+
+    // Họa tiết
+    if (attrs['họa tiết']) {
+      parts.push(`Họa tiết: ${attrs['họa tiết']}`);
+    }
+
+    // Kiểu dáng
+    if (attrs['kiểu dáng']) {
+      parts.push(`Kiểu dáng: ${attrs['kiểu dáng']}`);
+    } else if (attrs['kiểu']) {
+      parts.push(`Kiểu: ${attrs['kiểu']}`);
+    }
+
+    // Tính năng
+    if (attrs['tính năng']) {
+      parts.push(`Tính năng: ${attrs['tính năng']}`);
+    }
+
+    // Logo
+    if (attrs['logo']) {
+      parts.push(`Logo: ${attrs['logo']}`);
+    }
+
+    // Graphic
+    if (attrs['graphic']) {
+      parts.push(`Họa tiết: ${attrs['graphic']}`);
+    }
+
+    // Thiết kế
+    if (attrs['thiết kế']) {
+      parts.push(`Thiết kế: ${attrs['thiết kế']}`);
+    }
+
+    // Độ dài
+    if (attrs['độ dài']) {
+      parts.push(`Độ dài: ${attrs['độ dài']}`);
+    }
+
+    // Co giãn
+    if (attrs['co giãn']) {
+      parts.push(`Co giãn: ${attrs['co giãn']}`);
+    }
+
+    // Lót
+    if (attrs['lót']) {
+      parts.push(`Lót: ${attrs['lót']}`);
+    }
+  }
+
+  // Tình trạng kho
+  if (variant.quantity > 0) {
+    parts.push(`Còn hàng: ${variant.quantity} sản phẩm`);
+  } else {
+    parts.push('Hết hàng');
+  }
+
+  // SKU (để dễ tra cứu)
+  parts.push(`Mã sản phẩm: ${variant.sku}`);
+
+  return parts.join('. ');
+}
+
+// ---- UPSERT VECTOR ----
+async function upsertVariantDocument(
+  variant: product_variants,
+  product: products,
+  brand: brands,
+  category: categories,
+  size: sizes,
+  embedding: number[],
+) {
+  const content = buildVariantContent(variant, product, brand, category, size);
+
+  const { error } = await supabase.from('documents').upsert(
+    {
+      source_id: variant.sku, // unique key: SKU
+      content,
+      metadata: {
+        type: 'product_variant',
+        variant_id: variant.variant_id,
+        product_id: product.product_id,
+        product_slug: product.slug,
+        product_name: product.product_name,
+        sku: variant.sku,
+        barcode: variant.barcode,
+
+        // Brand & Category
+        brand_name: brand?.brand_name,
+        category_name: category?.category_name,
+
+        // Size
+        size_id: size?.size_id,
+        size_name: size?.size_label,
+
+        // Price & Stock
+        price: variant.base_price,
+        quantity: variant.quantity,
+        in_stock: variant.quantity > 0,
+        status: variant.status,
+
+        // Attributes (để filter)
+        ...(variant.attribute && {
+          color: (variant.attribute as any)['màu'],
+          material: (variant.attribute as any)['chất liệu'],
+          form: (variant.attribute as any)['form'] || (variant.attribute as any)['phom'],
+          technology: (variant.attribute as any)['công nghệ'],
+          pattern: (variant.attribute as any)['họa tiết'],
+          style: (variant.attribute as any)['phong cách'],
+        }),
+      },
+      embedding,
+      source_table: 'product_variants',
+    },
+    { onConflict: 'source_id' },
+  );
+
+  if (error) {
+    console.error(`❌ Supabase error on ${variant.sku}`, error);
+  } else {
+    console.log(`✅ Vector upserted: ${variant.sku}`);
+  }
+}
+
+// ---- MAIN SEED FUNCTION ----
+export async function seedProductVariants(prisma: PrismaClient) {
+  console.log('📦 Seeding local DB products...');
+  await prisma.product_variants.createMany({
+    data: variantsData,
+    skipDuplicates: true,
+  });
+
+  console.log('🧠 Syncing product variants to Supabase Vector...');
+  // Lấy tất cả variants với đầy đủ relations
+  const variants = await prisma.product_variants.findMany({
+    include: {
+      products: {
+        include: {
+          brands: true,
+          categories: true,
+        },
+      },
+      sizes: true,
+    },
+  });
+
+  console.log(`📦 Found ${variants.length} variants to process`);
+
+  for (const variant of variants) {
+    // Skip nếu không có product (data lỗi)
+    if (!variant.products) {
+      console.log(`⚠️ Skip variant ${variant.sku}: no product relation`);
+      continue;
+    }
+
+    // Check exists
+    const { data: exists } = await supabase
+      .from('documents')
+      .select('source_id')
+      .eq('source_id', variant.sku)
+      .maybeSingle();
+
+    if (exists) {
+      console.log(`⏭️ Skip exists: ${variant.sku}`);
+      continue;
+    }
+
+    // Build content và embed
+    const content = buildVariantContent(
+      variant,
+      variant.products,
+      variant.products.brands,
+      variant.products.categories,
+      variant.sizes,
+    );
+
+    const embedding = await embedText(content);
+
+    await upsertVariantDocument(
+      variant,
+      variant.products,
+      variant.products.brands,
+      variant.products.categories,
+      variant.sizes,
+      embedding,
+    );
+
+    // Rate limiting: đợi 100ms giữa mỗi request
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  console.log('🎉 Product variants seed & embedding DONE!');
+}

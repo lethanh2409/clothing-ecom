@@ -35,29 +35,116 @@ async function embedText(text: string) {
   return data.embedding.values;
 }
 
+// ========== BUILD RICH CONTENT FOR SITE CONTENT ==========
+function buildSiteContentText(sc: {
+  // những field bắt buộc từ nguồn dữ liệu của bạn
+  slug: string;
+  title: string;
+  content: string;
+  category?: string | null;
+  tags?: string[]; // optional nếu có thể rỗng
+  status?: boolean;
+  // optional: nếu bạn có author khi sync
+  updated_by?: number | null;
+  // optional timestamps nếu muốn override
+  created_at?: Date;
+  updated_at?: Date;
+}): string {
+  const parts: string[] = [];
+
+  // Tiêu đề
+  parts.push(sc.title);
+
+  // Nội dung chính
+  parts.push(sc.content);
+
+  // Thêm category vào content để semantic search tốt hơn
+  if (sc.category) {
+    const categoryMap: Record<string, string> = {
+      FAQ: 'Câu hỏi thường gặp',
+      POLICY: 'Chính sách',
+      GUIDE: 'Hướng dẫn',
+      ABOUT: 'Giới thiệu',
+      CONTACT: 'Liên hệ',
+    };
+    const categoryText = categoryMap[sc.category] || sc.category;
+    parts.push(`Thuộc mục: ${categoryText}`);
+  }
+
+  // Thêm tags để tăng khả năng match
+  if (sc.tags && sc.tags.length > 0) {
+    parts.push(`Từ khóa: ${sc.tags.join(', ')}`);
+  }
+
+  return parts.join('. ');
+}
+
 // ========== UPSERT HELPER ==========
-async function upsertDocument(
-  sourceId: string,
-  content: string,
-  metadata: any,
-  sourceTable: string,
-) {
+async function upsertSiteContentDocument(sc: {
+  // những field bắt buộc từ nguồn dữ liệu của bạn
+  slug: string;
+  title: string;
+  content: string;
+  category?: string | null;
+  tags?: string[]; // optional nếu có thể rỗng
+  status?: boolean;
+  // optional: nếu bạn có author khi sync
+  updated_by?: number | null;
+  // optional timestamps nếu muốn override
+  created_at?: Date;
+  updated_at?: Date;
+}) {
+  const content = buildSiteContentText(sc);
   const embedding = await embedText(content);
+
+  // Map category sang tiếng Việt cho metadata
+  const categoryMap: Record<string, string> = {
+    FAQ: 'Câu hỏi thường gặp',
+    POLICY: 'Chính sách',
+    GUIDE: 'Hướng dẫn',
+    ABOUT: 'Giới thiệu',
+    CONTACT: 'Liên hệ',
+    unknown: 'Khác',
+  };
+
   const { error } = await supabase.from('documents').upsert(
     {
-      source_id: sourceId,
+      source_id: sc.slug,
       content,
-      metadata,
+      metadata: {
+        type: 'site_content',
+        slug: sc.slug,
+        title: sc.title,
+        category: sc.category,
+        category_name: categoryMap[String(sc.category) || 'unknown'] || sc.category,
+        tags: sc.tags,
+        status: sc.status,
+
+        // Thêm các flag để dễ filter
+        is_faq: sc.category === 'FAQ',
+        is_policy: sc.category === 'POLICY',
+        is_guide: sc.category === 'GUIDE',
+        is_about: sc.category === 'ABOUT',
+        is_contact: sc.category === 'CONTACT',
+
+        // Phân loại chi tiết theo tags
+        is_shipping: sc.tags?.includes('giao-hang') || sc.tags?.includes('shipping'),
+        is_payment: sc.tags?.includes('thanh-toan') || sc.tags?.includes('payment'),
+        is_return: sc.tags?.includes('doi-tra') || sc.tags?.includes('return'),
+        is_warranty: sc.tags?.includes('bao-hanh') || sc.tags?.includes('warranty'),
+        is_size_guide: sc.tags?.includes('size') || sc.tags?.includes('do-luong'),
+        is_care_guide: sc.tags?.includes('bao-quan') || sc.tags?.includes('giat-ui'),
+      },
       embedding,
-      source_table: sourceTable,
+      source_table: 'site_contents',
     },
     { onConflict: 'source_id' },
   );
 
   if (error) {
-    console.error(`❌ Supabase error on ${sourceId}`, error);
+    console.error(`❌ Supabase error on ${sc.slug}`, error);
   } else {
-    console.log(`✅ Vector upserted: ${sourceId}`);
+    console.log(`✅ Vector upserted: ${sc.slug}`);
   }
 }
 
@@ -195,17 +282,10 @@ export async function seedSiteContents(prisma: PrismaClient) {
       continue;
     }
 
-    const text = `${sc.title}. ${sc.content}`;
-    await upsertDocument(
-      sc.slug,
-      text,
-      {
-        category: sc.category,
-        tags: sc.tags,
-        type: 'site_content',
-      },
-      'site_contents',
-    );
+    await upsertSiteContentDocument(sc);
+
+    // Rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   console.log('🎉 Site contents seed & embedding DONE!');

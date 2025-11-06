@@ -4,7 +4,7 @@ import { seedUsers } from './01_users';
 import { seedBrands, seedCategories } from './02_brands_categories';
 import { seedSizes } from './03_sizes';
 import { seedProducts } from './04_products';
-import { seedVariantsManualFull } from './05_variants';
+import { seedProductVariants } from './05_variants';
 import { seedVouchers } from './06_vouchers';
 import { seedSiteContents } from './07_site_contents';
 import { seedVariantAssets } from './08_assets';
@@ -27,7 +27,7 @@ async function main() {
   await seedProducts(prisma);
 
   console.log('\n=== Step 5: Variants ===');
-  await seedVariantsManualFull(prisma);
+  await seedProductVariants(prisma);
 
   console.log('\n=== Step 6: Vouchers ===');
   await seedVouchers(prisma);

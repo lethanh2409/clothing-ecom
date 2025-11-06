@@ -8,6 +8,8 @@ const ordersData = [
     order_id: 1,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2700000,
+    discount_price: 0,
     total_price: 2700000,
     shipping_fee: 30000,
     note: 'Giao giờ hành chính',
@@ -20,6 +22,8 @@ const ordersData = [
     order_id: 2,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 1599000,
+    discount_price: 0,
     total_price: 1599000,
     shipping_fee: 25000,
     note: null,
@@ -32,6 +36,8 @@ const ordersData = [
     order_id: 3,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 3990000,
+    discount_price: 0,
     total_price: 3990000,
     shipping_fee: 0,
     note: 'Freeship',
@@ -44,6 +50,8 @@ const ordersData = [
     order_id: 4,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 1798000,
+    discount_price: 0,
     total_price: 1798000,
     shipping_fee: 30000,
     note: null,
@@ -56,6 +64,8 @@ const ordersData = [
     order_id: 5,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2499000,
+    discount_price: 0,
     total_price: 2499000,
     shipping_fee: 25000,
     note: 'Gọi trước 30 phút',
@@ -70,6 +80,8 @@ const ordersData = [
     order_id: 6,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 3199000,
+    discount_price: 0,
     total_price: 3199000,
     shipping_fee: 30000,
     note: null,
@@ -82,6 +94,8 @@ const ordersData = [
     order_id: 7,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 25000,
     note: null,
@@ -94,6 +108,8 @@ const ordersData = [
     order_id: 8,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 4599000,
+    discount_price: 0,
     total_price: 4599000,
     shipping_fee: 0,
     note: 'VIP - Freeship',
@@ -106,6 +122,8 @@ const ordersData = [
     order_id: 9,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 998000,
+    discount_price: 0,
     total_price: 998000,
     shipping_fee: 30000,
     note: null,
@@ -120,6 +138,8 @@ const ordersData = [
     order_id: 10,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2199000,
+    discount_price: 0,
     total_price: 2199000,
     shipping_fee: 25000,
     note: null,
@@ -132,6 +152,8 @@ const ordersData = [
     order_id: 11,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 3499000,
+    discount_price: 0,
     total_price: 3499000,
     shipping_fee: 30000,
     note: 'Không giao cuối tuần',
@@ -144,6 +166,8 @@ const ordersData = [
     order_id: 12,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 1699000,
+    discount_price: 0,
     total_price: 1699000,
     shipping_fee: 25000,
     note: null,
@@ -156,6 +180,8 @@ const ordersData = [
     order_id: 13,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2899000,
+    discount_price: 0,
     total_price: 2899000,
     shipping_fee: 30000,
     note: null,
@@ -168,6 +194,8 @@ const ordersData = [
     order_id: 14,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 5199000,
+    discount_price: 0,
     total_price: 5199000,
     shipping_fee: 0,
     note: 'Đơn lớn - Freeship',
@@ -182,6 +210,8 @@ const ordersData = [
     order_id: 15,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 25000,
     note: null,
@@ -194,6 +224,8 @@ const ordersData = [
     order_id: 16,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3299000,
+    discount_price: 0,
     total_price: 3299000,
     shipping_fee: 30000,
     note: 'Giao buổi sáng',
@@ -206,6 +238,8 @@ const ordersData = [
     order_id: 17,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 2599000,
+    discount_price: 0,
     total_price: 2599000,
     shipping_fee: 25000,
     note: null,
@@ -218,6 +252,8 @@ const ordersData = [
     order_id: 18,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 1399000,
+    discount_price: 0,
     total_price: 1399000,
     shipping_fee: 30000,
     note: null,
@@ -232,6 +268,8 @@ const ordersData = [
     order_id: 19,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 4199000,
+    discount_price: 0,
     total_price: 4199000,
     shipping_fee: 0,
     note: 'Freeship',
@@ -244,6 +282,8 @@ const ordersData = [
     order_id: 20,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2899000,
+    discount_price: 0,
     total_price: 2899000,
     shipping_fee: 30000,
     note: null,
@@ -256,6 +296,8 @@ const ordersData = [
     order_id: 21,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 1799000,
+    discount_price: 0,
     total_price: 1799000,
     shipping_fee: 25000,
     note: 'Giao giờ hành chính',
@@ -268,6 +310,8 @@ const ordersData = [
     order_id: 22,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 3599000,
+    discount_price: 0,
     total_price: 3599000,
     shipping_fee: 30000,
     note: null,
@@ -282,6 +326,8 @@ const ordersData = [
     order_id: 23,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2399000,
+    discount_price: 0,
     total_price: 2399000,
     shipping_fee: 25000,
     note: null,
@@ -294,6 +340,8 @@ const ordersData = [
     order_id: 24,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 5499000,
+    discount_price: 0,
     total_price: 5499000,
     shipping_fee: 0,
     note: 'VIP - Freeship',
@@ -306,6 +354,8 @@ const ordersData = [
     order_id: 25,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 1599000,
+    discount_price: 0,
     total_price: 1599000,
     shipping_fee: 30000,
     note: null,
@@ -318,6 +368,8 @@ const ordersData = [
     order_id: 26,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2999000,
+    discount_price: 0,
     total_price: 2999000,
     shipping_fee: 25000,
     note: 'Gọi trước khi giao',
@@ -332,6 +384,8 @@ const ordersData = [
     order_id: 27,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3799000,
+    discount_price: 0,
     total_price: 3799000,
     shipping_fee: 30000,
     note: null,
@@ -344,6 +398,8 @@ const ordersData = [
     order_id: 28,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 25000,
     note: null,
@@ -356,6 +412,8 @@ const ordersData = [
     order_id: 29,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 4599000,
+    discount_price: 0,
     total_price: 4599000,
     shipping_fee: 0,
     note: 'Đơn lớn',
@@ -368,6 +426,8 @@ const ordersData = [
     order_id: 30,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2199000,
+    discount_price: 0,
     total_price: 2199000,
     shipping_fee: 30000,
     note: null,
@@ -382,6 +442,8 @@ const ordersData = [
     order_id: 31,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 2899000,
+    discount_price: 0,
     total_price: 2899000,
     shipping_fee: 25000,
     note: 'Giao buổi chiều',
@@ -394,6 +456,8 @@ const ordersData = [
     order_id: 32,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 3999000,
+    discount_price: 0,
     total_price: 3999000,
     shipping_fee: 30000,
     note: null,
@@ -406,6 +470,8 @@ const ordersData = [
     order_id: 33,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 1699000,
+    discount_price: 0,
     total_price: 1699000,
     shipping_fee: 25000,
     note: null,
@@ -418,6 +484,8 @@ const ordersData = [
     order_id: 34,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 5299000,
+    discount_price: 0,
     total_price: 5299000,
     shipping_fee: 0,
     note: 'VIP',
@@ -432,6 +500,8 @@ const ordersData = [
     order_id: 35,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2599000,
+    discount_price: 0,
     total_price: 2599000,
     shipping_fee: 30000,
     note: null,
@@ -444,6 +514,8 @@ const ordersData = [
     order_id: 36,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 25000,
     note: 'Giao nhanh',
@@ -456,6 +528,8 @@ const ordersData = [
     order_id: 37,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 4299000,
+    discount_price: 0,
     total_price: 4299000,
     shipping_fee: 0,
     note: null,
@@ -468,6 +542,8 @@ const ordersData = [
     order_id: 38,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2999000,
+    discount_price: 0,
     total_price: 2999000,
     shipping_fee: 30000,
     note: null,
@@ -482,6 +558,8 @@ const ordersData = [
     order_id: 39,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3599000,
+    discount_price: 0,
     total_price: 3599000,
     shipping_fee: 25000,
     note: null,
@@ -494,6 +572,8 @@ const ordersData = [
     order_id: 40,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 1799000,
+    discount_price: 0,
     total_price: 1799000,
     shipping_fee: 30000,
     note: 'Không giao tối',
@@ -506,6 +586,8 @@ const ordersData = [
     order_id: 41,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 4899000,
+    discount_price: 0,
     total_price: 4899000,
     shipping_fee: 0,
     note: 'Freeship',
@@ -518,6 +600,8 @@ const ordersData = [
     order_id: 42,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2399000,
+    discount_price: 0,
     total_price: 2399000,
     shipping_fee: 25000,
     note: null,
@@ -532,6 +616,8 @@ const ordersData = [
     order_id: 43,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 3199000,
+    discount_price: 0,
     total_price: 3199000,
     shipping_fee: 30000,
     note: null,
@@ -544,6 +630,8 @@ const ordersData = [
     order_id: 44,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 5699000,
+    discount_price: 0,
     total_price: 5699000,
     shipping_fee: 0,
     note: 'Black Friday',
@@ -558,6 +646,8 @@ const ordersData = [
     order_id: 45,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2899000,
+    discount_price: 0,
     total_price: 2899000,
     shipping_fee: 25000,
     note: 'Quà Giáng Sinh',
@@ -570,6 +660,8 @@ const ordersData = [
     order_id: 46,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 4399000,
+    discount_price: 0,
     total_price: 4399000,
     shipping_fee: 30000,
     note: null,
@@ -584,6 +676,8 @@ const ordersData = [
     order_id: 47,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2090000,
+    discount_price: 0,
     total_price: 2090000,
     shipping_fee: 30000,
     note: 'Tết Nguyên Đán',
@@ -596,6 +690,8 @@ const ordersData = [
     order_id: 48,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 3498000,
+    discount_price: 0,
     total_price: 3498000,
     shipping_fee: 25000,
     note: null,
@@ -608,6 +704,8 @@ const ordersData = [
     order_id: 49,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 30000,
     note: null,
@@ -622,6 +720,8 @@ const ordersData = [
     order_id: 50,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2799000,
+    discount_price: 0,
     total_price: 2799000,
     shipping_fee: 25000,
     note: null,
@@ -634,6 +734,8 @@ const ordersData = [
     order_id: 51,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 4599000,
+    discount_price: 0,
     total_price: 4599000,
     shipping_fee: 0,
     note: 'VIP',
@@ -648,6 +750,8 @@ const ordersData = [
     order_id: 52,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3199000,
+    discount_price: 0,
     total_price: 3199000,
     shipping_fee: 30000,
     note: null,
@@ -660,6 +764,8 @@ const ordersData = [
     order_id: 53,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 2599000,
+    discount_price: 0,
     total_price: 2599000,
     shipping_fee: 25000,
     note: 'Ngày Phụ Nữ',
@@ -674,6 +780,8 @@ const ordersData = [
     order_id: 54,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 1999000,
+    discount_price: 0,
     total_price: 1999000,
     shipping_fee: 30000,
     note: null,
@@ -686,6 +794,8 @@ const ordersData = [
     order_id: 55,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 3899000,
+    discount_price: 0,
     total_price: 3899000,
     shipping_fee: 25000,
     note: null,
@@ -700,6 +810,8 @@ const ordersData = [
     order_id: 56,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2999000,
+    discount_price: 0,
     total_price: 2999000,
     shipping_fee: 30000,
     note: null,
@@ -712,6 +824,8 @@ const ordersData = [
     order_id: 57,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 4799000,
+    discount_price: 0,
     total_price: 4799000,
     shipping_fee: 0,
     note: 'Freeship',
@@ -726,6 +840,8 @@ const ordersData = [
     order_id: 58,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2399000,
+    discount_price: 0,
     total_price: 2399000,
     shipping_fee: 25000,
     note: null,
@@ -738,6 +854,8 @@ const ordersData = [
     order_id: 59,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 3599000,
+    discount_price: 0,
     total_price: 3599000,
     shipping_fee: 30000,
     note: null,
@@ -752,6 +870,8 @@ const ordersData = [
     order_id: 60,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 1799000,
+    discount_price: 0,
     total_price: 1799000,
     shipping_fee: 25000,
     note: null,
@@ -764,6 +884,8 @@ const ordersData = [
     order_id: 61,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 5199000,
+    discount_price: 0,
     total_price: 5199000,
     shipping_fee: 0,
     note: 'VIP - Freeship',
@@ -778,6 +900,8 @@ const ordersData = [
     order_id: 62,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2899000,
+    discount_price: 0,
     total_price: 2899000,
     shipping_fee: 30000,
     note: null,
@@ -790,6 +914,8 @@ const ordersData = [
     order_id: 63,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 3999000,
+    discount_price: 0,
     total_price: 3999000,
     shipping_fee: 25000,
     note: null,
@@ -804,6 +930,8 @@ const ordersData = [
     order_id: 64,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 2199000,
+    discount_price: 0,
     total_price: 2199000,
     shipping_fee: 25000,
     note: null,
@@ -816,6 +944,8 @@ const ordersData = [
     order_id: 65,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 4599000,
+    discount_price: 0,
     total_price: 4599000,
     shipping_fee: 30000,
     note: null,
@@ -830,6 +960,8 @@ const ordersData = [
     order_id: 66,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3298000,
+    discount_price: 0,
     total_price: 3298000,
     shipping_fee: 25000,
     note: null,
@@ -842,6 +974,8 @@ const ordersData = [
     order_id: 67,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 1899000,
+    discount_price: 0,
     total_price: 1899000,
     shipping_fee: 30000,
     note: 'Giao nhanh',
@@ -854,6 +988,8 @@ const ordersData = [
     order_id: 68,
     customer_id: 1,
     address_id: 2,
+    subtotal_price: 5199000,
+    discount_price: 0,
     total_price: 5199000,
     shipping_fee: 0,
     note: 'VIP',
@@ -866,6 +1002,8 @@ const ordersData = [
     order_id: 69,
     customer_id: 2,
     address_id: 3,
+    subtotal_price: 2599000,
+    discount_price: 0,
     total_price: 2599000,
     shipping_fee: 25000,
     note: null,
@@ -878,6 +1016,8 @@ const ordersData = [
     order_id: 70,
     customer_id: 1,
     address_id: 1,
+    subtotal_price: 3899000,
+    discount_price: 0,
     total_price: 3899000,
     shipping_fee: 30000,
     note: 'Gọi trước',
@@ -890,6 +1030,8 @@ const ordersData = [
     order_id: 71,
     customer_id: 2,
     address_id: 4,
+    subtotal_price: 1699000,
+    discount_price: 0,
     total_price: 1699000,
     shipping_fee: 25000,
     note: null,
@@ -909,7 +1051,6 @@ const orderDetailData = [
     variant_id: 1,
     quantity: 3,
     total_price: 2700000,
-    discount_price: 0,
   },
 
   // Order 2
@@ -919,7 +1060,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
   {
     order_detail_id: 3,
@@ -927,7 +1067,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 2,
     total_price: 798000,
-    discount_price: 18000,
   },
 
   // Order 3
@@ -937,7 +1076,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 5,
@@ -945,7 +1083,6 @@ const orderDetailData = [
     variant_id: 8,
     quantity: 1,
     total_price: 1300000,
-    discount_price: 0,
   },
   {
     order_detail_id: 6,
@@ -953,7 +1090,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 109000,
   },
 
   // Order 4
@@ -963,7 +1099,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 8,
@@ -971,7 +1106,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 72000,
   },
 
   // Order 5
@@ -981,7 +1115,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 99000,
   },
 
   // Order 6
@@ -991,7 +1124,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 11,
@@ -999,7 +1131,6 @@ const orderDetailData = [
     variant_id: 41,
     quantity: 1,
     total_price: 999000,
-    discount_price: 50000,
   },
   {
     order_detail_id: 12,
@@ -1007,7 +1138,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 7
@@ -1017,7 +1147,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 8
@@ -1027,7 +1156,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 2,
     total_price: 4398000,
-    discount_price: 0,
   },
   {
     order_detail_id: 15,
@@ -1035,7 +1163,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 0,
   },
 
   // Order 9
@@ -1045,7 +1172,6 @@ const orderDetailData = [
     variant_id: 41,
     quantity: 1,
     total_price: 999000,
-    discount_price: 1000,
   },
 
   // Order 10
@@ -1055,7 +1181,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
 
   // Order 11
@@ -1065,7 +1190,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 19,
@@ -1073,7 +1197,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
   {
     order_detail_id: 20,
@@ -1081,7 +1204,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 119000,
   },
 
   // Order 12
@@ -1091,7 +1213,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 22,
@@ -1099,7 +1220,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 
   // Order 13
@@ -1109,7 +1229,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 0,
   },
   {
     order_detail_id: 24,
@@ -1117,7 +1236,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 14
@@ -1127,7 +1245,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 2,
     total_price: 5518000,
-    discount_price: 319000,
   },
 
   // Order 15
@@ -1137,7 +1254,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 16
@@ -1147,7 +1263,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 0,
   },
   {
     order_detail_id: 28,
@@ -1155,7 +1270,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
   {
     order_detail_id: 29,
@@ -1163,7 +1277,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 119000,
   },
 
   // Order 17
@@ -1173,7 +1286,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 31,
@@ -1181,7 +1293,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 18
@@ -1191,7 +1302,6 @@ const orderDetailData = [
     variant_id: 50,
     quantity: 1,
     total_price: 1399000,
-    discount_price: 0,
   },
 
   // Order 19
@@ -1201,7 +1311,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 34,
@@ -1209,7 +1318,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
   {
     order_detail_id: 35,
@@ -1217,7 +1325,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 59000,
   },
 
   // Order 20
@@ -1227,7 +1334,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 37,
@@ -1235,7 +1341,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 21
@@ -1245,7 +1350,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 39,
@@ -1253,7 +1357,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 
   // Order 22
@@ -1263,7 +1366,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 41,
@@ -1271,7 +1373,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
   {
     order_detail_id: 42,
@@ -1279,7 +1380,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 99000,
   },
 
   // Order 23
@@ -1289,7 +1389,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 160000,
   },
 
   // Order 24
@@ -1299,7 +1398,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 2,
     total_price: 5198000,
-    discount_price: 0,
   },
   {
     order_detail_id: 45,
@@ -1307,7 +1405,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 25
@@ -1317,7 +1414,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
   {
     order_detail_id: 47,
@@ -1325,7 +1421,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 2,
     total_price: 798000,
-    discount_price: 18000,
   },
 
   // Order 26
@@ -1335,7 +1430,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 49,
@@ -1343,7 +1437,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 1,
     total_price: 790000,
-    discount_price: 0,
   },
 
   // Order 27
@@ -1353,7 +1446,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 51,
@@ -1361,7 +1453,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 28
@@ -1371,7 +1462,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 29
@@ -1381,7 +1471,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 0,
   },
   {
     order_detail_id: 54,
@@ -1389,7 +1478,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 100000,
   },
 
   // Order 30
@@ -1399,7 +1487,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
 
   // Order 31
@@ -1409,7 +1496,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 0,
   },
   {
     order_detail_id: 57,
@@ -1417,7 +1503,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 32
@@ -1427,7 +1512,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 59,
@@ -1435,7 +1519,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 33
@@ -1445,7 +1528,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 61,
@@ -1453,7 +1535,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 
   // Order 34
@@ -1463,7 +1544,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 2,
     total_price: 5198000,
-    discount_price: 0,
   },
   {
     order_detail_id: 63,
@@ -1471,7 +1551,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 99000,
   },
 
   // Order 35
@@ -1481,7 +1560,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 65,
@@ -1489,7 +1567,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 36
@@ -1499,7 +1576,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 37
@@ -1509,7 +1585,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 68,
@@ -1517,7 +1592,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
   {
     order_detail_id: 69,
@@ -1525,7 +1599,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 38
@@ -1535,7 +1608,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 71,
@@ -1543,7 +1615,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 39
@@ -1553,7 +1624,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 73,
@@ -1561,7 +1631,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 40
@@ -1571,7 +1640,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 75,
@@ -1579,7 +1647,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 
   // Order 41
@@ -1589,7 +1656,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 77,
@@ -1597,7 +1663,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
 
   // Order 42
@@ -1607,7 +1672,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
 
   // Order 43
@@ -1617,7 +1681,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 0,
   },
   {
     order_detail_id: 80,
@@ -1625,7 +1688,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 44 - Black Friday (nhiều sản phẩm)
@@ -1635,7 +1697,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 2,
     total_price: 5518000,
-    discount_price: 319000,
   },
   {
     order_detail_id: 82,
@@ -1643,7 +1704,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 0,
   },
 
   // Order 45
@@ -1653,7 +1713,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 84,
@@ -1661,7 +1720,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 46
@@ -1671,7 +1729,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 86,
@@ -1679,7 +1736,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
   {
     order_detail_id: 87,
@@ -1687,7 +1743,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 47
@@ -1697,7 +1752,6 @@ const orderDetailData = [
     variant_id: 1,
     quantity: 2,
     total_price: 1800000,
-    discount_price: 0,
   },
   {
     order_detail_id: 89,
@@ -1705,7 +1759,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 110000,
   },
 
   // Order 48
@@ -1715,7 +1768,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 91,
@@ -1723,7 +1775,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
   {
     order_detail_id: 92,
@@ -1731,7 +1782,6 @@ const orderDetailData = [
     variant_id: 4,
     quantity: 1,
     total_price: 1200000,
-    discount_price: 120000,
   },
 
   // Order 49
@@ -1741,7 +1791,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 50
@@ -1751,7 +1800,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 95,
@@ -1759,7 +1807,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 51 - Valentine
@@ -1769,7 +1816,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 97,
@@ -1777,7 +1823,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 100000,
   },
 
   // Order 52
@@ -1787,7 +1832,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 0,
   },
   {
     order_detail_id: 99,
@@ -1795,7 +1839,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 53 - Women's Day
@@ -1805,7 +1848,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 101,
@@ -1813,7 +1855,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 1,
     total_price: 790000,
-    discount_price: 90000,
   },
 
   // Order 54
@@ -1823,7 +1864,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 200000,
   },
 
   // Order 55
@@ -1833,7 +1873,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 104,
@@ -1841,7 +1880,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 56
@@ -1851,7 +1889,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 106,
@@ -1859,7 +1896,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 57
@@ -1869,7 +1905,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 108,
@@ -1877,7 +1912,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
 
   // Order 58
@@ -1887,7 +1921,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
 
   // Order 59
@@ -1897,7 +1930,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 2,
     total_price: 2598000,
-    discount_price: 0,
   },
   {
     order_detail_id: 111,
@@ -1905,7 +1937,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 60
@@ -1915,7 +1946,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 113,
@@ -1923,7 +1953,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 
   // Order 61
@@ -1933,7 +1962,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 2,
     total_price: 5518000,
-    discount_price: 319000,
   },
 
   // Order 62
@@ -1943,7 +1971,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 116,
@@ -1951,7 +1978,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 63
@@ -1961,7 +1987,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 118,
@@ -1969,7 +1994,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 64
@@ -1979,7 +2003,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
 
   // Order 65
@@ -1989,7 +2012,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 121,
@@ -1997,7 +2019,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
   {
     order_detail_id: 122,
@@ -2005,7 +2026,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 0,
   },
 
   // Order 66
@@ -2015,7 +2035,6 @@ const orderDetailData = [
     variant_id: 34,
     quantity: 1,
     total_price: 2599000,
-    discount_price: 100000,
   },
   {
     order_detail_id: 124,
@@ -2023,7 +2042,6 @@ const orderDetailData = [
     variant_id: 27,
     quantity: 1,
     total_price: 819000,
-    discount_price: 20000,
   },
 
   // Order 67
@@ -2033,7 +2051,6 @@ const orderDetailData = [
     variant_id: 21,
     quantity: 2,
     total_price: 1980000,
-    discount_price: 81000,
   },
 
   // Order 68 - Đang giao
@@ -2043,7 +2060,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 2,
     total_price: 5518000,
-    discount_price: 319000,
   },
 
   // Order 69 - Đang xử lý
@@ -2053,7 +2069,6 @@ const orderDetailData = [
     variant_id: 53,
     quantity: 1,
     total_price: 2199000,
-    discount_price: 0,
   },
   {
     order_detail_id: 128,
@@ -2061,7 +2076,6 @@ const orderDetailData = [
     variant_id: 56,
     quantity: 1,
     total_price: 399000,
-    discount_price: 0,
   },
 
   // Order 70 - Đã xác nhận
@@ -2071,7 +2085,6 @@ const orderDetailData = [
     variant_id: 37,
     quantity: 1,
     total_price: 2759000,
-    discount_price: 60000,
   },
   {
     order_detail_id: 130,
@@ -2079,7 +2092,6 @@ const orderDetailData = [
     variant_id: 30,
     quantity: 1,
     total_price: 1299000,
-    discount_price: 0,
   },
 
   // Order 71 - Chờ xác nhận
@@ -2089,7 +2101,6 @@ const orderDetailData = [
     variant_id: 15,
     quantity: 2,
     total_price: 1580000,
-    discount_price: 0,
   },
   {
     order_detail_id: 132,
@@ -2097,7 +2108,6 @@ const orderDetailData = [
     variant_id: 18,
     quantity: 1,
     total_price: 690000,
-    discount_price: 71000,
   },
 ];
 
@@ -2244,7 +2254,6 @@ export async function seedOrderDetails(prisma: PrismaClient) {
       update: {
         quantity: detail.quantity,
         total_price: detail.total_price,
-        discount_price: detail.discount_price,
       },
       create: detail,
     });

@@ -63,89 +63,153 @@ async function upsertDocument(
 
 // ========== BRANDS DATA ==========
 const brandsData = [
-  { name: 'Adidas', slug: 'adidas', desc: 'Thương hiệu thể thao quốc tế' },
-  { name: 'Nike', slug: 'nike', desc: 'Just Do It - Thể thao hàng đầu' },
-  { name: 'Uniqlo', slug: 'uniqlo', desc: 'Thời trang Nhật Bản' },
+  {
+    id: 1,
+    name: 'Adidas',
+    slug: 'adidas',
+    desc: 'Thương hiệu thể thao quốc tế nổi tiếng với 3 sọc đặc trưng. Chuyên về giày dép, quần áo thể thao chất lượng cao.',
+  },
+  {
+    id: 2,
+    name: 'Nike',
+    slug: 'nike',
+    desc: 'Just Do It - Thương hiệu thể thao hàng đầu thế giới. Sản phẩm đa dạng từ giày chạy bộ, áo thun, đến phụ kiện thể thao.',
+  },
+  {
+    id: 3,
+    name: 'Uniqlo',
+    slug: 'uniqlo',
+    desc: 'Thời trang Nhật Bản với thiết kế tối giản, chất liệu cao cấp. Nổi tiếng với áo chống nắng AIRism và áo khoác lông vũ.',
+  },
 ];
 
 // ========== CATEGORIES DATA ==========
 const categoriesData = [
-  { category_name: 'Đồ nam', slug: 'do-nam', description: 'Danh mục đồ nam', parent_id: null },
-  { category_name: 'Đồ nữ', slug: 'do-nu', description: 'Danh mục đồ nữ', parent_id: null },
-  { category_name: 'Áo thun nam', slug: 'ao-thun-nam', description: 'T-shirt', parent_id: 1 },
   {
+    category_id: 1,
+    category_name: 'Đồ nam',
+    slug: 'do-nam',
+    description: 'Tất cả sản phẩm thời trang dành cho nam giới',
+    parent_id: null,
+  },
+  {
+    category_id: 2,
+    category_name: 'Đồ nữ',
+    slug: 'do-nu',
+    description: 'Tất cả sản phẩm thời trang dành cho nữ giới',
+    parent_id: null,
+  },
+  {
+    category_id: 3,
+    category_name: 'Áo thun nam',
+    slug: 'ao-thun-nam',
+    description: 'T-shirt nam, áo phông cotton thoáng mát',
+    parent_id: 1,
+  },
+  {
+    category_id: 4,
     category_name: 'Áo sơ mi nam',
     slug: 'ao-so-mi-nam',
-    description: 'Shirt formal, casual',
+    description: 'Shirt formal, áo sơ mi công sở và casual',
     parent_id: 1,
   },
   {
+    category_id: 5,
     category_name: 'Áo polo nam',
     slug: 'ao-polo-nam',
-    description: 'Polo shirt, casual',
+    description: 'Polo shirt, áo thể thao có cổ thanh lịch',
     parent_id: 1,
   },
   {
+    category_id: 6,
     category_name: 'Quần short nam',
     slug: 'quan-short-nam',
-    description: 'Summer shorts',
+    description: 'Quần ngắn mùa hè, summer shorts thể thao',
     parent_id: 1,
   },
   {
+    category_id: 7,
     category_name: 'Quần dài nam',
     slug: 'quan-dai-nam',
-    description: 'Jeans, chinos, trousers',
+    description: 'Jeans, chinos, quần tây, trousers',
     parent_id: 1,
   },
-  { category_name: 'Áo thun nữ', slug: 'ao-thun-nu', description: 'T-shirt', parent_id: 2 },
   {
-    category_name: 'Áo sơ mi nữ',
-    slug: 'ao-so-mi-nu',
-    description: 'Shirt formal, casual',
-    parent_id: 2,
-  },
-  { category_name: 'Áo khoác nữ', slug: 'ao-khoac-nu', description: 'Jacket, coat', parent_id: 2 },
-  {
-    category_name: 'Quần short nữ',
-    slug: 'quan-short-nu',
-    description: 'Summer shorts',
-    parent_id: 2,
-  },
-  {
-    category_name: 'Quần dài nữ',
-    slug: 'quan-dai-nu',
-    description: 'Jeans, chinos, trousers',
-    parent_id: 2,
-  },
-  {
-    category_name: 'Áo tank top',
-    slug: 'ao-tank-top',
-    description: 'áo tank top nữ',
-    parent_id: 2,
-  },
-  { category_name: 'Váy ngắn', slug: 'vay-ngan', description: 'Váy ngắn nữ', parent_id: 2 },
-  {
-    category_name: 'Quần legging',
-    slug: 'quan-legging',
-    description: 'Quần legging nữ',
-    parent_id: 2,
-  },
-  {
+    category_id: 16,
     category_name: 'Áo khoác nam',
     slug: 'ao-khoac-nam',
-    description: 'Jacket, coat',
+    description: 'Jacket, coat, áo khoác gió, hoodie nam',
     parent_id: 1,
   },
+
   {
-    category_name: 'Áo khoác hoodie nữ',
-    slug: 'ao-khoac-hoodie-nu',
-    description: 'Áo khoác hoodie nữ',
+    category_id: 8,
+    category_name: 'Áo thun nữ',
+    slug: 'ao-thun-nu',
+    description: 'T-shirt nữ, áo phông form rộng và ôm',
     parent_id: 2,
   },
   {
+    category_id: 9,
+    category_name: 'Áo sơ mi nữ',
+    slug: 'ao-so-mi-nu',
+    description: 'Shirt nữ công sở và dạo phố',
+    parent_id: 2,
+  },
+  {
+    category_id: 10,
+    category_name: 'Áo khoác nữ',
+    slug: 'ao-khoac-nu',
+    description: 'Jacket, coat, áo khoác da, áo dạ nữ',
+    parent_id: 2,
+  },
+  {
+    category_id: 11,
+    category_name: 'Quần short nữ',
+    slug: 'quan-short-nu',
+    description: 'Quần ngắn nữ, summer shorts',
+    parent_id: 2,
+  },
+  {
+    category_id: 12,
+    category_name: 'Quần dài nữ',
+    slug: 'quan-dai-nu',
+    description: 'Jeans, chinos, quần ống rộng, trousers nữ',
+    parent_id: 2,
+  },
+  {
+    category_id: 13,
+    category_name: 'Áo tank top',
+    slug: 'ao-tank-top',
+    description: 'Áo hai dây, tank top thể thao nữ',
+    parent_id: 2,
+  },
+  {
+    category_id: 14,
+    category_name: 'Váy ngắn',
+    slug: 'vay-ngan',
+    description: 'Váy ngắn dạo phố, váy chữ A',
+    parent_id: 2,
+  },
+  {
+    category_id: 15,
+    category_name: 'Quần legging',
+    slug: 'quan-legging',
+    description: 'Quần legging tập gym, yoga nữ',
+    parent_id: 2,
+  },
+  {
+    category_id: 17,
+    category_name: 'Áo khoác hoodie nữ',
+    slug: 'ao-khoac-hoodie-nu',
+    description: 'Áo hoodie có mũ, áo nỉ nữ',
+    parent_id: 2,
+  },
+  {
+    category_id: 18,
     category_name: 'Quần jeans nữ',
     slug: 'quan-jeans-nu',
-    description: 'Quần jeans nữ',
+    description: 'Quần bò nữ, jeans rách, skinny jeans',
     parent_id: 2,
   },
 ];
@@ -168,16 +232,28 @@ export async function seedBrands(prisma: PrismaClient) {
     const { data: exists } = await supabase
       .from('documents')
       .select('source_id')
-      .eq('source_id', brand.slug)
+      .eq('source_id', `brand-${brand.slug}`)
       .maybeSingle();
 
     if (exists) {
-      console.log(`⏭️ Skip exists: ${brand.slug}`);
+      console.log(`⏭️ Skip exists: brand-${brand.slug}`);
       continue;
     }
 
-    const text = `${brand.name}. ${brand.desc}`;
-    await upsertDocument(brand.slug, text, { type: 'brand' }, 'brands');
+    // Content chi tiết hơn để AI hiểu rõ
+    const text = `Thương hiệu: ${brand.name}. ${brand.desc}. Slug: ${brand.slug}. Khách hàng có thể tìm các sản phẩm của ${brand.name} bằng cách lọc theo brand hoặc tìm kiếm trực tiếp tên thương hiệu.`;
+
+    await upsertDocument(
+      `brand-${brand.slug}`,
+      text,
+      {
+        type: 'brand',
+        brand_id: brand.id,
+        brand_name: brand.name,
+        slug: brand.slug,
+      },
+      'brands',
+    );
   }
 
   console.log('🎉 Brands seed & embedding DONE!');
@@ -197,21 +273,34 @@ export async function seedCategories(prisma: PrismaClient) {
     const { data: exists } = await supabase
       .from('documents')
       .select('source_id')
-      .eq('source_id', cat.slug)
+      .eq('source_id', `category-${cat.slug}`)
       .maybeSingle();
 
     if (exists) {
-      console.log(`⏭️ Skip exists: ${cat.slug}`);
+      console.log(`⏭️ Skip exists: category-${cat.slug}`);
       continue;
     }
 
-    const text = `${cat.category_name}. ${cat.description}`;
+    // Xác định gender từ parent
+    const gender = cat.parent_id === 1 ? 'nam' : cat.parent_id === 2 ? 'nữ' : 'unisex';
+
+    // Content phong phú hơn
+    const parentName = cat.parent_id
+      ? categoriesData.find((c) => c.category_id === cat.parent_id)?.category_name
+      : null;
+
+    const text = `Danh mục sản phẩm: ${cat.category_name}. Mô tả: ${cat.description}. ${parentName ? `Thuộc nhóm: ${parentName}.` : ''} Dành cho: ${gender}. Slug: ${cat.slug}. Khách có thể tìm ${cat.category_name} trong mục ${parentName || 'chính'}.`;
+
     await upsertDocument(
-      cat.slug,
+      `category-${cat.slug}`,
       text,
       {
-        parent_id: cat.parent_id,
         type: 'category',
+        category_id: cat.category_id,
+        category_name: cat.category_name,
+        slug: cat.slug,
+        parent_id: cat.parent_id,
+        gender: gender,
       },
       'categories',
     );
