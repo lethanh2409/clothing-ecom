@@ -9,6 +9,7 @@ import { seedVouchers } from './06_vouchers';
 import { seedSiteContents } from './07_site_contents';
 import { seedVariantAssets } from './08_assets';
 import { seedOrdersComplete } from './09_orders';
+import seedInventorySnapshots from './10_inventory_snapshots';
 
 async function main() {
   console.log('🌱 Starting seed...\n');
@@ -40,6 +41,9 @@ async function main() {
 
   console.log('\n=== Step 9: Orders ===');
   await seedOrdersComplete(prisma);
+
+  console.log('\n=== Step 10: Inventory Snapshots ===');
+  await seedInventorySnapshots(prisma);
 
   console.log('\n✅ Seed completed successfully!');
 }
