@@ -1,26 +1,42 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { OtpService } from './otp.service';
 import { SendOtpDto } from '../dtos/send-otp.dto';
 import { VerifyOtpDto } from '../dtos/verify-otp.dto';
 import { Public } from 'src/auth/public.decorator';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('auth/otp')
 export class OtpController {
-  constructor(private readonly otp: OtpService) {}
+  constructor(private readonly otpService: OtpService) {}
 
   @Public()
   @Post('send')
-  async send(@Body() dto: SendOtpDto) {
-    const purpose = dto.purpose ?? 'register';
-    await this.otp.send(dto.email, purpose);
-    // Không spread để tránh trùng 'success'
-    return { success: true };
+  @Post('send')
+  async sendOtp(@Body() dto: SendOtpDto) {
+    await this.otpService.send(dto.email, dto.purpose);
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Đã gửi OTP! Vui lòng kiểm tra email',
+    };
   }
 
   @Public()
   @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Xác minh mã OTP' })
+  @ApiResponse({
+    status: 200,
+    description: 'Xác minh thành công',
+    schema: {
+      example: {
+        success: true,
+        message: 'Xác minh OTP thành công',
+      },
+    },
+  })
   async verify(@Body() dto: VerifyOtpDto) {
-    const { otp_token } = await this.otp.verify(dto.email, dto.code, dto.purpose);
-    return { success: true, otp_token };
+    const result = await this.otpService.verify(dto.email, dto.code, dto.purpose);
+    return result;
   }
 }

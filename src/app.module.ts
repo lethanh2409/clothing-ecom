@@ -19,6 +19,7 @@ import { MailModule } from './mail/mail.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { OrdersCronService } from './orders/orders.cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -54,6 +55,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     MailModule,
 
     InventoryModule,
+
+    ChatbotModule,
   ],
   providers: [
     VnpayService,

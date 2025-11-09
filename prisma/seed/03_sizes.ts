@@ -3,64 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 
-// ========== GEMINI EMBEDDING ==========
-interface GeminiResponse {
-  embedding?: {
-    values: number[];
-  };
-}
-
-async function embedText(text: string) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'text-embedding-004',
-        content: {
-          parts: [{ text }],
-        },
-      }),
-    },
-  );
-
-  const data = (await res.json()) as GeminiResponse;
-
-  if (!data.embedding?.values) {
-    console.error('Gemini embedding failed:', data);
-    throw new Error('Gemini embedding failed');
-  }
-
-  return data.embedding.values;
-}
-
-// ========== UPSERT HELPER ==========
-async function upsertDocument(
-  sourceId: string,
-  content: string,
-  metadata: any,
-  sourceTable: string,
-) {
-  const embedding = await embedText(content);
-  const { error } = await supabase.from('documents').upsert(
-    {
-      source_id: sourceId,
-      content,
-      metadata,
-      embedding,
-      source_table: sourceTable,
-    },
-    { onConflict: 'source_id' },
-  );
-
-  if (error) {
-    console.error(`❌ Supabase error on ${sourceId}`, error);
-  } else {
-    console.log(`✅ Vector upserted: ${sourceId}`);
-  }
-}
-
 // ========== SIZES DATA ==========
 const sizesData = [
   // Adidas (brand_id=1) – áo nam S/M/L/XL
@@ -574,18 +516,60 @@ const sizesData = [
   },
 ];
 
-// ========== SEED SIZES (CẢI THIỆN LỚN) ==========
-export async function seedSizes(prisma: PrismaClient) {
-  console.log('📏 Seeding local DB sizes...');
-  await prisma.sizes.createMany({
-    data: sizesData,
-    skipDuplicates: true,
-  });
+interface GeminiResponse {
+  embedding?: { values: number[] };
+}
 
-  console.log('🧠 Syncing sizes to Supabase Vector...');
+async function embedText(text: string) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'text-embedding-004',
+        content: { parts: [{ text }] },
+      }),
+    },
+  );
+  const data = (await res.json()) as GeminiResponse;
+  if (!data.embedding?.values) {
+    console.error('❌ Gemini embedding failed:', data);
+    throw new Error('Gemini embedding failed');
+  }
+  return data.embedding.values;
+}
+
+async function upsertDocument(sourceId: string, content: string, metadata: any, source_table) {
+  const embedding = await embedText(content);
+  const { error } = await supabase.from('documents').upsert(
+    {
+      source_id: sourceId,
+      content,
+      metadata,
+      embedding,
+      source_table,
+    },
+    { onConflict: 'source_id' },
+  );
+
+  if (error) console.error(`❌ Supabase upsert error on ${sourceId}`, error);
+  else console.log(`✅ Size vector upserted: ${sourceId}`);
+}
+
+export async function seedSizes(prisma: PrismaClient) {
+  console.log('📏 Seeding size data to local DB...');
+  await prisma.sizes.createMany({ data: sizesData, skipDuplicates: true });
+
+  console.log('🧠 Syncing size embeddings to Supabase...');
+
+  const brands = await prisma.brands.findMany();
 
   for (const size of sizesData) {
-    const sourceId = `size-${size.brand_id}-${size.gender}-${size.type.replace(/\s+/g, '-')}-${size.size_label}`;
+    const brand = brands.find((b) => b.brand_id === size.brand_id);
+    const brandName = brand?.brand_name || `Brand ${size.brand_id}`;
+    const genderText = size.gender === 'male' ? 'nam' : 'nữ';
+    const sourceId = `size-${brandName}-${genderText}-${size.type}-${size.size_label}`;
 
     const { data: exists } = await supabase
       .from('documents')
@@ -598,42 +582,35 @@ export async function seedSizes(prisma: PrismaClient) {
       continue;
     }
 
-    // Lấy tên brand
-    const brandsData = await prisma.brands.findMany();
-    const brandName =
-      brandsData.find((b) => b.brand_id === size.brand_id)?.brand_name || `Brand ${size.brand_id}`;
-    const genderText = size.gender === 'male' ? 'nam' : 'nữ';
-
-    // Content CỰC KỲ chi tiết để AI hiểu
-    const measurements = size.measurements;
+    const m = size.measurements;
     const measText =
       size.type === 'pants'
-        ? `Vòng eo: ${measurements.waist}, Vòng mông: ${measurements.hip}, Chiều dài quần: ${measurements.length}`
-        : `Vòng ngực: ${measurements.chest}, Vòng eo: ${measurements.waist}, Vòng mông: ${measurements.hip}, Chiều dài áo: ${measurements.length}`;
+        ? `Eo ${m.waist}, mông ${m.hip}, dài ${m.length}`
+        : `Ngực ${m.chest}, eo ${m.waist}, mông ${m.hip}, dài ${m.length}`;
 
-    const text = `Bảng size ${brandName} - ${size.type} ${genderText} - Size ${size.size_label}.
-Phù hợp với người cao ${size.height_range}, cân nặng ${size.weight_range}.
-Số đo chi tiết: ${measText}.
-Loại sản phẩm: ${size.type === 'pants' ? 'quần dài, quần short, jeans' : 'áo thun, áo polo, áo sơ mi'}.
-Khách hàng có thể chọn size ${size.size_label} nếu ${genderText === 'nam' ? 'anh' : 'chị'} cao khoảng ${size.height_range} và nặng khoảng ${size.weight_range}.`;
+    // 👉 Text gọn, dễ embed
+    const content = `
+Bảng size ${brandName} cho ${genderText}.
+Sản phẩm: ${size.type}, size ${size.size_label}.
+Chiều cao phù hợp: ${size.height_range}.
+Cân nặng phù hợp: ${size.weight_range}.
+Số đo: ${measText}.
+`;
 
-    await upsertDocument(
-      sourceId,
-      text,
-      {
-        type: 'size',
-        brand_id: size.brand_id,
-        brand_name: brandName,
-        gender: size.gender,
-        size_label: size.size_label,
-        product_type: size.type,
-        height_range: size.height_range,
-        weight_range: size.weight_range,
-        measurements: size.measurements,
-      },
-      'sizes',
-    );
+    const metadata = {
+      type: 'size',
+      brand_id: size.brand_id,
+      brand_name: brandName,
+      gender: size.gender,
+      size_label: size.size_label,
+      product_type: size.type,
+      height_range: size.height_range,
+      weight_range: size.weight_range,
+      measurements: size.measurements,
+    };
+
+    await upsertDocument(sourceId, content, metadata, 'sizes');
   }
 
-  console.log('🎉 Sizes seed & embedding DONE!');
+  console.log('🎉 Size seeding + embeddings DONE!');
 }

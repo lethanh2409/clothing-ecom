@@ -39,13 +39,6 @@ export class OtpService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  private signOtpToken(email: string, purpose: OtpPurpose): string {
-    const secret = process.env.OTP_JWT_SECRET || 'otp_secret';
-    const ttl = process.env.OTP_JWT_TTL || '10m';
-    const payload: OtpJwtPayload = { email, purpose, ok: true };
-    return jwt.sign(payload, secret, { expiresIn: ttl });
-  }
-
   verifyOtpToken(token: string, purpose: OtpPurpose): { email: string } {
     const secret = process.env.OTP_JWT_SECRET || 'otp_secret';
     try {
@@ -61,7 +54,19 @@ export class OtpService {
   }
 
   async send(email: string, purpose: OtpPurpose = 'register'): Promise<void> {
+    console.log('📧 Sending OTP to:', email);
     const now = new Date();
+
+    // ✅ 1. Kiểm tra tồn tại trong bảng users trước khi gửi OTP
+    const user = await this.prisma.users.findUnique({ where: { email } });
+    console.log('📧 Check user existence:', user ? 'found' : 'not found');
+    if (purpose === 'register' && user) {
+      throw new BadRequestException('Email này đã được sử dụng để đăng ký');
+    }
+
+    if (purpose === 'reset' && !user) {
+      throw new NotFoundException('Email này chưa được đăng ký trong hệ thống');
+    }
 
     // để TS tự suy luận kiểu: (email_otps | null)
     const exists = await this.prisma.email_otps.findFirst({
@@ -111,35 +116,41 @@ export class OtpService {
         },
       });
     }
-
+    console.log('📧 Sending OTP to:', code);
     await this.mail.sendOtp(email, code);
   }
 
-  async verify(email: string, code: string, purpose: OtpPurpose): Promise<{ otp_token: string }> {
-    const rec = await this.prisma.email_otps.findFirst({ where: { email, purpose } });
-    if (!rec) throw new NotFoundException('OTP không tồn tại. Vui lòng gửi lại.');
-    if (rec.consumed_at) throw new BadRequestException('OTP đã được sử dụng');
-    if (rec.expires_at < new Date()) throw new BadRequestException('OTP đã hết hạn');
-    if (rec.attempts >= MAX_ATTEMPTS) {
+  async verify(
+    email: string,
+    code: string,
+    purpose: OtpPurpose,
+  ): Promise<{ success: boolean; message: string }> {
+    const otp = await this.prisma.email_otps.findFirst({ where: { email, purpose } });
+    if (!otp) throw new NotFoundException('OTP không tồn tại hoặc chưa được gửi');
+
+    // Kiểm tra trạng thái
+    if (otp.consumed_at) throw new BadRequestException('OTP đã được sử dụng');
+    if (otp.expires_at < new Date()) throw new BadRequestException('OTP đã hết hạn');
+    if (otp.attempts >= MAX_ATTEMPTS) {
       throw new HttpException('Bạn đã nhập sai quá số lần cho phép', HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const ok = await bcrypt.compare(code, rec.code_hash);
-    if (!ok) {
+    // Kiểm tra mã OTP
+    const isValid = await bcrypt.compare(code, otp.code_hash);
+    if (!isValid) {
       await this.prisma.email_otps.update({
-        where: { id: rec.id },
-        data: { attempts: rec.attempts + 1 },
+        where: { id: otp.id },
+        data: { attempts: otp.attempts + 1 },
       });
-      throw new BadRequestException('Mã OTP không đúng');
+      throw new BadRequestException('Mã OTP không chính xác');
     }
 
+    // Nếu hợp lệ → đánh dấu đã sử dụng
     await this.prisma.email_otps.update({
-      where: { id: rec.id },
+      where: { id: otp.id },
       data: { consumed_at: new Date() },
     });
 
-    const otp_token = this.signOtpToken(email, purpose);
-    return { otp_token };
+    return { success: true, message: 'Xác minh OTP thành công' };
   }
 }

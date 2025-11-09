@@ -130,8 +130,6 @@ export class ProductsService {
   }
 
   // ================= Queries =================
-  // src/products/products.service.ts
-  // THÊM CÁC METHODS NÀY VÀO PHẦN // ================= Queries =================
 
   /**
    * Lấy tất cả variants kèm thông tin product (cho màn hình quản lý tồn kho)

@@ -26,16 +26,6 @@ export class UsersController {
     };
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: number) {
-    const user = await this.userService.findOne(+id);
-    return {
-      success: true,
-      message: `Thông tin user #${id}`,
-      data: user,
-    };
-  }
-
   @Post()
   async create(@Body() dto: CreateUserDto) {
     const user = await this.userService.create(dto);
@@ -91,5 +81,15 @@ export class UsersController {
     }
 
     return this.userService.updateProfile(userId, updateProfileDto);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: number) {
+    const user = await this.userService.findOne(+id);
+    return {
+      success: true,
+      message: `Thông tin user #${id}`,
+      data: user,
+    };
   }
 }

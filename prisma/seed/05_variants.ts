@@ -1000,7 +1000,9 @@ function buildVariantContent(
 
   // Size
   if (size?.size_label) {
-    parts.push(`Size: ${size.size_label}`);
+    parts.push(
+      `Size: ${size.size_label} phù hợp cho người có chiều cao khoảng ${size.height_range} đến ${size.height_range} cm, cân nặng ${size.weight_range} đến ${size.weight_range} kg.`,
+    );
   }
 
   // Giá

@@ -1,12 +1,17 @@
-import { Controller, Post, Body, Req, Res, Get } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, Get, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import express from 'express';
 import { JwtUser } from '../types/jwt-user.type';
 import { Public } from 'src/auth/public.decorator';
+import { ChangePasswordDto } from 'src/users/dtos/change-password.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -42,5 +47,11 @@ export class AuthController {
   @Get('me')
   getProfile(@Req() req: express.Request & { user: JwtUser }) {
     return req.user;
+  }
+
+  @Patch('change-password')
+  async changePassword(@Req() req, @Body() dto: ChangePasswordDto) {
+    const userId = Number(req.user.id);
+    return this.authService.changePassword(userId, dto);
   }
 }
