@@ -1,9 +1,19 @@
-import { Controller, Post, Body, Req, Res, Get, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Res,
+  Get,
+  Patch,
+  HttpException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import express from 'express';
 import { JwtUser } from '../types/jwt-user.type';
 import { Public } from 'src/auth/public.decorator';
-import { ChangePasswordDto } from 'src/users/dtos/change-password.dto';
+import { ChangePasswordDto } from 'src/auth/dtos/change-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('auth')
@@ -51,7 +61,33 @@ export class AuthController {
 
   @Patch('change-password')
   async changePassword(@Req() req, @Body() dto: ChangePasswordDto) {
-    const userId = Number(req.user.id);
-    return this.authService.changePassword(userId, dto);
+    if (dto.new_password !== dto.confirm_new_password) {
+      throw new BadRequestException('Mật khẩu xác nhận không khớp');
+    }
+    try {
+      const userId = Number(req.user.userId);
+      console.log('userId', userId);
+      return await this.authService.changePassword(userId, dto);
+    } catch (err) {
+      // Log lỗi nếu muốn
+      console.error(err);
+      // Nếu là HttpException thì trả về như bình thường, còn lỗi khác thì map thành BadRequest
+      if (err instanceof HttpException) throw err;
+      throw new BadRequestException(err.message || 'Lỗi đổi mật khẩu');
+    }
+  }
+
+  // 🆘 Khi người dùng quên mật khẩu (đã xác minh OTP)
+  @Public()
+  @Patch('reset-password')
+  async resetPassword(@Body() dto: ChangePasswordDto) {
+    // ở đây không cần req.user vì user chưa đăng nhập
+    if (dto.new_password !== dto.confirm_new_password) {
+      throw new BadRequestException('Mật khẩu xác nhận không khớp');
+    }
+    if (!dto.email) {
+      throw new BadRequestException('Vui lòng nhập email liên kết với tài khoản!');
+    }
+    return this.authService.changePassword(null, dto);
   }
 }

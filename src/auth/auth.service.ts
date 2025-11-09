@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service'; // Adjust path
 import { users } from '@prisma/client';
-import { ChangePasswordDto } from 'src/users/dtos/change-password.dto';
+import { ChangePasswordDto } from 'src/auth/dtos/change-password.dto';
 
 export interface JwtPayload {
   sub: number;
@@ -114,20 +114,38 @@ export class AuthService {
     return { access_token: newAccessToken };
   }
 
-  // auth.service.ts
-  async changePassword(userId: number, dto: ChangePasswordDto) {
-    const user = await this.prisma.users.findUnique({ where: { user_id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+  async changePassword(userId: number | null, dto: ChangePasswordDto) {
+    const { old_password, new_password, email } = dto;
 
-    const isMatch = await bcrypt.compare(dto.old_password, user.password);
-    if (!isMatch) throw new BadRequestException('Mật khẩu cũ không đúng');
+    let user;
 
-    const hashed = await bcrypt.hash(dto.new_password, 10);
+    // 🧩 1. Xác định người dùng
+    if (email) {
+      user = await this.prisma.users.findUnique({ where: { email } });
+      if (!user) throw new NotFoundException('Không tìm thấy tài khoản với email này');
+    } else if (userId) {
+      user = await this.prisma.users.findUnique({ where: { user_id: userId } });
+      console.log('user', user);
+      if (!user) throw new UnauthorizedException('Không xác định được người dùng');
+    } else {
+      throw new BadRequestException('Thiếu thông tin người dùng');
+    }
+
+    // 🧩 2. Nếu có old_password → người dùng đang đổi mật khẩu chủ động
+    if (old_password) {
+      const isMatch = await bcrypt.compare(String(old_password), String(user.password));
+      console.log('Password match:', isMatch); // Log to check
+      if (!isMatch) throw new BadRequestException('Mật khẩu cũ không đúng');
+    }
+
+    // 🧩 3. Hash mật khẩu mới
+    const hashed = await bcrypt.hash(new_password, 10);
+
     await this.prisma.users.update({
-      where: { user_id: userId },
+      where: { user_id: user.user_id },
       data: { password: hashed },
     });
 
-    return { message: 'Đổi mật khẩu thành công' };
+    return { success: true, message: 'Đổi mật khẩu thành công' };
   }
 }
