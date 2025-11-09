@@ -29,7 +29,7 @@ model users {
   password      String
   email         String    @unique
   phone         String?
-  full_name     String?
+  full_name     String
   status        Boolean   @default(true)
   refresh_token String?
   expired_at    DateTime?

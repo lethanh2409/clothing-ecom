@@ -1,5 +1,5 @@
 // src/orders/orders.service.ts
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { VnpayService } from '../payment/vnpay.service';
@@ -15,12 +15,16 @@ import {
 } from '@prisma/client';
 import { format } from 'date-fns/format';
 import { UpdateOrderStatusDto } from './dtos/update-order-status';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly vnpayService: VnpayService,
+    private readonly mail: MailService,
   ) {}
 
   /**
@@ -29,10 +33,7 @@ export class OrdersService {
    * ============================================
    */
   async createOrder(dto: CreateOrderDto, customerId: number) {
-    return this.prisma.$transaction(async (tx) => {
-      // ========================================
-      // 1️⃣ VALIDATE ITEMS & TÍNH SUBTOTAL
-      // ========================================
+    const result = await this.prisma.$transaction(async (tx) => {
       let calculatedSubtotal = new Prisma.Decimal(0);
       const variantDetails: Array<{
         variant_id: number;
@@ -50,6 +51,7 @@ export class OrdersService {
             base_price: true,
             status: true,
             sku: true,
+            products: { select: { product_name: true } },
           },
         });
 
@@ -61,7 +63,7 @@ export class OrdersService {
 
         if (variant.quantity < item.quantity) {
           throw new BadRequestException(
-            `Sản phẩm ${variant.sku} không đủ hàng. Còn lại: ${variant.quantity}, Yêu cầu: ${item.quantity}`,
+            `Sản phẩm ${variant.products?.product_name || variant.sku} không đủ hàng. Còn lại: ${variant.quantity}, yêu cầu: ${item.quantity}`,
           );
         }
 
@@ -77,9 +79,7 @@ export class OrdersService {
         });
       }
 
-      // ========================================
-      // 2️⃣ XỬ LÝ VOUCHER (NẾU CÓ)
-      // ========================================
+      // Xử lý voucher
       let discountAmount = new Prisma.Decimal(0);
       let voucherId: number | null = null;
 
@@ -88,15 +88,10 @@ export class OrdersService {
           where: { voucher_id: dto.voucherId },
         });
 
-        if (!voucher) {
-          throw new BadRequestException('Mã giảm giá không tồn tại');
+        if (!voucher || !voucher.status) {
+          throw new BadRequestException('Mã giảm giá không hợp lệ');
         }
 
-        if (!voucher.status) {
-          throw new BadRequestException('Mã giảm giá đã ngừng hoạt động');
-        }
-
-        // ✅ Kiểm tra thời gian
         const now = new Date();
         if (voucher.start_date && now < voucher.start_date) {
           throw new BadRequestException('Mã giảm giá chưa đến thời gian sử dụng');
@@ -105,41 +100,30 @@ export class OrdersService {
           throw new BadRequestException('Mã giảm giá đã hết hạn');
         }
 
-        // ✅ Kiểm tra số lượng
         if (voucher.quantity <= voucher.used_count) {
           throw new BadRequestException('Mã giảm giá đã hết lượt sử dụng');
         }
 
-        // ✅ Kiểm tra giá trị đơn hàng tối thiểu
-        const subtotalNumber = calculatedSubtotal.toNumber();
-        const minOrderValue = voucher.min_order_value.toNumber();
-
-        if (subtotalNumber < minOrderValue) {
+        if (calculatedSubtotal.toNumber() < voucher.min_order_value.toNumber()) {
           throw new BadRequestException(
-            `Đơn hàng phải có giá trị tối thiểu ${minOrderValue.toLocaleString('vi-VN')}₫ để sử dụng mã này`,
+            `Đơn hàng phải có giá trị tối thiểu ${voucher.min_order_value.toNumber().toLocaleString('vi-VN')}₫ để sử dụng mã này`,
           );
         }
 
-        // ✅ Tính discount
         if (voucher.discount_type === 'percentage') {
-          const discountPercent = voucher.discount_value.toNumber();
-          discountAmount = calculatedSubtotal.mul(discountPercent).div(100);
-
-          // Giới hạn max discount
+          discountAmount = calculatedSubtotal.mul(voucher.discount_value.toNumber()).div(100);
           const maxDiscount = voucher.max_discount.toNumber();
           if (discountAmount.toNumber() > maxDiscount) {
             discountAmount = new Prisma.Decimal(maxDiscount);
           }
-        } else if (voucher.discount_type === 'fixed') {
+        } else {
           discountAmount = voucher.discount_value;
         }
 
-        // ⚠️ QUAN TRỌNG: Discount không vượt quá subtotal
         if (discountAmount.greaterThan(calculatedSubtotal)) {
           discountAmount = calculatedSubtotal;
         }
 
-        // ✅ Tăng used_count
         await tx.vouchers.update({
           where: { voucher_id: voucher.voucher_id },
           data: { used_count: { increment: 1 } },
@@ -148,33 +132,20 @@ export class OrdersService {
         voucherId = voucher.voucher_id;
       }
 
-      // ========================================
-      // 3️⃣ TÍNH TOTAL_PRICE (CHUẨN THEO BE)
-      // ========================================
-      const shippingFee = new Prisma.Decimal(30000); // Fixed 30k
-      const calculatedTotal = calculatedSubtotal.sub(discountAmount).add(shippingFee);
+      const shippingFee = new Prisma.Decimal(30000);
+      const totalPrice = calculatedSubtotal.sub(discountAmount).add(shippingFee);
 
-      // ========================================
-      // 4️⃣ VERIFY GIÁ TỪ FE (CHO PHÉP SAI LỆCH 1000Đ)
-      // ========================================
-      const priceDiff = Math.abs(calculatedTotal.toNumber() - dto.totalPrice);
-      if (priceDiff > 1000) {
-        // ❌ Rollback transaction - Không lưu gì cả
-        throw new BadRequestException(
-          'Đã xảy ra lỗi trong quá trình tạo đơn hàng. Vui lòng thử lại hoặc sử dụng mã giảm giá khác.',
-        );
+      if (Math.abs(totalPrice.toNumber() - dto.totalPrice) > 1000) {
+        throw new BadRequestException('Giá trị đơn hàng không hợp lệ, vui lòng thử lại');
       }
 
-      // ========================================
-      // 5️⃣ TẠO ORDER
-      // ========================================
       const order = await tx.orders.create({
         data: {
           customer_id: customerId,
           address_id: dto.addressId,
           subtotal_price: calculatedSubtotal,
           discount_price: discountAmount,
-          total_price: calculatedTotal,
+          total_price: totalPrice,
           shipping_fee: shippingFee,
           order_status: 'pending',
           payment_status: 'pending',
@@ -182,11 +153,7 @@ export class OrdersService {
         },
       });
 
-      // ========================================
-      // 6️⃣ TẠO ORDER_DETAIL & XUẤT KHO
-      // ========================================
       for (const vd of variantDetails) {
-        // Tạo order detail
         await tx.order_detail.create({
           data: {
             order_id: order.order_id,
@@ -196,49 +163,39 @@ export class OrdersService {
           },
         });
 
-        // ✅ Ghi inventory transaction (xuất kho)
         await tx.inventory_transactions.create({
           data: {
             variant_id: vd.variant_id,
-            change_quantity: -vd.quantity, // ⚠️ Âm = xuất kho
+            change_quantity: -vd.quantity,
             reason: 'customer_order',
             order_id: order.order_id,
           },
         });
 
-        // ✅ Trừ tồn kho
         await tx.product_variants.update({
           where: { variant_id: vd.variant_id },
           data: { quantity: { decrement: vd.quantity } },
         });
       }
 
-      // ========================================
-      // 7️⃣ XÓA CART_DETAIL SAU KHI ĐẶT HÀNG
-      // ========================================
       const cart = await tx.cart.findFirst({
         where: { customer_id: customerId },
         select: { cart_id: true },
       });
 
       if (cart) {
-        const variantIds = dto.items.map((item) => item.variantId);
-
+        const variantIds = dto.items.map((i) => i.variantId);
         await tx.cart_detail.deleteMany({
-          where: {
-            cart_id: cart.cart_id,
-            variant_id: { in: variantIds },
-          },
+          where: { cart_id: cart.cart_id, variant_id: { in: variantIds } },
         });
 
-        // Tính lại total_price của cart
-        const remainingDetails = await tx.cart_detail.findMany({
+        const remaining = await tx.cart_detail.findMany({
           where: { cart_id: cart.cart_id },
           include: { product_variants: true },
         });
 
         let newTotal = new Prisma.Decimal(0);
-        for (const d of remainingDetails) {
+        for (const d of remaining) {
           const price = d.product_variants?.base_price ?? new Prisma.Decimal(0);
           newTotal = newTotal.add(price.mul(d.quantity));
         }
@@ -249,9 +206,6 @@ export class OrdersService {
         });
       }
 
-      // ========================================
-      // 8️⃣ TẠO PAYMENT RECORD
-      // ========================================
       const txId = 'TX-' + Date.now();
       const payment = await tx.payments.create({
         data: {
@@ -259,46 +213,78 @@ export class OrdersService {
           method: 'VNPAY_QR',
           status: 'pending',
           transaction_id: txId,
-          amount: calculatedTotal,
+          amount: totalPrice,
         },
       });
 
-      // ========================================
-      // 9️⃣ GENERATE PAYMENT URL
-      // ========================================
-      const qrUrl = this.vnpayService.generatePaymentUrl({
-        orderId: order.order_id,
-        amount: calculatedTotal.toNumber(),
-        txnRef: txId,
-      });
-
-      // ========================================
-      // 🎉 TRẢ VỀ KẾT QUẢ
-      // ========================================
-      return {
-        success: true,
-        message: 'Đơn hàng đã được tạo thành công',
-        order: {
-          order_id: order.order_id,
-          total_price: calculatedTotal.toNumber(),
-          order_status: order.order_status,
-          payment_status: order.payment_status,
-          created_at: order.created_at,
-        },
-        payment: {
-          payment_id: payment.payment_id,
-          transaction_id: payment.transaction_id,
-          amount: calculatedTotal.toNumber(),
-          qrUrl,
-        },
-        breakdown: {
-          subtotal: calculatedSubtotal.toNumber(),
-          discount: discountAmount.toNumber(),
-          shipping: shippingFee.toNumber(),
-          total: calculatedTotal.toNumber(),
-        },
-      };
+      return { order, variantDetails, totalPrice, payment, txId };
     });
+
+    // Gửi email
+    try {
+      const customer = await this.prisma.customers.findUnique({
+        where: { customer_id: customerId },
+        select: { user_id: true },
+      });
+
+      if (!customer) throw new NotFoundException('Customer not found');
+
+      const user = await this.prisma.users.findUnique({
+        where: { user_id: customer.user_id },
+        select: { email: true, full_name: true },
+      });
+
+      if (user?.email) {
+        const itemsWithName = await Promise.all(
+          result.variantDetails.map(async (vd) => {
+            const variant = await this.prisma.product_variants.findUnique({
+              where: { variant_id: vd.variant_id },
+              select: { products: { select: { product_name: true } } },
+            });
+            return {
+              product_name: variant?.products?.product_name || 'Unknown',
+              quantity: vd.quantity,
+              unit_price: vd.unit_price.toNumber(),
+              subtotal: vd.subtotal.toNumber(),
+            };
+          }),
+        );
+
+        await this.mail.sendInvoice(
+          user.email,
+          user.full_name,
+          result.order,
+          itemsWithName,
+          result.totalPrice.toNumber(),
+        );
+      }
+    } catch (err) {
+      this.logger.error('Failed to send order email', err);
+    }
+
+    const qrUrl = this.vnpayService.generatePaymentUrl({
+      orderId: result.order.order_id,
+      amount: result.totalPrice.toNumber(),
+      txnRef: result.txId,
+    });
+
+    return {
+      success: true,
+      message: 'Đơn hàng đã được tạo thành công',
+      order: {
+        order_id: result.order.order_id,
+        total_price: result.totalPrice.toNumber(),
+        order_status: result.order.order_status,
+        payment_status: result.order.payment_status,
+        created_at: result.order.created_at,
+      },
+      payment: {
+        payment_id: result.payment.payment_id,
+        transaction_id: result.payment.transaction_id,
+        amount: result.totalPrice.toNumber(),
+        qrUrl,
+      },
+    };
   }
 
   // ADMIN: lấy tất cả orders (kèm toàn bộ quan hệ cần dùng)

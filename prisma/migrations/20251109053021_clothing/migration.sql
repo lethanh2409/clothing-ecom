@@ -15,7 +15,7 @@ CREATE TABLE "clothing_ecom"."users" (
     "password" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT,
-    "full_name" TEXT,
+    "full_name" TEXT NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "refresh_token" TEXT,
     "expired_at" TIMESTAMP(3),

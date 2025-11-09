@@ -109,4 +109,64 @@ export class MailService {
       return false;
     }
   }
+
+  async sendInvoice(
+    to: string,
+    fullName: string,
+    order: any,
+    items: Array<{ product_name: string; quantity: number; unit_price: number; subtotal: number }>,
+    total: number,
+  ) {
+    const itemsHtml = items
+      .map(
+        (item) => `
+      <tr>
+        <td>${item.product_name}</td>
+        <td style="text-align:right">${item.quantity}</td>
+        <td style="text-align:right">${item.unit_price.toLocaleString()}₫</td>
+        <td style="text-align:right">${item.subtotal.toLocaleString()}₫</td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+      <h2>Hóa đơn đơn hàng #${order.order_id}</h2>
+      <p>Khách hàng: ${fullName} (${to})</p>
+      <table width="100%" style="border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="border-bottom:1px solid #ccc;text-align:left">Sản phẩm</th>
+            <th style="border-bottom:1px solid #ccc;text-align:right">SL</th>
+            <th style="border-bottom:1px solid #ccc;text-align:right">Đơn giá</th>
+            <th style="border-bottom:1px solid #ccc;text-align:right">Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+      <h3>Tổng: ${total.toLocaleString()}₫</h3>
+      <p>Cảm ơn bạn đã đặt hàng!</p>
+    </div>
+  `;
+
+    await this.sendMail(to, `Hóa đơn đơn hàng #${order.order_id}`, html);
+  }
+
+  // Ví dụ thêm sendMail method public
+  async sendMail(to: string, subject: string, html: string) {
+    try {
+      const info = await this.transporter.sendMail({
+        from: `"Shop Thời Trang" <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html,
+      });
+      this.logger.log(`✅ Email sent to ${to} | MessageID: ${info.messageId}`);
+    } catch (err) {
+      this.logger.error(`❌ Failed to send email to ${to}`, err);
+    }
+  }
 }
