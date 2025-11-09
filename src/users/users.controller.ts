@@ -4,11 +4,12 @@ import { CreateUserDto, CreateCustomerDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Roles } from '../auth/roles.decorate';
 import { UpdateProfileDto } from './dtos/update-profile';
+import { Public } from '../auth/public.decorator';
 @Controller('users')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
-  //Tạo customer user
+  @Public()
   @Post('register')
   createCustomer(@Body() dto: CreateCustomerDto) {
     return this.userService.createCustomer(dto);
