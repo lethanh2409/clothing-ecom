@@ -100,6 +100,7 @@ CREATE TABLE "clothing_ecom"."lookbooks" (
     "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "image" TEXT,
+    "status" TEXT NOT NULL,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 

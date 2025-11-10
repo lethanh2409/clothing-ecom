@@ -7,10 +7,6 @@ export class CreateLookbookDto {
 
   @IsOptional()
   @IsString()
-  slug?: string;
-
-  @IsOptional()
-  @IsString()
   description?: string;
 
   // nếu client đã có URL có thể gửi thẳng

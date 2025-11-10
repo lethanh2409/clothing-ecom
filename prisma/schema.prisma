@@ -142,6 +142,28 @@ model categories {
   @@schema("clothing_ecom")
 }
 
+
+/// SIZES
+model sizes {
+  size_id      Int      @id @default(autoincrement())
+  brand_id     Int
+  gender       String
+  size_label   String
+  height_range String
+  weight_range String
+  measurements Json
+  type         String
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+  updated_at   DateTime @updatedAt @db.Timestamp(0)
+
+  brands           brands            @relation(fields: [brand_id], references: [brand_id])
+  product_variants product_variants[]
+
+  @@unique([brand_id, gender, size_label, type])
+  @@map("sizes")
+  @@schema("clothing_ecom")
+}
+
 /// LOOKBOOKS
 model lookbooks {
   lookbook_id Int     @id @default(autoincrement())
@@ -149,6 +171,7 @@ model lookbooks {
   slug        String  @unique
   description String
   image       String?
+  status      String
   created_at  DateTime @default(now()) @db.Timestamp(0)
   updated_at  DateTime @updatedAt @db.Timestamp(0)
 
@@ -176,42 +199,23 @@ model products {
 
   @@map("products")
   @@schema("clothing_ecom")
+  lookbookItems lookbook_items[]
 }
+
 
 /// LOOKBOOK_ITEMS
 model lookbook_items {
   item_id     Int     @id @default(autoincrement())
   lookbook_id Int
-  variant_id  Int
+  product_id  Int
   position    Int?
   note        String?
 
   lookbooks        lookbooks        @relation(fields: [lookbook_id], references: [lookbook_id], onDelete: Cascade)
-  product_variants product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade)
+  products products @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
 
-  @@unique([lookbook_id, variant_id])
+  @@unique([lookbook_id, product_id])
   @@map("lookbook_items")
-  @@schema("clothing_ecom")
-}
-
-/// SIZES
-model sizes {
-  size_id      Int      @id @default(autoincrement())
-  brand_id     Int
-  gender       String
-  size_label   String
-  height_range String
-  weight_range String
-  measurements Json
-  type         String
-  created_at   DateTime @default(now()) @db.Timestamp(0)
-  updated_at   DateTime @updatedAt @db.Timestamp(0)
-
-  brands           brands            @relation(fields: [brand_id], references: [brand_id])
-  product_variants product_variants[]
-
-  @@unique([brand_id, gender, size_label, type])
-  @@map("sizes")
   @@schema("clothing_ecom")
 }
 
@@ -232,7 +236,6 @@ model product_variants {
   products                      products                        @relation(fields: [product_id], references: [product_id], onDelete: Cascade)
   sizes                         sizes                           @relation(fields: [size_id], references: [size_id])
   variant_assets                variant_assets[]
-  lookbook_items                lookbook_items[]
   order_detail                  order_detail[]
   inventory_transactions        inventory_transactions[]
   inventory_snapshots           inventory_snapshots[]           // ✅ Thêm relation
