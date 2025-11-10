@@ -1,7 +1,6 @@
 import { LookbookItem } from './lookbook_items.entity';
-
 export class Lookbook {
-  lookbook_id: number;
+  lookbookId: number;
 
   title: string;
 
@@ -9,11 +8,13 @@ export class Lookbook {
 
   description: string;
 
-  image: string;
+  image?: string;
 
-  created_at: Date;
+  status: string;
 
-  updated_at: Date;
+  createdAt: Date;
 
-  items: LookbookItem[];
+  updatedAt: Date;
+
+  lookbookItems: LookbookItem[];
 }

@@ -171,7 +171,7 @@ model lookbooks {
   slug        String  @unique
   description String
   image       String?
-  status      String
+  status      String    @default("ACTIVE")
   created_at  DateTime @default(now()) @db.Timestamp(0)
   updated_at  DateTime @updatedAt @db.Timestamp(0)
 

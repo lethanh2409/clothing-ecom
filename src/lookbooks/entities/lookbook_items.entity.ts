@@ -1,14 +1,12 @@
 import { Lookbook } from './lookbook.entity';
-import { ProductVariant } from '../../products/entities/product-variant.entity';
+import { Product } from '../../products/entities/product.entity';
 
 export class LookbookItem {
-  item_id: number;
-
+  itemId: number;
+  lookbookId: number;
+  productId: number;
+  position?: number;
+  note?: string;
   lookbook: Lookbook;
-
-  variant: ProductVariant;
-
-  position: number;
-
-  note: string;
+  product: Product;
 }

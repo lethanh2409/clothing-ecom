@@ -28,7 +28,7 @@ export class LookbooksController {
   @Public()
   @Get('active')
   getActive() {
-    return this.service.getActive();
+    return this.service.getActiveForCustomer();
   }
 
   // =========================

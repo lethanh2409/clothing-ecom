@@ -94,13 +94,29 @@ CREATE TABLE "clothing_ecom"."categories" (
 );
 
 -- CreateTable
+CREATE TABLE "clothing_ecom"."sizes" (
+    "size_id" SERIAL NOT NULL,
+    "brand_id" INTEGER NOT NULL,
+    "gender" TEXT NOT NULL,
+    "size_label" TEXT NOT NULL,
+    "height_range" TEXT NOT NULL,
+    "weight_range" TEXT NOT NULL,
+    "measurements" JSONB NOT NULL,
+    "type" TEXT NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(0) NOT NULL,
+
+    CONSTRAINT "sizes_pkey" PRIMARY KEY ("size_id")
+);
+
+-- CreateTable
 CREATE TABLE "clothing_ecom"."lookbooks" (
     "lookbook_id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "image" TEXT,
-    "status" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -126,27 +142,11 @@ CREATE TABLE "clothing_ecom"."products" (
 CREATE TABLE "clothing_ecom"."lookbook_items" (
     "item_id" SERIAL NOT NULL,
     "lookbook_id" INTEGER NOT NULL,
-    "variant_id" INTEGER NOT NULL,
+    "product_id" INTEGER NOT NULL,
     "position" INTEGER,
     "note" TEXT,
 
     CONSTRAINT "lookbook_items_pkey" PRIMARY KEY ("item_id")
-);
-
--- CreateTable
-CREATE TABLE "clothing_ecom"."sizes" (
-    "size_id" SERIAL NOT NULL,
-    "brand_id" INTEGER NOT NULL,
-    "gender" TEXT NOT NULL,
-    "size_label" TEXT NOT NULL,
-    "height_range" TEXT NOT NULL,
-    "weight_range" TEXT NOT NULL,
-    "measurements" JSONB NOT NULL,
-    "type" TEXT NOT NULL,
-    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(0) NOT NULL,
-
-    CONSTRAINT "sizes_pkey" PRIMARY KEY ("size_id")
 );
 
 -- CreateTable
@@ -428,16 +428,16 @@ CREATE UNIQUE INDEX "brands_slug_key" ON "clothing_ecom"."brands"("slug");
 CREATE UNIQUE INDEX "categories_slug_key" ON "clothing_ecom"."categories"("slug");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "sizes_brand_id_gender_size_label_type_key" ON "clothing_ecom"."sizes"("brand_id", "gender", "size_label", "type");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "lookbooks_slug_key" ON "clothing_ecom"."lookbooks"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "products_slug_key" ON "clothing_ecom"."products"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "lookbook_items_lookbook_id_variant_id_key" ON "clothing_ecom"."lookbook_items"("lookbook_id", "variant_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "sizes_brand_id_gender_size_label_type_key" ON "clothing_ecom"."sizes"("brand_id", "gender", "size_label", "type");
+CREATE UNIQUE INDEX "lookbook_items_lookbook_id_product_id_key" ON "clothing_ecom"."lookbook_items"("lookbook_id", "product_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "product_variants_sku_key" ON "clothing_ecom"."product_variants"("sku");
@@ -500,6 +500,9 @@ ALTER TABLE "clothing_ecom"."addresses" ADD CONSTRAINT "addresses_customer_id_fk
 ALTER TABLE "clothing_ecom"."categories" ADD CONSTRAINT "categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "clothing_ecom"."categories"("category_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "clothing_ecom"."sizes" ADD CONSTRAINT "sizes_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -509,10 +512,7 @@ ALTER TABLE "clothing_ecom"."products" ADD CONSTRAINT "products_category_id_fkey
 ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_lookbook_id_fkey" FOREIGN KEY ("lookbook_id") REFERENCES "clothing_ecom"."lookbooks"("lookbook_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "clothing_ecom"."sizes" ADD CONSTRAINT "sizes_brand_id_fkey" FOREIGN KEY ("brand_id") REFERENCES "clothing_ecom"."brands"("brand_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."lookbook_items" ADD CONSTRAINT "lookbook_items_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "clothing_ecom"."products"("product_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."product_variants" ADD CONSTRAINT "product_variants_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "clothing_ecom"."products"("product_id") ON DELETE CASCADE ON UPDATE CASCADE;
