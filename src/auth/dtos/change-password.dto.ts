@@ -2,6 +2,7 @@
 import { IsString, MinLength, MaxLength, IsOptional, IsEmail } from 'class-validator';
 
 export class ChangePasswordDto {
+  @IsOptional()
   old_password?: string;
 
   @IsString()

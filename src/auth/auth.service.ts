@@ -115,10 +115,8 @@ export class AuthService {
   }
 
   async changePassword(userId: number | null, dto: ChangePasswordDto) {
-    const { old_password, new_password, email } = dto;
-
     let user;
-
+    const email = dto.email ?? null;
     // 🧩 1. Xác định người dùng
     if (email) {
       user = await this.prisma.users.findUnique({ where: { email } });
@@ -131,15 +129,21 @@ export class AuthService {
       throw new BadRequestException('Thiếu thông tin người dùng');
     }
 
+    console.log('ALO', dto.old_password, user.password);
+
     // 🧩 2. Nếu có old_password → người dùng đang đổi mật khẩu chủ động
-    if (old_password) {
-      const isMatch = await bcrypt.compare(String(old_password), String(user.password));
-      console.log('Password match:', isMatch); // Log to check
+    if (dto.old_password) {
+      const isMatch = await bcrypt.compare(String(dto.old_password), String(user.password));
       if (!isMatch) throw new BadRequestException('Mật khẩu cũ không đúng');
+
+      const isSame = await bcrypt.compare(String(dto.new_password), String(user.password)); // so sánh new với hash cũ
+      if (isSame) {
+        throw new BadRequestException('Mật khẩu mới phải khác mật khẩu cũ');
+      }
     }
 
     // 🧩 3. Hash mật khẩu mới
-    const hashed = await bcrypt.hash(new_password, 10);
+    const hashed = await bcrypt.hash(dto.new_password, 10);
 
     await this.prisma.users.update({
       where: { user_id: user.user_id },

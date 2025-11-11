@@ -64,9 +64,11 @@ export class AuthController {
     if (dto.new_password !== dto.confirm_new_password) {
       throw new BadRequestException('Mật khẩu xác nhận không khớp');
     }
+    if (dto.new_password == dto.old_password) {
+      throw new BadRequestException('Mật khẩu mới phải khác mật khẩu cũ');
+    }
     try {
       const userId = Number(req.user.userId);
-      console.log('userId', userId);
       return await this.authService.changePassword(userId, dto);
     } catch (err) {
       // Log lỗi nếu muốn
