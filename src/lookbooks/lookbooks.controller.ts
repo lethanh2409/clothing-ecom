@@ -20,7 +20,7 @@ import { Roles } from 'src/auth/roles.decorate';
 
 @Controller('lookbooks')
 export class LookbooksController {
-  constructor(private readonly service: LookbooksService) {}
+  constructor(private readonly lookbooksService: LookbooksService) {}
 
   // =========================
   // 👥 CUSTOMER: chỉ xem lookbook ACTIVE
@@ -28,7 +28,7 @@ export class LookbooksController {
   @Public()
   @Get('active')
   getActive() {
-    return this.service.getActiveForCustomer();
+    return this.lookbooksService.getActiveForCustomer();
   }
 
   // =========================
@@ -37,7 +37,7 @@ export class LookbooksController {
   @Public()
   @Get(':id')
   getOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.getOne(id);
+    return this.lookbooksService.getOne(id);
   }
 
   // =========================
@@ -46,7 +46,7 @@ export class LookbooksController {
   @Get()
   @Roles('ADMIN')
   getAll() {
-    return this.service.getAll();
+    return this.lookbooksService.getAll();
   }
 
   // =========================
@@ -56,7 +56,7 @@ export class LookbooksController {
   @Roles('ADMIN')
   @UseInterceptors(FileInterceptor('image'))
   create(@Body() dto: CreateLookbookDto, @UploadedFile() image?: Express.Multer.File) {
-    return this.service.create(dto, image);
+    return this.lookbooksService.create(dto, image);
   }
 
   // =========================
@@ -70,7 +70,7 @@ export class LookbooksController {
     @Body() dto: UpdateLookbookDto,
     @UploadedFile() image?: Express.Multer.File,
   ) {
-    return this.service.update(id, dto, image);
+    return this.lookbooksService.update(id, dto, image);
   }
 
   // =========================
@@ -79,42 +79,47 @@ export class LookbooksController {
   @Delete(':id')
   @Roles('ADMIN')
   softDelete(@Param('id', ParseIntPipe) id: number) {
-    return this.service.softDelete(id);
+    return this.lookbooksService.softDelete(id);
   }
 
-  // ==========================
-  // LOOKBOOK ITEMS
-  // ==========================
-  // @Roles('ADMIN')
-  // @Get(':id/items')
-  // getItems(@Param('id', ParseIntPipe) id: number) {
-  //   return this.service.getItems(id);
-  // }
+  // =========================================
+  // ✅ GET ITEMS (CUSTOMER)
+  // =========================================
+  @Get(':id/items')
+  async getItemsForCustomer(@Param('id', ParseIntPipe) lookbookId: number) {
+    return this.lookbooksService.getItemsForCustomer(lookbookId);
+  }
 
-  // @Roles('ADMIN')
-  // @Post(':id/items')
-  // addItem(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() body: { variant_id: number; note?: string; position?: number },
-  // ) {
-  //   return this.service.addItem(id, body.variant_id, body.note, body.position);
-  // }
+  // =========================================
+  // ✅ GET ITEMS (ADMIN)
+  // =========================================
+  @Roles('ADMIN', 'STAFF')
+  @Get('admin/:id/items')
+  async getItemsAdmin(@Param('id', ParseIntPipe) lookbookId: number) {
+    return this.lookbooksService.getItemsAdmin(lookbookId);
+  }
 
-  // @Roles('ADMIN')
-  // @Delete(':id/items/:variantId')
-  // removeItem(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Param('variantId', ParseIntPipe) variantId: number,
-  // ) {
-  //   return this.service.removeItem(id, variantId);
-  // }
+  // =========================================
+  // ✅ ADD MULTIPLE PRODUCTS
+  // =========================================
+  @Roles('ADMIN')
+  @Post(':id/items')
+  async addProductsToLookbook(
+    @Param('id', ParseIntPipe) lookbookId: number,
+    @Body('productIds') productIds: number[],
+  ) {
+    return this.lookbooksService.addProductsToLookbook(lookbookId, productIds);
+  }
 
-  // @Roles('ADMIN')
-  // @Patch(':id/status')
-  // toggleStatus(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() body: { status: 'ACTIVE' | 'INACTIVE' },
-  // ) {
-  //   return this.service.toggleStatus(id, body.status);
-  // }
+  // =========================================
+  // ✅ REMOVE PRODUCT
+  // =========================================
+  @Roles('ADMIN')
+  @Delete(':id/items/:productId')
+  async removeProductFromLookbook(
+    @Param('id', ParseIntPipe) lookbookId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+  ) {
+    return this.lookbooksService.removeProductFromLookbook(lookbookId, productId);
+  }
 }

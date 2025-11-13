@@ -4,6 +4,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UpdateLookbookDto } from './dtos/update-lookbook.dto';
 import slugify from 'slugify';
 import type { Express } from 'express';
+import { CreateLookbookDto } from './dtos/create-lookbook.dto';
 
 @Injectable()
 export class LookbooksService {
@@ -15,7 +16,7 @@ export class LookbooksService {
   // =========================================
   // ✅ CREATE LOOKBOOK
   // =========================================
-  async create(dto: any, imageFile?: Express.Multer.File) {
+  async create(dto: CreateLookbookDto, imageFile?: Express.Multer.File) {
     let image = dto.image ?? null;
 
     if (imageFile) {
@@ -26,7 +27,7 @@ export class LookbooksService {
       image = res.secure_url;
     }
 
-    const slugBase = dto.slug || slugify(dto.title, { lower: true, strict: true, locale: 'vi' });
+    const slugBase = slugify(dto.title, { lower: true, strict: true, locale: 'vi' });
     const existed = await this.prisma.lookbooks.findFirst({ where: { slug: slugBase } });
     const finalSlug = existed ? `${slugBase}-${Date.now()}` : slugBase;
 
@@ -199,28 +200,72 @@ export class LookbooksService {
   }
 
   // =========================================
-  // ✅ ADD MULTIPLE PRODUCTS
+  // ✅ ADD MULTIPLE PRODUCTS (UPDATED)
   // =========================================
   async addProductsToLookbook(lookbookId: number, productIds: number[]) {
-    const lb = await this.prisma.lookbooks.findUnique({ where: { lookbook_id: lookbookId } });
-    if (!lb) throw new NotFoundException('Lookbook not found');
+    // 1️⃣ Kiểm tra lookbook tồn tại
+    const lb = await this.prisma.lookbooks.findUnique({
+      where: { lookbook_id: lookbookId },
+    });
+    if (!lb) throw new NotFoundException('Không tìm thấy lookbook');
 
+    // 2️⃣ Validate mảng
     if (!Array.isArray(productIds) || productIds.length === 0) {
       throw new BadRequestException('productIds phải là mảng có ít nhất 1 phần tử');
     }
 
+    // 3️⃣ Kiểm tra sản phẩm có tồn tại không
+    const existingProducts = await this.prisma.products.findMany({
+      where: { product_id: { in: productIds } },
+      select: { product_id: true },
+    });
+    const existingIds = existingProducts.map((p) => p.product_id);
+    const invalidIds = productIds.filter((id) => !existingIds.includes(id));
+    if (invalidIds.length > 0) {
+      throw new BadRequestException(`Không tìm thấy sản phẩm: ${invalidIds.join(', ')}`);
+    }
+
+    // 4️⃣ Tính vị trí (append vào cuối)
+    const lastPos = await this.prisma.lookbook_items.findFirst({
+      where: { lookbook_id: lookbookId },
+      orderBy: { position: 'desc' },
+      select: { position: true },
+    });
+    const startPos = (lastPos?.position ?? 0) + 1;
+
     const data = productIds.map((pid, idx) => ({
       lookbook_id: lookbookId,
       product_id: pid,
-      position: idx + 1,
+      position: startPos + idx,
     }));
 
+    // 5️⃣ Tạo items
     await this.prisma.lookbook_items.createMany({
       data,
       skipDuplicates: true,
     });
 
-    return { success: true, added: productIds.length };
+    // 6️⃣ Lấy lại lookbook kèm items để trả về
+    const lookbook = await this.prisma.lookbooks.findUnique({
+      where: { lookbook_id: lookbookId },
+      include: {
+        lookbook_items: {
+          select: {
+            item_id: true,
+            product_id: true,
+            position: true,
+            note: true,
+          },
+        },
+      },
+    });
+
+    // 7️⃣ Response
+    return {
+      success: true,
+      message: `Đã thêm ${productIds.length} sản phẩm vào lookbook`,
+      lookbook,
+    };
   }
 
   // =========================================
