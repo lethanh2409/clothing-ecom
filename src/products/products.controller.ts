@@ -108,11 +108,10 @@ export class ProductsController {
     return { success: true, data };
   }
 
-  @Delete(':id')
-  // @Roles('ADMIN')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    const data = await this.productsService.deleteProduct(id);
-    return { success: true, data };
+  @Roles('ADMIN')
+  @Patch(':id/inactive')
+  async softDeleteProduct(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.deleteProduct(id);
   }
 
   // ======== VARIANT ASSETS (upload SAU khi tạo) ========

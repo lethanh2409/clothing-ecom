@@ -144,7 +144,6 @@ CREATE TABLE "clothing_ecom"."lookbook_items" (
     "lookbook_id" INTEGER NOT NULL,
     "product_id" INTEGER NOT NULL,
     "position" INTEGER,
-    "note" TEXT,
 
     CONSTRAINT "lookbook_items_pkey" PRIMARY KEY ("item_id")
 );
@@ -429,6 +428,9 @@ CREATE UNIQUE INDEX "categories_slug_key" ON "clothing_ecom"."categories"("slug"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sizes_brand_id_gender_size_label_type_key" ON "clothing_ecom"."sizes"("brand_id", "gender", "size_label", "type");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "lookbooks_title_key" ON "clothing_ecom"."lookbooks"("title");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "lookbooks_slug_key" ON "clothing_ecom"."lookbooks"("slug");

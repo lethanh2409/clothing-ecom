@@ -610,7 +610,7 @@ export class ProductsService {
         }
       }
 
-      return tx.products.findUnique({
+      const result = await tx.products.findUnique({
         where: { product_id: id },
         include: {
           product_variants: {
@@ -621,15 +621,46 @@ export class ProductsService {
           categories: true,
         },
       });
+
+      // ✅ Format base_price trước khi return
+      if (result) {
+        return {
+          ...result,
+          product_variants: result.product_variants.map((v) => ({
+            ...v,
+            base_price: parseFloat(v.base_price.toString()),
+          })),
+        };
+      }
+
+      return result;
     });
   }
 
-  // ================= DELETE =================
+  // ================= SOFT DELETE =================
   async deleteProduct(id: number) {
-    const existed = await this.prisma.products.findUnique({ where: { product_id: id } });
-    if (!existed) throw new NotFoundException(`Product ${id} không tồn tại`);
-    await this.prisma.products.delete({ where: { product_id: id } });
-    return { success: true };
+    const existed = await this.prisma.products.findUnique({
+      where: { product_id: id },
+    });
+
+    if (!existed) {
+      throw new NotFoundException(`Product ${id} không tồn tại`);
+    }
+
+    // Soft delete: đổi status
+    const updated = await this.prisma.products.update({
+      where: { product_id: id },
+      data: {
+        status: 'INACTIVE',
+        updated_at: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: `Đã chuyển sản phẩm ${id} sang trạng thái INACTIVE`,
+      product: updated,
+    };
   }
 
   // ================= VARIANT ASSETS (upload sau) =================

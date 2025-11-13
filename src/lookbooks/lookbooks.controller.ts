@@ -85,6 +85,7 @@ export class LookbooksController {
   // =========================================
   // ✅ GET ITEMS (CUSTOMER)
   // =========================================
+  @Roles('CUSTOMER')
   @Get(':id/items')
   async getItemsForCustomer(@Param('id', ParseIntPipe) lookbookId: number) {
     return this.lookbooksService.getItemsForCustomer(lookbookId);
