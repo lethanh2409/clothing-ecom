@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards, Req, Get, Param } from '@nestjs/comm
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dtos/create-review.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-
+import { Public } from '../auth/public.decorator';
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
@@ -15,6 +15,7 @@ export class ReviewsController {
     return this.reviewsService.createForUser(userId, dto);
   }
 
+  @Public()
   @Get('product/:id')
   async findByProduct(@Param('id') id: string) {
     return this.reviewsService.findByProduct(Number(id));

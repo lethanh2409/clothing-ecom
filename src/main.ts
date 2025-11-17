@@ -23,7 +23,15 @@ async function bootstrap() {
   // log request kiểu dev (GET /users 404 - 3 ms)
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
   app.use(morgan(':method :url :status :response-time ms - :req[content-type]'));
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true, // ← Cho phép convert tự động
+      },
+    }),
+  );
   const port = Number(process.env.PORT) || 3618;
   await app.listen(port);
   console.log(`🚀 Server: http://localhost:${port}`);

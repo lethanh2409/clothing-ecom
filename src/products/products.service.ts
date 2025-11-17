@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
+import { FilterProductDto } from './dtos/filter-product.dto';
 
 // ===== Types kết quả =====
 type VariantWithAssets = Prisma.product_variantsGetPayload<{
@@ -753,5 +754,64 @@ export class ProductsService {
     });
 
     return { message: 'image deleted!' };
+  }
+
+  async filter(query: FilterProductDto) {
+    const { brand_id, category_id, keyword, min_price, max_price } = query;
+
+    const where: any = {
+      status: 'ACTIVE',
+    };
+
+    // Brand filter
+    if (brand_id?.length) {
+      where.brand_id = { in: brand_id };
+    }
+
+    // Category filter
+    if (category_id?.length) {
+      where.category_id = { in: category_id };
+    }
+
+    // Keyword filter
+    if (keyword) {
+      where.OR = [
+        { product_name: { contains: keyword, mode: 'insensitive' } },
+        { description: { contains: keyword, mode: 'insensitive' } },
+      ];
+    }
+
+    // Price filter inside variants
+    if (min_price || max_price) {
+      where.product_variants = {
+        some: {
+          AND: [
+            min_price ? { base_price: { gte: min_price } } : {},
+            max_price ? { base_price: { lte: max_price } } : {},
+          ],
+        },
+      };
+    }
+
+    const products = await this.prisma.products.findMany({
+      where,
+      include: {
+        brands: true,
+        categories: true,
+        product_variants: {
+          include: { variant_assets: true },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    // Convert Decimal → Number
+    return products.map((product) => ({
+      ...product,
+      product_variants: product.product_variants.map((variant) => ({
+        ...variant,
+        base_price: Number(variant.base_price),
+      })),
+    }));
   }
 }

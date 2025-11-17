@@ -12,7 +12,7 @@ export class VnpayService {
   private tmnCode = (process.env.VNPAY_TMN_CODE || '').trim();
   private secretKey = (process.env.VNPAY_HASH_SECRET || '').trim(); // ⚠️ dùng đúng biến .env bạn đã khai báo
   private vnpUrl = process.env.VNPAY_URL || 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  private returnUrl = process.env.VNPAY_RETURN_URL || 'http://localhost:3618/payment/return';
+  private returnUrl = process.env.VNPAY_RETURN_URL || 'http://localhost:3001/payment/return';
 
   constructor(private prisma: PrismaService) {}
 

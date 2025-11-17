@@ -21,6 +21,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { VariantFilterDto } from './dtos/variant-filter.dto';
+import { FilterProductDto } from './dtos/filter-product.dto';
 
 type ListResponse<T = any> = {
   success: true;
@@ -78,7 +79,14 @@ export class ProductsController {
     @Query('status', new DefaultValuePipe('ACTIVE')) status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK',
   ): Promise<ListResponse> {
     const items = await this.productsService.getProductsByStatus(status);
+    console.log('khach hàng');
     return { success: true, count: items.length, data: items };
+  }
+
+  @Public()
+  @Get('filter')
+  async filter(@Query() query: FilterProductDto) {
+    return this.productsService.filter(query);
   }
 
   @Public()
@@ -99,7 +107,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  // @Roles('ADMIN')
+  @Roles('ADMIN')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateProductDto,
