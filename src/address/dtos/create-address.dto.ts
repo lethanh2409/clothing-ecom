@@ -9,9 +9,17 @@ export class CreateAddressDto {
   @Length(8, 20)
   consignee_phone: string;
 
+  // GHN province
   @IsString() province: string;
+  @IsString() province_id: string;
+
+  // GHN district
   @IsString() district: string;
+  @IsString() district_id: string;
+
+  // GHN ward
   @IsString() ward: string;
+  @IsString() ward_id: string;
 
   @IsOptional()
   @IsString()
@@ -23,5 +31,5 @@ export class CreateAddressDto {
 
   @IsOptional()
   @IsBoolean()
-  is_default?: boolean; // mặc định false nếu không truyền
+  is_default?: boolean;
 }

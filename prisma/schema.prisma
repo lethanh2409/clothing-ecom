@@ -87,8 +87,11 @@ model addresses {
   consignee_name  String
   consignee_phone String
   province        String
+  province_id     String
   district        String
+  district_id     String
   ward            String
+  ward_id         String
   street          String   @default("")
   house_num       String   @default("")
   is_default      Boolean  @default(false)
