@@ -385,6 +385,7 @@ export class InventoryController {
     }
   }
 
+  //** Update threshold for a variant
   @Put('variants/:id/threshold')
   async updateThreshold(
     @Param('id', ParseIntPipe) variantId: number,
