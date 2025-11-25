@@ -158,6 +158,7 @@ CREATE TABLE "clothing_ecom"."product_variants" (
     "size_id" INTEGER NOT NULL,
     "sku" TEXT NOT NULL,
     "barcode" TEXT NOT NULL,
+    "low_stock_threshold" INTEGER NOT NULL DEFAULT 10,
     "base_price" DECIMAL(12,2) NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 0,
     "status" BOOLEAN NOT NULL DEFAULT true,

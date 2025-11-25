@@ -8,10 +8,17 @@ import { CategoriesController } from './categories.controller';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { EmbeddingService } from 'src/embedding/embedding.service';
 
 @Module({
   imports: [CloudinaryModule, PrismaModule],
-  providers: [ProductsService, BrandsService, CategoriesService, CloudinaryService],
+  providers: [
+    ProductsService,
+    BrandsService,
+    CategoriesService,
+    CloudinaryService,
+    EmbeddingService,
+  ],
   controllers: [ProductsController, BrandsController, CategoriesController],
   exports: [ProductsService],
 })

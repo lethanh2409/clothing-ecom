@@ -106,6 +106,7 @@ export class ChatbotService {
       };
     } catch (err) {
       this.logger.warn('⚠️ N8N webhook health check failed');
+      this.logger.warn(err instanceof Error ? err.message : String(err));
       return {
         status: 'error',
         webhook_url: this.n8nWebhookUrl,

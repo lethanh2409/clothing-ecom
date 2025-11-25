@@ -59,7 +59,7 @@ export class InventoryCron {
     this.logger.log('⚠️ Kiểm tra tồn kho thấp...');
 
     try {
-      const lowStock = await this.inventoryService.getLowStockVariants(10);
+      const lowStock = await this.inventoryService.getLowStockVariants();
       const outOfStock = await this.inventoryService.getOutOfStockVariants();
 
       if (outOfStock.count > 0) {
@@ -68,12 +68,12 @@ export class InventoryCron {
         // TODO: Gửi email/notification cho admin
       }
 
-      if (lowStock.count > 0) {
-        this.logger.warn(`⚠️ TỒN KHO THẤP: ${lowStock.count} variants có tồn kho < 10`);
+      if (lowStock.length > 0) {
+        this.logger.warn(`⚠️ TỒN KHO THẤP: ${lowStock.length} variants có tồn kho < 10`);
         // TODO: Gửi email/notification cho admin
       }
 
-      if (outOfStock.count === 0 && lowStock.count === 0) {
+      if (outOfStock.count === 0 && lowStock.length === 0) {
         this.logger.log('✅ Tồn kho ổn định');
       }
     } catch (error) {

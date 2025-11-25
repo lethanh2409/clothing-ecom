@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   UseGuards,
   BadRequestException,
+  Put,
 } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -24,15 +25,12 @@ import {
   AdjustStockDto,
   BulkStockAdjustRequestDto,
 } from './dtos/inventory-request.dto';
+import { BulkUpdateThresholdDto, UpdateThresholdDto } from './dtos/update-threshold.dto';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class InventoryController {
   constructor(private readonly inventoryService: InventoryService) {}
-
-  // ============================================
-  // HISTORICAL QUERIES (ADMIN/STAFF)
-  // ============================================
 
   /**
    * Lấy tồn kho của 1 variant tại thời điểm cụ thể
@@ -149,10 +147,6 @@ export class InventoryController {
     }
   }
 
-  // ============================================
-  // TRANSACTION REPORTS (ADMIN/STAFF)
-  // ============================================
-
   /**
    * Báo cáo biến động tồn kho theo khoảng thời gian
    * GET /inventory/reports/changes?startDate=2025-01-01&endDate=2025-01-31
@@ -252,10 +246,6 @@ export class InventoryController {
     }
   }
 
-  // ============================================
-  // STOCK ALERTS (ADMIN/STAFF)
-  // ============================================
-
   /**
    * Lấy danh sách variants có tồn kho thấp
    * GET /inventory/alerts/low-stock?threshold=10
@@ -274,7 +264,7 @@ export class InventoryController {
         throw new BadRequestException('threshold tối đa là 1000');
       }
 
-      const result = await this.inventoryService.getLowStockVariants(threshold);
+      const result = await this.inventoryService.getLowStockVariants();
       return {
         success: true,
         data: result,
@@ -306,10 +296,6 @@ export class InventoryController {
       );
     }
   }
-
-  // ============================================
-  // STOCK ADJUSTMENT (ADMIN ONLY)
-  // ============================================
 
   /**
    * Điều chỉnh tồn kho (nhập/xuất thủ công)
@@ -397,5 +383,49 @@ export class InventoryController {
         error instanceof Error ? error.message : 'Không thể điều chỉnh hàng loạt',
       );
     }
+  }
+
+  @Put('variants/:id/threshold')
+  async updateThreshold(
+    @Param('id', ParseIntPipe) variantId: number,
+    @Body() dto: UpdateThresholdDto,
+  ) {
+    return this.inventoryService.updateThreshold(variantId, dto);
+  }
+
+  /**
+   * Bulk update threshold
+   * POST /inventory/variants/bulk-update-threshold
+   */
+  @Post('variants/bulk-update-threshold')
+  async bulkUpdateThreshold(@Body() dto: BulkUpdateThresholdDto) {
+    return this.inventoryService.bulkUpdateThreshold(dto);
+  }
+
+  /**
+   * Get low stock variants
+   * GET /inventory/low-stock
+   */
+  @Get('low-stock')
+  async getLowStock() {
+    return this.inventoryService.getLowStockVariantsRaw();
+  }
+
+  /**
+   * Get single variant status
+   * GET /inventory/variants/:id/status
+   */
+  @Get('variants/:id/status')
+  async getVariantStatus(@Param('id', ParseIntPipe) variantId: number) {
+    return this.inventoryService.getVariantStockStatus(variantId);
+  }
+
+  /**
+   * Get all variants with threshold (for admin dashboard)
+   * GET /inventory/variants
+   */
+  @Get('variants')
+  async getAllVariants() {
+    return this.inventoryService.getAllVariantsWithThreshold();
   }
 }

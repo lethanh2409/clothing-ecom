@@ -21,6 +21,7 @@ import { OrdersCronService } from './orders/orders.cron.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { ShippingModule } from './shipping/shipping.module';
+import { EmbeddingModule } from './embedding/embedding.module';
 
 @Module({
   imports: [
@@ -60,6 +61,8 @@ import { ShippingModule } from './shipping/shipping.module';
     ChatbotModule,
 
     ShippingModule,
+
+    EmbeddingModule,
   ],
   providers: [
     VnpayService,

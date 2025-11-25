@@ -31,6 +31,7 @@ import {
   RevenueByBrandQueryDto,
 } from './dtos/revenue-query.dto';
 import { UpdateOrderStatusDto } from './dtos/update-order-status';
+import { Public } from '../auth/public.decorator';
 
 @Controller('orders')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -437,6 +438,16 @@ export class OrdersController {
 
     // Thêm BOM để Excel đọc đúng tiếng Việt
     res.send('\uFEFF' + csv);
+  }
+
+  @Get(':id/AI')
+  @Public()
+  async getOrderForAI(@Param('id') id: string) {
+    const order = await this.ordersService.getOrderById(Number(id));
+    if (!order) {
+      throw new NotFoundException(`Order ${id} not found`);
+    }
+    return order;
   }
 
   @Get(':id')

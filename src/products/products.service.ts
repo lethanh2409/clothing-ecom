@@ -10,6 +10,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { FilterProductDto } from './dtos/filter-product.dto';
+import { EmbeddingService } from 'src/embedding/embedding.service';
 
 // ===== Types kết quả =====
 type VariantWithAssets = Prisma.product_variantsGetPayload<{
@@ -29,6 +30,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cloudinary: CloudinaryService,
+    private readonly embedding: EmbeddingService,
   ) {}
 
   // ================= Helpers =================
@@ -429,6 +431,9 @@ export class ProductsService {
   }
 
   // ================= CREATE (no assets) =================
+  /**
+   * CREATE with auto-sync to vector store
+   */
   async createProductWithVariants(input: CreateProductDto) {
     if (!Array.isArray(input.variants) || input.variants.length === 0) {
       throw new BadRequestException('`variants` must be a non-empty array');
@@ -443,6 +448,7 @@ export class ProductsService {
 
     try {
       return await this.prisma.$transaction(async (tx) => {
+        // 1. Tạo product
         const product = await tx.products.create({
           data: {
             brand_id: input.brand_id,
@@ -454,6 +460,7 @@ export class ProductsService {
           },
         });
 
+        // 2. Kiểm tra trùng lặp variants
         const seen = new Set<string>();
         for (const v of input.variants) {
           const key = `${Number(v.size_id)}::${String(v.color).trim().toLowerCase()}`;
@@ -461,6 +468,13 @@ export class ProductsService {
           seen.add(key);
         }
 
+        // 3. Lấy brand & category để sync
+        const brand = await tx.brands.findUnique({ where: { brand_id: input.brand_id } });
+        const category = await tx.categories.findUnique({
+          where: { category_id: input.category_id },
+        });
+
+        // 4. Tạo variants và sync từng cái
         for (const v of input.variants) {
           const color = String(v.color).trim();
           const sku =
@@ -476,7 +490,7 @@ export class ProductsService {
             v.barcode ??
             (await this.generateBarcode(tx, product.product_id, Number(v.size_id), color));
 
-          await tx.product_variants.create({
+          const variant = await tx.product_variants.create({
             data: {
               product_id: product.product_id,
               size_id: Number(v.size_id),
@@ -485,11 +499,21 @@ export class ProductsService {
               base_price: v.base_price,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
-              attribute: { color } as Prisma.InputJsonValue,
+              attribute: { color } as any,
             },
           });
+
+          // ⭐ Sync variant to vector store
+          try {
+            const size = await tx.sizes.findUnique({ where: { size_id: Number(v.size_id) } });
+            await this.embedding.syncVariant(variant, product, brand, category, size);
+          } catch (error) {
+            console.error('❌ Failed to sync variant to vector store:', error);
+            // Không throw error để không block việc tạo product
+          }
         }
 
+        // 5. Trả về kết quả
         const raw = await tx.products.findUnique({
           where: { product_id: product.product_id },
           include: {
@@ -530,12 +554,7 @@ export class ProductsService {
         };
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const target = Array.isArray(error.meta?.target)
-          ? error.meta.target.join(', ')
-          : 'unique field';
-        throw new ConflictException(`Product với ${target} đã tồn tại`);
-      }
+      console.error('❌ Failed to sync variant to vector store:', error);
       throw error;
     }
   }
@@ -543,11 +562,16 @@ export class ProductsService {
   // ================= UPDATE (no asset changes here) =================
   async updateProductAndVariants(id: number, payload: UpdateProductDto) {
     return this.prisma.$transaction(async (tx) => {
-      const existed = await tx.products.findUnique({ where: { product_id: id } });
+      const existed = await tx.products.findUnique({
+        where: { product_id: id },
+        include: { brands: true, categories: true },
+      });
       if (!existed) throw new NotFoundException(`Product ${id} không tồn tại`);
 
+      // 1. Update product info
+      let updatedProduct = existed;
       if (payload.product) {
-        await tx.products.update({
+        updatedProduct = await tx.products.update({
           where: { product_id: id },
           data: {
             brand_id: payload.product.brand_id ?? undefined,
@@ -557,32 +581,61 @@ export class ProductsService {
             description: payload.product.description ?? undefined,
             status: (payload.product.status as any) ?? undefined,
           },
+          include: { brands: true, categories: true },
         });
       }
 
+      // 2. Delete variants
       if (payload.variantIdsToDelete?.length) {
+        // ⭐ Delete from vector store first
+        const variantsToDelete = await tx.product_variants.findMany({
+          where: { product_id: id, variant_id: { in: payload.variantIdsToDelete.map(Number) } },
+        });
+
+        for (const v of variantsToDelete) {
+          try {
+            await this.embedding.deleteDocument(v.sku);
+          } catch (error) {
+            console.error('❌ Failed to delete variant from vector store:', error);
+          }
+        }
+
         await tx.product_variants.deleteMany({
           where: { product_id: id, variant_id: { in: payload.variantIdsToDelete.map(Number) } },
         });
       }
 
+      // 3. Upsert variants
       for (const v of payload.variantsToUpsert ?? []) {
         if (v.variant_id) {
-          await tx.product_variants.update({
+          // Update existing variant
+          const updated = await tx.product_variants.update({
             where: { variant_id: Number(v.variant_id) },
             data: {
               size_id: v.size_id ?? undefined,
               sku: v.sku ?? undefined,
               barcode: v.barcode ?? undefined,
-              base_price:
-                v.base_price != null ? new Prisma.Decimal(Number(v.base_price)) : undefined,
+              base_price: v.base_price != null ? Number(v.base_price) : undefined,
               quantity: v.quantity != null ? Number(v.quantity) : undefined,
-              attribute: v.color
-                ? ({ color: String(v.color) } as Prisma.InputJsonValue)
-                : undefined,
+              attribute: v.color ? ({ color: String(v.color) } as any) : undefined,
             },
+            include: { sizes: true },
           });
+
+          // ⭐ Re-sync to vector store
+          try {
+            await this.embedding.syncVariant(
+              updated,
+              updatedProduct,
+              updatedProduct.brands,
+              updatedProduct.categories,
+              updated.sizes,
+            );
+          } catch (error) {
+            console.error('❌ Failed to sync updated variant:', error);
+          }
         } else {
+          // Create new variant
           const sizeId = Number(v.size_id);
           const color = String(v.color || '').trim();
           const sku =
@@ -596,7 +649,7 @@ export class ProductsService {
             ));
           const barcode = v.barcode ?? (await this.generateBarcode(tx, id, sizeId, color));
 
-          await tx.product_variants.create({
+          const created = await tx.product_variants.create({
             data: {
               product_id: id,
               size_id: sizeId,
@@ -605,9 +658,23 @@ export class ProductsService {
               base_price: v.base_price ?? 0,
               quantity: v.quantity != null ? Number(v.quantity) : 0,
               status: true,
-              attribute: { color } as Prisma.InputJsonValue,
+              attribute: { color } as any,
             },
+            include: { sizes: true },
           });
+
+          // ⭐ Sync new variant
+          try {
+            await this.embedding.syncVariant(
+              created,
+              updatedProduct,
+              updatedProduct.brands,
+              updatedProduct.categories,
+              created.sizes,
+            );
+          } catch (error) {
+            console.error('❌ Failed to sync new variant:', error);
+          }
         }
       }
 
@@ -622,17 +689,6 @@ export class ProductsService {
           categories: true,
         },
       });
-
-      // ✅ Format base_price trước khi return
-      if (result) {
-        return {
-          ...result,
-          product_variants: result.product_variants.map((v) => ({
-            ...v,
-            base_price: parseFloat(v.base_price.toString()),
-          })),
-        };
-      }
 
       return result;
     });

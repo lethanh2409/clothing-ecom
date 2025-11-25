@@ -11,13 +11,13 @@ import {
   BulkInventoryAtDateDto,
   ChangeReportDto,
   VariantTransactionsDto,
-  LowStockVariantsDto,
   OutOfStockVariantsDto,
   AdjustStockResponseDto,
   BulkStockAdjustDto,
   BulkStockAdjustResponseDto,
   VariantChangeItem,
 } from './dtos/inventory-snapshot.dto';
+import { BulkUpdateThresholdDto, UpdateThresholdDto } from './dtos/update-threshold.dto';
 
 @Injectable()
 export class InventoryService {
@@ -421,47 +421,6 @@ export class InventoryService {
     };
   }
 
-  // ============================================
-  // STOCK ALERTS
-  // ============================================
-
-  /**
-   * Lấy danh sách variants có tồn kho thấp
-   */
-  async getLowStockVariants(threshold = 10): Promise<LowStockVariantsDto> {
-    const variants = await this.prisma.product_variants.findMany({
-      where: {
-        quantity: {
-          lte: threshold,
-        },
-        status: true,
-      },
-      include: {
-        products: {
-          include: {
-            brands: true,
-            categories: true,
-          },
-        },
-      },
-      orderBy: { quantity: 'asc' },
-    });
-
-    return {
-      threshold,
-      count: variants.length,
-      variants: variants.map((v) => ({
-        variant_id: v.variant_id,
-        sku: v.sku,
-        product_name: v.products?.product_name || undefined,
-        brand: v.products?.brands?.brand_name || undefined,
-        category: v.products?.categories?.category_name || undefined,
-        quantity: v.quantity,
-        status: v.quantity === 0 ? 'out_of_stock' : 'low_stock',
-      })),
-    };
-  }
-
   /**
    * Lấy variants hết hàng
    */
@@ -579,5 +538,197 @@ export class InventoryService {
         failed,
       },
     };
+  }
+
+  /**
+   * Update threshold cho 1 variant
+   */
+  async updateThreshold(variantId: number, dto: UpdateThresholdDto) {
+    const variant = await this.prisma.product_variants.findUnique({
+      where: { variant_id: variantId },
+      select: {
+        variant_id: true,
+        sku: true,
+        quantity: true,
+        products: {
+          select: { product_name: true },
+        },
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException(`Variant ${variantId} không tồn tại`);
+    }
+
+    const updated = await this.prisma.product_variants.update({
+      where: { variant_id: variantId },
+      data: {
+        low_stock_threshold: dto.low_stock_threshold,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Cập nhật ngưỡng cảnh báo thành công',
+      data: {
+        variant_id: updated.variant_id,
+        sku: updated.sku,
+        product_name: variant.products.product_name,
+        quantity: variant.quantity,
+        low_stock_threshold: updated.low_stock_threshold,
+        is_low_stock: variant.quantity <= updated.low_stock_threshold,
+      },
+    };
+  }
+
+  /**
+   * Bulk update threshold cho nhiều variants
+   */
+  async bulkUpdateThreshold(dto: BulkUpdateThresholdDto) {
+    const result = await this.prisma.product_variants.updateMany({
+      where: {
+        variant_id: { in: dto.variant_ids },
+      },
+      data: {
+        low_stock_threshold: dto.low_stock_threshold,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Đã cập nhật ${result.count} sản phẩm`,
+      updated_count: result.count,
+    };
+  }
+
+  /**
+   * Get low stock variants
+   */
+  async getLowStockVariants() {
+    const variants = await this.prisma.product_variants.findMany({
+      where: { status: true },
+      include: {
+        products: {
+          include: { brands: true, categories: true },
+        },
+        sizes: true,
+      },
+      orderBy: { quantity: 'asc' },
+    });
+
+    return variants.filter((v) => v.quantity <= v.low_stock_threshold);
+  }
+
+  /**
+   * Get low stock với raw SQL (vì Prisma không support compare 2 columns)
+   */
+  async getLowStockVariantsRaw() {
+    const query = `
+      SELECT 
+        pv.variant_id,
+        pv.sku,
+        pv.quantity,
+        pv.low_stock_threshold,
+        pv.base_price,
+        p.product_name,
+        b.brand_name,
+        c.category_name,
+        s.size_label,
+        CASE 
+          WHEN pv.quantity = 0 THEN 'out_of_stock'
+          WHEN pv.quantity <= pv.low_stock_threshold * 0.5 THEN 'critical'
+          WHEN pv.quantity <= pv.low_stock_threshold THEN 'low'
+          ELSE 'normal'
+        END as alert_level,
+        ROUND(pv.quantity::NUMERIC / NULLIF(pv.low_stock_threshold, 0) * 100, 2) as stock_percentage
+      FROM "clothing_ecom".product_variants pv
+      JOIN "clothing_ecom".products p ON pv.product_id = p.product_id
+      LEFT JOIN "clothing_ecom".brands b ON p.brand_id = b.brand_id
+      LEFT JOIN "clothing_ecom".categories c ON p.category_id = c.category_id
+      LEFT JOIN "clothing_ecom".sizes s ON pv.size_id = s.size_id
+      WHERE pv.status = true
+        AND pv.quantity <= pv.low_stock_threshold
+      ORDER BY pv.quantity ASC
+      LIMIT 100
+    `;
+
+    return this.prisma.$queryRawUnsafe(query);
+  }
+
+  /**
+   * Check single variant stock status
+   */
+  async getVariantStockStatus(variantId: number) {
+    const variant = await this.prisma.product_variants.findUnique({
+      where: { variant_id: variantId },
+      select: {
+        variant_id: true,
+        sku: true,
+        quantity: true,
+        low_stock_threshold: true,
+        base_price: true,
+        products: {
+          select: {
+            product_name: true,
+            brands: { select: { brand_name: true } },
+          },
+        },
+        sizes: {
+          select: { size_label: true },
+        },
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException(`Variant ${variantId} không tồn tại`);
+    }
+
+    const alertLevel =
+      variant.quantity === 0
+        ? 'out_of_stock'
+        : variant.quantity <= variant.low_stock_threshold * 0.5
+          ? 'critical'
+          : variant.quantity <= variant.low_stock_threshold
+            ? 'low'
+            : 'normal';
+
+    const stockPercentage =
+      variant.low_stock_threshold > 0
+        ? Math.round((variant.quantity / variant.low_stock_threshold) * 100)
+        : 100;
+
+    return {
+      ...variant,
+      alert_level: alertLevel,
+      stock_percentage: stockPercentage,
+      is_low_stock: variant.quantity <= variant.low_stock_threshold,
+    };
+  }
+
+  /**
+   * Get all variants with threshold info (for admin dashboard)
+   */
+  async getAllVariantsWithThreshold() {
+    return this.prisma.product_variants.findMany({
+      where: { status: true },
+      select: {
+        variant_id: true,
+        sku: true,
+        quantity: true,
+        low_stock_threshold: true,
+        base_price: true,
+        products: {
+          select: {
+            product_name: true,
+            brands: { select: { brand_name: true } },
+            categories: { select: { category_name: true } },
+          },
+        },
+        sizes: {
+          select: { size_label: true, gender: true },
+        },
+      },
+      orderBy: { updated_at: 'desc' },
+    });
   }
 }
