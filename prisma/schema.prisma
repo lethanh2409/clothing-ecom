@@ -2,7 +2,7 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  //url      = env("DATABASE_URL")
   // ✅ Thêm dòng này để chỉ định schema
   schemas  = ["clothing_ecom"]
 }
