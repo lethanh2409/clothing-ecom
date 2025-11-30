@@ -17,7 +17,6 @@ import {
 } from '@nestjs/common';
 import express from 'express'; // FIX: Import Response from express
 import { OrdersService } from './orders.service';
-import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '../auth/roles.decorate';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreateOrderDto } from './dtos/create-order.dto';
@@ -31,10 +30,10 @@ import {
   RevenueByBrandQueryDto,
 } from './dtos/revenue-query.dto';
 import { UpdateOrderStatusDto } from './dtos/update-order-status';
-import { Public } from '../auth/public.decorator';
+import { Public } from 'src/auth/public.decorator';
 
 @Controller('orders')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(RolesGuard)
 export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
@@ -50,6 +49,16 @@ export class OrdersController {
       success: true,
       data: await this.ordersService.findAll(),
     };
+  }
+
+  @Public()
+  @Get('/:id/AI/:userId')
+  async getOrderForAI(@Param('id') id: string, @Param('userId') userId: string) {
+    const order = await this.ordersService.getOrderByIdForAI(Number(id), Number(userId));
+    if (!order) {
+      throw new NotFoundException(`Order ${id} not found`);
+    }
+    return order;
   }
 
   // --- CUSTOMER: chỉ được xem đơn hàng của chính họ ---
@@ -438,16 +447,6 @@ export class OrdersController {
 
     // Thêm BOM để Excel đọc đúng tiếng Việt
     res.send('\uFEFF' + csv);
-  }
-
-  @Get(':id/AI')
-  @Public()
-  async getOrderForAI(@Param('id') id: string) {
-    const order = await this.ordersService.getOrderById(Number(id));
-    if (!order) {
-      throw new NotFoundException(`Order ${id} not found`);
-    }
-    return order;
   }
 
   @Get(':id')

@@ -163,6 +163,7 @@ CREATE TABLE "clothing_ecom"."product_variants" (
     "quantity" INTEGER NOT NULL DEFAULT 0,
     "status" BOOLEAN NOT NULL DEFAULT true,
     "attribute" JSONB NOT NULL,
+    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
@@ -250,7 +251,7 @@ CREATE TABLE "clothing_ecom"."cart_detail" (
 -- CreateTable
 CREATE TABLE "clothing_ecom"."orders" (
     "order_id" SERIAL NOT NULL,
-    "customer_id" INTEGER,
+    "customer_id" INTEGER NOT NULL,
     "address_id" INTEGER,
     "subtotal_price" DECIMAL(12,2) NOT NULL,
     "discount_price" DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -548,7 +549,7 @@ ALTER TABLE "clothing_ecom"."cart_detail" ADD CONSTRAINT "cart_detail_cart_id_fk
 ALTER TABLE "clothing_ecom"."cart_detail" ADD CONSTRAINT "cart_detail_variant_id_fkey" FOREIGN KEY ("variant_id") REFERENCES "clothing_ecom"."product_variants"("variant_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clothing_ecom"."orders" ADD CONSTRAINT "orders_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "clothing_ecom"."orders" ADD CONSTRAINT "orders_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "clothing_ecom"."customers"("customer_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "clothing_ecom"."orders" ADD CONSTRAINT "orders_address_id_fkey" FOREIGN KEY ("address_id") REFERENCES "clothing_ecom"."addresses"("address_id") ON DELETE SET NULL ON UPDATE CASCADE;

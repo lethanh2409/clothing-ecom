@@ -1,65 +1,4 @@
 import type { PrismaClient } from '@prisma/client';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
-
-// ========== GEMINI EMBEDDING ==========
-interface GeminiResponse {
-  embedding?: {
-    values: number[];
-  };
-}
-
-async function embedText(text: string) {
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'text-embedding-004',
-        content: {
-          parts: [{ text }],
-        },
-      }),
-    },
-  );
-
-  const data = (await res.json()) as GeminiResponse;
-
-  if (!data.embedding?.values) {
-    console.error('Gemini embedding failed:', data);
-    throw new Error('Gemini embedding failed');
-  }
-
-  return data.embedding.values;
-}
-
-// ========== UPSERT HELPER ==========
-async function upsertDocument(
-  sourceId: string,
-  content: string,
-  metadata: any,
-  sourceTable: string,
-) {
-  const embedding = await embedText(content);
-  const { error } = await supabase.from('documents').upsert(
-    {
-      source_id: sourceId,
-      content,
-      metadata,
-      embedding,
-      source_table: sourceTable,
-    },
-    { onConflict: 'source_id' },
-  );
-
-  if (error) {
-    console.error(`❌ Supabase error on ${sourceId}`, error);
-  } else {
-    console.log(`✅ Vector upserted: ${sourceId}`);
-  }
-}
 
 // ========== BRANDS DATA ==========
 const brandsData = [
@@ -225,37 +164,6 @@ export async function seedBrands(prisma: PrismaClient) {
     })),
     skipDuplicates: true,
   });
-
-  console.log('🧠 Syncing brands to Supabase Vector...');
-
-  for (const brand of brandsData) {
-    const { data: exists } = await supabase
-      .from('documents')
-      .select('source_id')
-      .eq('source_id', `brand-${brand.slug}`)
-      .maybeSingle();
-
-    if (exists) {
-      console.log(`⏭️ Skip exists: brand-${brand.slug}`);
-      continue;
-    }
-
-    // Content chi tiết hơn để AI hiểu rõ
-    const text = `Thương hiệu: ${brand.name}. ${brand.desc}. Slug: ${brand.slug}. Khách hàng có thể tìm các sản phẩm của ${brand.name} bằng cách lọc theo brand hoặc tìm kiếm trực tiếp tên thương hiệu.`;
-
-    await upsertDocument(
-      `brand-${brand.slug}`,
-      text,
-      {
-        type: 'brand',
-        brand_id: brand.id,
-        brand_name: brand.name,
-        slug: brand.slug,
-      },
-      'brands',
-    );
-  }
-
   console.log('🎉 Brands seed & embedding DONE!');
 }
 
@@ -266,45 +174,5 @@ export async function seedCategories(prisma: PrismaClient) {
     data: categoriesData,
     skipDuplicates: true,
   });
-
-  console.log('🧠 Syncing categories to Supabase Vector...');
-
-  for (const cat of categoriesData) {
-    const { data: exists } = await supabase
-      .from('documents')
-      .select('source_id')
-      .eq('source_id', `category-${cat.slug}`)
-      .maybeSingle();
-
-    if (exists) {
-      console.log(`⏭️ Skip exists: category-${cat.slug}`);
-      continue;
-    }
-
-    // Xác định gender từ parent
-    const gender = cat.parent_id === 1 ? 'nam' : cat.parent_id === 2 ? 'nữ' : 'unisex';
-
-    // Content phong phú hơn
-    const parentName = cat.parent_id
-      ? categoriesData.find((c) => c.category_id === cat.parent_id)?.category_name
-      : null;
-
-    const text = `Danh mục sản phẩm: ${cat.category_name}. Mô tả: ${cat.description}. ${parentName ? `Thuộc nhóm: ${parentName}.` : ''} Dành cho: ${gender}. Slug: ${cat.slug}. Khách có thể tìm ${cat.category_name} trong mục ${parentName || 'chính'}.`;
-
-    await upsertDocument(
-      `category-${cat.slug}`,
-      text,
-      {
-        type: 'category',
-        category_id: cat.category_id,
-        category_name: cat.category_name,
-        slug: cat.slug,
-        parent_id: cat.parent_id,
-        gender: gender,
-      },
-      'categories',
-    );
-  }
-
   console.log('🎉 Categories seed & embedding DONE!');
 }

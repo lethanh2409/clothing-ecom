@@ -340,6 +340,39 @@ export class OrdersService {
     return this.transformOrderFull(order);
   }
 
+  // ADMIN: lấy 1 order theo id
+  async getOrderByIdForAI(orderId: number, userId: number) {
+    const order = await this.prisma.orders.findUnique({
+      where: { order_id: orderId },
+      include: {
+        customers: true,
+        addresses: true,
+        vouchers: true,
+        order_detail: {
+          include: {
+            product_variants: {
+              include: {
+                products: true,
+                variant_assets: true,
+              },
+            },
+          },
+        },
+        payments: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with id ${orderId} not found`);
+    } else {
+      if (order.customers.user_id === userId) {
+        return this.transformOrderFull(order);
+      } else {
+        return `Đơn hàng không nằm trong danh sách đơn hàng của bạn`;
+      }
+    }
+  }
+
   // CUSTOMER: lấy orders theo userId (map user → customer → orders)
   async getOrdersByUserId(userId: number) {
     const customer = await this.prisma.customers.findUnique({
