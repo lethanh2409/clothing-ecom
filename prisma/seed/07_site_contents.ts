@@ -107,7 +107,7 @@ const siteContentsData = [
 - Không tính ngày lễ, Tết, Chủ Nhật
 - Đơn hàng sau 16h được xử lý vào ngày hôm sau
 - Kiểm tra tracking code qua tin nhắn SMS hoặc email`,
-    category: 'FAQ',
+    content_type: 'FAQ',
     tags: ['giao-hang', 'shipping', 'thoi-gian', 'delivery'],
     status: true,
   },
@@ -144,7 +144,7 @@ const siteContentsData = [
 - Áp dụng cho đơn hàng từ 3.000.000đ
 - Thẻ tín dụng: Home Credit, FE Credit, Kredivo
 - Kỳ hạn: 3, 6, 9, 12 tháng`,
-    category: 'FAQ',
+    content_type: 'FAQ',
     tags: ['thanh-toan', 'payment', 'phuong-thuc', 'cod', 'chuyen-khoan'],
     status: true,
   },
@@ -181,7 +181,7 @@ const siteContentsData = [
 **Địa chỉ đổi/trả hàng:**
 - HCM: 11 Nguyễn Đình Chiểu, phường Đa Kao, Quận 1, TP. Hồ Chí Minh
 - HN: Số 122 đường Hoàng Quốc Việt, phường Nghĩa Đô, quận Cầu Giấy, Hà Nộii`,
-    category: 'FAQ',
+    content_type: 'FAQ',
     tags: ['doi-tra', 'return', 'exchange', 'chinh-sach'],
     status: true,
   },
@@ -222,7 +222,7 @@ const siteContentsData = [
 - Hotline: 1900-xxxx (8:00 - 22:00)
 - Email: clothingecom8@gmail.com
 - Chat: Fanpage Facebook / Website`,
-    category: 'FAQ',
+    content_type: 'FAQ',
     tags: ['bao-hanh', 'warranty', 'loi-san-xuat', 'quality'],
     status: true,
   },
@@ -370,7 +370,7 @@ const siteContentsData = [
 - Quần dài → theo vòng eo + chiều dài  
 - Áo khoác → nên tăng 1 size  
 `,
-    category: 'GUIDE',
+    content_type: 'GUIDE',
     tags: ['size', 'huong-dan', 'do-luong', 'chon-size'],
     status: true,
   },
@@ -452,7 +452,7 @@ const siteContentsData = [
 - Cho vào túi vải (không dùng túi nilon)
 - Để nơi khô ráo, thoáng mát
 - Kiểm tra định kỳ 1-2 tháng`,
-    category: 'GUIDE',
+    content_type: 'GUIDE',
     tags: ['bao-quan', 'care', 'giat-ui', 'lam-sach'],
     status: true,
   },
@@ -489,7 +489,7 @@ const siteContentsData = [
 **5. Liên hệ về bảo mật:**
 - Email: privacy@store.com
 - Hotline: 1900-xxxx`,
-    category: 'POLICY',
+    content_type: 'POLICY',
     tags: ['bao-mat', 'privacy', 'du-lieu', 'thong-tin'],
     status: true,
   },
@@ -527,7 +527,7 @@ Mang đến trải nghiệm mua sắm tuyệt vời với sản phẩm chính h�
 - TP.HCM: 123 Nguyễn Trãi, Q.1 (8:00 - 22:00)
 - Hà Nội: 456 Trần Duy Hưng, Cầu Giấy (8:00 - 22:00)
 - Đà Nẵng: 789 Lê Duẩn, Q. Hải Châu (8:00 - 22:00)`,
-    category: 'ABOUT',
+    content_type: 'ABOUT',
     tags: ['gioi-thieu', 'about', 've-chung-toi', 'company'],
     status: true,
   },
@@ -568,7 +568,7 @@ Mang đến trải nghiệm mua sắm tuyệt vời với sản phẩm chính h�
 **Đà Nẵng:**
 📍 789 Lê Duẩn, Q. Hải Châu
 ⏰ 8:00 - 22:00 (Tất cả các ngày)`,
-    category: 'CONTACT',
+    content_type: 'CONTACT',
     tags: ['lien-he', 'contact', 'hotline', 'dia-chi'],
     status: true,
   },
@@ -604,7 +604,7 @@ async function embedText(text: string): Promise<number[]> {
 
 // ========== UPSERT WITH CHUNKS ==========
 async function upsertSiteContentWithChunks(siteContent: (typeof siteContentsData)[0]) {
-  const { slug, title, content, category, tags, status } = siteContent;
+  const { slug, title, content, content_type, tags, status } = siteContent;
 
   // Build full text
   const fullText = `${title}\n\n${content}`;
@@ -623,8 +623,8 @@ async function upsertSiteContentWithChunks(siteContent: (typeof siteContentsData
     const chunkText = chunks[i];
     const chunkId = chunks.length === 1 ? slug : `${slug}_chunk_${i + 1}`;
 
-    // Map category
-    const categoryMap: Record<string, string> = {
+    // Map content_type
+    const content_typeMap: Record<string, string> = {
       FAQ: 'Câu hỏi thường gặp',
       POLICY: 'Chính sách',
       GUIDE: 'Hướng dẫn',
@@ -638,8 +638,8 @@ async function upsertSiteContentWithChunks(siteContent: (typeof siteContentsData
       type: 'site_content',
       slug,
       title,
-      category,
-      category_name: categoryMap[category] || category,
+      content_type,
+      content_type_name: content_typeMap[content_type] || content_type,
       tags,
       status,
 
@@ -650,11 +650,11 @@ async function upsertSiteContentWithChunks(siteContent: (typeof siteContentsData
       is_last_chunk: i === chunks.length - 1,
 
       // Flags for easy filtering
-      is_faq: category === 'FAQ',
-      is_policy: category === 'POLICY',
-      is_guide: category === 'GUIDE',
-      is_about: category === 'ABOUT',
-      is_contact: category === 'CONTACT',
+      is_faq: content_type === 'FAQ',
+      is_policy: content_type === 'POLICY',
+      is_guide: content_type === 'GUIDE',
+      is_about: content_type === 'ABOUT',
+      is_contact: content_type === 'CONTACT',
 
       // Detail flags based on tags
       is_shipping: tags?.includes('giao-hang') || tags?.includes('shipping'),

@@ -172,7 +172,7 @@ CREATE TABLE "clothing_ecom"."product_variants" (
 
 -- CreateTable
 CREATE TABLE "clothing_ecom"."product_variant_price_history" (
-    "id" SERIAL NOT NULL,
+    "price_history_id" SERIAL NOT NULL,
     "variant_id" INTEGER NOT NULL,
     "old_price" DECIMAL(12,2) NOT NULL,
     "new_price" DECIMAL(12,2) NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE "clothing_ecom"."product_variant_price_history" (
     "reason" VARCHAR(255) NOT NULL,
     "changed_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "product_variant_price_history_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "product_variant_price_history_pkey" PRIMARY KEY ("price_history_id")
 );
 
 -- CreateTable
@@ -200,7 +200,6 @@ CREATE TABLE "clothing_ecom"."inventory_snapshots" (
     "variant_id" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
     "snapshot_date" DATE NOT NULL,
-    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "inventory_snapshots_pkey" PRIMARY KEY ("snapshot_id")
 );
@@ -374,7 +373,7 @@ CREATE TABLE "clothing_ecom"."audit_logs" (
 
 -- CreateTable
 CREATE TABLE "clothing_ecom"."email_otps" (
-    "id" SERIAL NOT NULL,
+    "otp_id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "purpose" TEXT NOT NULL,
     "code_hash" TEXT NOT NULL,
@@ -385,7 +384,7 @@ CREATE TABLE "clothing_ecom"."email_otps" (
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
 
-    CONSTRAINT "email_otps_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "email_otps_pkey" PRIMARY KEY ("otp_id")
 );
 
 -- CreateTable
@@ -394,7 +393,7 @@ CREATE TABLE "clothing_ecom"."site_contents" (
     "slug" VARCHAR(255) NOT NULL,
     "title" VARCHAR(500) NOT NULL,
     "content" TEXT NOT NULL,
-    "category" VARCHAR(100) NOT NULL,
+    "content_type" VARCHAR(100) NOT NULL,
     "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "status" BOOLEAN NOT NULL DEFAULT true,
     "updated_by" INTEGER,
@@ -483,7 +482,7 @@ CREATE UNIQUE INDEX "site_contents_slug_key" ON "clothing_ecom"."site_contents"(
 CREATE INDEX "site_contents_slug_idx" ON "clothing_ecom"."site_contents"("slug");
 
 -- CreateIndex
-CREATE INDEX "site_contents_category_idx" ON "clothing_ecom"."site_contents"("category");
+CREATE INDEX "site_contents_content_type_idx" ON "clothing_ecom"."site_contents"("content_type");
 
 -- CreateIndex
 CREATE INDEX "site_contents_status_idx" ON "clothing_ecom"."site_contents"("status");
