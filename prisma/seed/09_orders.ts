@@ -10,7 +10,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2700000,
     discount_price: 0,
-    total_price: 2700000,
+    total_price: 2730000, // 2700000 + 30000
     shipping_fee: 30000,
     note: 'Giao giờ hành chính',
     payment_status: 'paid',
@@ -24,7 +24,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 1599000,
     discount_price: 0,
-    total_price: 1599000,
+    total_price: 1624000, // 1599000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -38,7 +38,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 3990000,
     discount_price: 0,
-    total_price: 3990000,
+    total_price: 3990000, // 3990000 + 0
     shipping_fee: 0,
     note: 'Freeship',
     payment_status: 'paid',
@@ -52,7 +52,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 1798000,
     discount_price: 0,
-    total_price: 1798000,
+    total_price: 1828000, // 1798000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -66,7 +66,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2499000,
     discount_price: 0,
-    total_price: 2499000,
+    total_price: 2524000, // 2499000 + 25000
     shipping_fee: 25000,
     note: 'Gọi trước 30 phút',
     payment_status: 'paid',
@@ -82,7 +82,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 3199000,
     discount_price: 0,
-    total_price: 3199000,
+    total_price: 3229000, // 3199000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -96,7 +96,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1924000, // 1899000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -110,7 +110,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 4599000,
     discount_price: 0,
-    total_price: 4599000,
+    total_price: 4599000, // 4599000 + 0
     shipping_fee: 0,
     note: 'VIP - Freeship',
     payment_status: 'paid',
@@ -124,7 +124,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 998000,
     discount_price: 0,
-    total_price: 998000,
+    total_price: 1028000, // 998000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -140,7 +140,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2199000,
     discount_price: 0,
-    total_price: 2199000,
+    total_price: 2224000, // 2199000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -154,7 +154,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 3499000,
     discount_price: 0,
-    total_price: 3499000,
+    total_price: 3529000, // 3499000 + 30000
     shipping_fee: 30000,
     note: 'Không giao cuối tuần',
     payment_status: 'paid',
@@ -168,7 +168,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 1699000,
     discount_price: 0,
-    total_price: 1699000,
+    total_price: 1724000, // 1699000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -182,7 +182,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2899000,
     discount_price: 0,
-    total_price: 2899000,
+    total_price: 2929000, // 2899000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -196,7 +196,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 5199000,
     discount_price: 0,
-    total_price: 5199000,
+    total_price: 5199000, // 5199000 + 0
     shipping_fee: 0,
     note: 'Đơn lớn - Freeship',
     payment_status: 'paid',
@@ -212,7 +212,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1924000, // 1899000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -226,7 +226,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3299000,
     discount_price: 0,
-    total_price: 3299000,
+    total_price: 3329000, // 3299000 + 30000
     shipping_fee: 30000,
     note: 'Giao buổi sáng',
     payment_status: 'paid',
@@ -240,7 +240,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 2599000,
     discount_price: 0,
-    total_price: 2599000,
+    total_price: 2624000, // 2599000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -254,7 +254,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 1399000,
     discount_price: 0,
-    total_price: 1399000,
+    total_price: 1429000, // 1399000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -270,7 +270,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 4199000,
     discount_price: 0,
-    total_price: 4199000,
+    total_price: 4199000, // 4199000 + 0
     shipping_fee: 0,
     note: 'Freeship',
     payment_status: 'paid',
@@ -284,7 +284,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2899000,
     discount_price: 0,
-    total_price: 2899000,
+    total_price: 2929000, // 2899000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -298,7 +298,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 1799000,
     discount_price: 0,
-    total_price: 1799000,
+    total_price: 1824000, // 1799000 + 25000
     shipping_fee: 25000,
     note: 'Giao giờ hành chính',
     payment_status: 'paid',
@@ -312,7 +312,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 3599000,
     discount_price: 0,
-    total_price: 3599000,
+    total_price: 3629000, // 3599000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -328,7 +328,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2399000,
     discount_price: 0,
-    total_price: 2399000,
+    total_price: 2424000, // 2399000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -342,7 +342,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 5499000,
     discount_price: 0,
-    total_price: 5499000,
+    total_price: 5499000, // 5499000 + 0
     shipping_fee: 0,
     note: 'VIP - Freeship',
     payment_status: 'paid',
@@ -356,7 +356,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 1599000,
     discount_price: 0,
-    total_price: 1599000,
+    total_price: 1629000, // 1599000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -370,7 +370,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2999000,
     discount_price: 0,
-    total_price: 2999000,
+    total_price: 3024000, // 2999000 + 25000
     shipping_fee: 25000,
     note: 'Gọi trước khi giao',
     payment_status: 'paid',
@@ -386,7 +386,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3799000,
     discount_price: 0,
-    total_price: 3799000,
+    total_price: 3829000, // 3799000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -400,7 +400,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1924000, // 1899000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -414,7 +414,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 4599000,
     discount_price: 0,
-    total_price: 4599000,
+    total_price: 4599000, // 4599000 + 0
     shipping_fee: 0,
     note: 'Đơn lớn',
     payment_status: 'paid',
@@ -428,7 +428,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2199000,
     discount_price: 0,
-    total_price: 2199000,
+    total_price: 2229000, // 2199000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -444,7 +444,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 2899000,
     discount_price: 0,
-    total_price: 2899000,
+    total_price: 2924000, // 2899000 + 25000
     shipping_fee: 25000,
     note: 'Giao buổi chiều',
     payment_status: 'paid',
@@ -458,7 +458,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 3999000,
     discount_price: 0,
-    total_price: 3999000,
+    total_price: 4029000, // 3999000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -472,7 +472,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 1699000,
     discount_price: 0,
-    total_price: 1699000,
+    total_price: 1724000, // 1699000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -486,7 +486,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 5299000,
     discount_price: 0,
-    total_price: 5299000,
+    total_price: 5299000, // 5299000 + 0
     shipping_fee: 0,
     note: 'VIP',
     payment_status: 'paid',
@@ -502,7 +502,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2599000,
     discount_price: 0,
-    total_price: 2599000,
+    total_price: 2629000, // 2599000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -516,7 +516,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1924000, // 1899000 + 25000
     shipping_fee: 25000,
     note: 'Giao nhanh',
     payment_status: 'paid',
@@ -530,7 +530,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 4299000,
     discount_price: 0,
-    total_price: 4299000,
+    total_price: 4299000, // 4299000 + 0
     shipping_fee: 0,
     note: null,
     payment_status: 'paid',
@@ -544,7 +544,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2999000,
     discount_price: 0,
-    total_price: 2999000,
+    total_price: 3029000, // 2999000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -560,7 +560,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3599000,
     discount_price: 0,
-    total_price: 3599000,
+    total_price: 3624000, // 3599000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -574,7 +574,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 1799000,
     discount_price: 0,
-    total_price: 1799000,
+    total_price: 1829000, // 1799000 + 30000
     shipping_fee: 30000,
     note: 'Không giao tối',
     payment_status: 'paid',
@@ -588,7 +588,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 4899000,
     discount_price: 0,
-    total_price: 4899000,
+    total_price: 4899000, // 4899000 + 0
     shipping_fee: 0,
     note: 'Freeship',
     payment_status: 'paid',
@@ -602,7 +602,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2399000,
     discount_price: 0,
-    total_price: 2399000,
+    total_price: 2424000, // 2399000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -618,7 +618,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 3199000,
     discount_price: 0,
-    total_price: 3199000,
+    total_price: 3229000, // 3199000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -632,7 +632,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 5699000,
     discount_price: 0,
-    total_price: 5699000,
+    total_price: 5699000, // 5699000 + 0
     shipping_fee: 0,
     note: 'Black Friday',
     payment_status: 'paid',
@@ -648,7 +648,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2899000,
     discount_price: 0,
-    total_price: 2899000,
+    total_price: 2924000, // 2899000 + 25000
     shipping_fee: 25000,
     note: 'Quà Giáng Sinh',
     payment_status: 'paid',
@@ -662,7 +662,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 4399000,
     discount_price: 0,
-    total_price: 4399000,
+    total_price: 4429000, // 4399000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -678,7 +678,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2090000,
     discount_price: 0,
-    total_price: 2090000,
+    total_price: 2120000, // 2090000 + 30000
     shipping_fee: 30000,
     note: 'Tết Nguyên Đán',
     payment_status: 'paid',
@@ -692,7 +692,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 3498000,
     discount_price: 0,
-    total_price: 3498000,
+    total_price: 3523000, // 3498000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -706,7 +706,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1929000, // 1899000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -722,7 +722,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2799000,
     discount_price: 0,
-    total_price: 2799000,
+    total_price: 2824000, // 2799000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -736,7 +736,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 4599000,
     discount_price: 0,
-    total_price: 4599000,
+    total_price: 4599000, // 4599000 + 0
     shipping_fee: 0,
     note: 'VIP',
     payment_status: 'paid',
@@ -752,7 +752,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3199000,
     discount_price: 0,
-    total_price: 3199000,
+    total_price: 3229000, // 3199000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -766,7 +766,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 2599000,
     discount_price: 0,
-    total_price: 2599000,
+    total_price: 2624000, // 2599000 + 25000
     shipping_fee: 25000,
     note: 'Ngày Phụ Nữ',
     payment_status: 'paid',
@@ -782,7 +782,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 1999000,
     discount_price: 0,
-    total_price: 1999000,
+    total_price: 2029000, // 1999000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -796,7 +796,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 3899000,
     discount_price: 0,
-    total_price: 3899000,
+    total_price: 3924000, // 3899000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -804,7 +804,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-04-20T14:45:00'),
   },
-
   // ==================== 2025 - THÁNG 5 ====================
   {
     order_id: 56,
@@ -812,7 +811,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2999000,
     discount_price: 0,
-    total_price: 2999000,
+    total_price: 3029000, // 2999000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -826,7 +825,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 4799000,
     discount_price: 0,
-    total_price: 4799000,
+    total_price: 4799000, // 4799000 + 0
     shipping_fee: 0,
     note: 'Freeship',
     payment_status: 'paid',
@@ -834,7 +833,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-05-15T09:30:00'),
   },
-
   // ==================== 2025 - THÁNG 6 ====================
   {
     order_id: 58,
@@ -842,7 +840,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2399000,
     discount_price: 0,
-    total_price: 2399000,
+    total_price: 2424000, // 2399000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -856,7 +854,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 3599000,
     discount_price: 0,
-    total_price: 3599000,
+    total_price: 3629000, // 3599000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -864,7 +862,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-06-20T15:00:00'),
   },
-
   // ==================== 2025 - THÁNG 7 ====================
   {
     order_id: 60,
@@ -872,7 +869,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 1799000,
     discount_price: 0,
-    total_price: 1799000,
+    total_price: 1824000, // 1799000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -886,7 +883,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 5199000,
     discount_price: 0,
-    total_price: 5199000,
+    total_price: 5199000, // 5199000 + 0
     shipping_fee: 0,
     note: 'VIP - Freeship',
     payment_status: 'paid',
@@ -894,7 +891,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-07-15T14:30:00'),
   },
-
   // ==================== 2025 - THÁNG 8 ====================
   {
     order_id: 62,
@@ -902,7 +898,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2899000,
     discount_price: 0,
-    total_price: 2899000,
+    total_price: 2929000, // 2899000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -916,7 +912,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 3999000,
     discount_price: 0,
-    total_price: 3999000,
+    total_price: 4024000, // 3999000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -924,7 +920,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-08-18T09:45:00'),
   },
-
   // ==================== 2025 - THÁNG 9 ====================
   {
     order_id: 64,
@@ -932,7 +927,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 2199000,
     discount_price: 0,
-    total_price: 2199000,
+    total_price: 2224000, // 2199000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -946,7 +941,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 4599000,
     discount_price: 0,
-    total_price: 4599000,
+    total_price: 4629000, // 4599000 + 30000
     shipping_fee: 30000,
     note: null,
     payment_status: 'paid',
@@ -954,7 +949,6 @@ const ordersData = [
     voucher_id: null,
     created_at: new Date('2025-09-20T10:30:00'),
   },
-
   // ==================== 2025 - THÁNG 10 ====================
   {
     order_id: 66,
@@ -962,7 +956,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3298000,
     discount_price: 0,
-    total_price: 3298000,
+    total_price: 3323000, // 3298000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -976,7 +970,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 1899000,
     discount_price: 0,
-    total_price: 1899000,
+    total_price: 1929000, // 1899000 + 30000
     shipping_fee: 30000,
     note: 'Giao nhanh',
     payment_status: 'paid',
@@ -990,7 +984,7 @@ const ordersData = [
     address_id: 2,
     subtotal_price: 5199000,
     discount_price: 0,
-    total_price: 5199000,
+    total_price: 5199000, // 5199000 + 0
     shipping_fee: 0,
     note: 'VIP',
     payment_status: 'paid',
@@ -1004,7 +998,7 @@ const ordersData = [
     address_id: 3,
     subtotal_price: 2599000,
     discount_price: 0,
-    total_price: 2599000,
+    total_price: 2624000, // 2599000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'paid',
@@ -1018,7 +1012,7 @@ const ordersData = [
     address_id: 1,
     subtotal_price: 3899000,
     discount_price: 0,
-    total_price: 3899000,
+    total_price: 3929000, // 3899000 + 30000
     shipping_fee: 30000,
     note: 'Gọi trước',
     payment_status: 'pending',
@@ -1032,7 +1026,7 @@ const ordersData = [
     address_id: 4,
     subtotal_price: 1699000,
     discount_price: 0,
-    total_price: 1699000,
+    total_price: 1724000, // 1699000 + 25000
     shipping_fee: 25000,
     note: null,
     payment_status: 'pending',
