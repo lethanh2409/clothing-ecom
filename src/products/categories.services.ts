@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { categories } from '@prisma/client';
+import slugify from 'slugify';
 
 @Injectable()
 export class CategoriesService {
@@ -60,7 +61,13 @@ export class CategoriesService {
     return this.prisma.categories.create({
       data: {
         category_name: dto.category_name,
-        slug: dto.slug ?? dto.category_name.toLowerCase().replace(/\s+/g, '-'),
+        slug:
+          dto.slug ??
+          slugify(dto.category_name, {
+            lower: true,
+            strict: true, // bỏ ký tự đặc biệt
+            locale: 'vi', // hỗ trợ tiếng Việt
+          }),
         description: dto.description ?? '',
         parent_id: dto.parent_id ?? null,
         status: dto.status ?? true,

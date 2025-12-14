@@ -11,6 +11,7 @@ import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { FilterProductDto } from './dtos/filter-product.dto';
 import { EmbeddingService } from 'src/embedding/embedding.service';
+import slugify from 'slugify';
 
 // ===== Types kết quả =====
 type VariantWithAssets = Prisma.product_variantsGetPayload<{
@@ -454,7 +455,13 @@ export class ProductsService {
             brand_id: input.brand_id,
             category_id: input.category_id,
             product_name: String(input.product_name),
-            slug: input.slug ?? String(input.product_name).toLowerCase().replace(/\s+/g, '-'),
+            slug:
+              input.slug ??
+              slugify(input.product_name, {
+                lower: true,
+                strict: true, // bỏ ký tự đặc biệt
+                locale: 'vi', // hỗ trợ tiếng Việt
+              }),
             description: input.description ?? '',
             status: (input.status as any) ?? 'ACTIVE',
           },

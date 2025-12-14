@@ -95,7 +95,7 @@ export class OtpService {
 
     if (exists) {
       await this.prisma.email_otps.update({
-        where: { id: exists.id },
+        where: { otp_id: exists.otp_id },
         data: {
           code_hash: hash,
           expires_at: expiresAt,
@@ -139,7 +139,7 @@ export class OtpService {
     const isValid = await bcrypt.compare(code, otp.code_hash);
     if (!isValid) {
       await this.prisma.email_otps.update({
-        where: { id: otp.id },
+        where: { otp_id: otp.otp_id },
         data: { attempts: otp.attempts + 1 },
       });
       throw new BadRequestException('Mã OTP không chính xác');
@@ -147,7 +147,7 @@ export class OtpService {
 
     // Nếu hợp lệ → đánh dấu đã sử dụng
     await this.prisma.email_otps.update({
-      where: { id: otp.id },
+      where: { otp_id: otp.otp_id },
       data: { consumed_at: new Date() },
     });
 

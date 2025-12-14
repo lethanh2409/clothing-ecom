@@ -200,6 +200,7 @@ CREATE TABLE "clothing_ecom"."inventory_snapshots" (
     "variant_id" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
     "snapshot_date" DATE NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "inventory_snapshots_pkey" PRIMARY KEY ("snapshot_id")
 );

@@ -6,6 +6,7 @@ import { CreateBrandDto } from './dtos/create-brand.dto';
 import { UpdateBrandDto } from './dtos/update-brand.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import type { Express } from 'express';
+import slugify from 'slugify';
 
 @Injectable()
 export class BrandsService {
@@ -54,7 +55,13 @@ export class BrandsService {
       return await this.prisma.brands.create({
         data: {
           brand_name: dto.brand_name,
-          slug: dto.slug ?? dto.brand_name.toLowerCase().replace(/\s+/g, '-'),
+          slug:
+            dto.slug ??
+            slugify(dto.brand_name, {
+              lower: true,
+              strict: true, // bỏ ký tự đặc biệt
+              locale: 'vi', // hỗ trợ tiếng Việt
+            }),
           description: dto.description ?? '',
           status: dto.status ?? true,
           logo_url,
