@@ -171,7 +171,12 @@ export async function seedBrands(prisma: PrismaClient) {
 export async function seedCategories(prisma: PrismaClient) {
   console.log('📂 Seeding local DB categories...');
   await prisma.categories.createMany({
-    data: categoriesData,
+    data: categoriesData.map((b) => ({
+      category_name: b.category_name,
+      slug: b.slug,
+      description: b.description ?? null,
+      parent_id: b.parent_id,
+    })),
     skipDuplicates: true,
   });
   console.log('🎉 Categories seed & embedding DONE!');
