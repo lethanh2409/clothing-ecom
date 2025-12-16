@@ -39,9 +39,9 @@ export class UsersController {
 
   // Update user
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  update(@Param('id') id: number, @Body() dto: UpdateUserDto) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return this.userService.update(+id, dto);
+    return this.userService.update(id, dto);
   }
 
   // Soft delete
