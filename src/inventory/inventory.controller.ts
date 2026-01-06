@@ -10,7 +10,10 @@ import {
   UseGuards,
   BadRequestException,
   Put,
+  StreamableFile,
+  Res,
 } from '@nestjs/common';
+import express from 'express';
 import { InventoryService } from './inventory.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -26,6 +29,7 @@ import {
   BulkStockAdjustRequestDto,
 } from './dtos/inventory-request.dto';
 import { BulkUpdateThresholdDto, UpdateThresholdDto } from './dtos/update-threshold.dto';
+import { ExportInventoryDto, ExportInventoryRangeDto } from './dtos/export-inventory.dto';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)

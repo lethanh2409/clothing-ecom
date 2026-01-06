@@ -1,7 +1,6 @@
 // src/inventory/inventory.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { format } from 'date-fns';
 import {
   InventorySnapshotDto,
   CreateSnapshotResponseDto,
@@ -18,6 +17,8 @@ import {
   VariantChangeItem,
 } from './dtos/inventory-snapshot.dto';
 import { BulkUpdateThresholdDto, UpdateThresholdDto } from './dtos/update-threshold.dto';
+import * as ExcelJS from 'exceljs';
+import { format, parseISO } from 'date-fns';
 
 @Injectable()
 export class InventoryService {
@@ -731,4 +732,351 @@ export class InventoryService {
       orderBy: { updated_at: 'desc' },
     });
   }
+
+  // /**
+  //  * Export inventory snapshot to Excel
+  //  */
+  // async exportInventoryToExcel(
+  //   date: string,
+  //   filters?: {
+  //     variant_ids?: number[];
+  //     category_id?: number;
+  //     brand_id?: number;
+  //   },
+  // ): Promise<ExcelJS.Buffer> {
+  //   const targetDate = parseISO(date);
+  //   targetDate.setHours(0, 0, 0, 0);
+
+  //   // Build where clause
+  //   const whereClause: any = {
+  //     snapshot_date: targetDate,
+  //     product_variants: {
+  //       status: true,
+  //     },
+  //   };
+
+  //   if (filters?.variant_ids?.length) {
+  //     whereClause.variant_id = { in: filters.variant_ids };
+  //   }
+
+  //   if (filters?.category_id) {
+  //     whereClause.product_variants = {
+  //       ...whereClause.product_variants,
+  //       products: {
+  //         category_id: filters.category_id,
+  //       },
+  //     };
+  //   }
+
+  //   if (filters?.brand_id) {
+  //     whereClause.product_variants = {
+  //       ...whereClause.product_variants,
+  //       products: {
+  //         brand_id: filters.brand_id,
+  //       },
+  //     };
+  //   }
+
+  //   // Fetch data
+  //   const snapshots = await this.prisma.inventory_snapshots.findMany({
+  //     where: whereClause,
+  //     include: {
+  //       product_variants: {
+  //         include: {
+  //           products: {
+  //             include: {
+  //               brands: true,
+  //               categories: true,
+  //             },
+  //           },
+  //           sizes: true,
+  //         },
+  //       },
+  //     },
+  //     orderBy: [
+  //       { product_variants: { products: { product_name: 'asc' } } },
+  //       { product_variants: { sizes: { size_label: 'asc' } } },
+  //     ],
+  //   });
+
+  //   // Create workbook
+  //   const workbook = new ExcelJS.Workbook();
+  //   const worksheet = workbook.addWorksheet('Tồn Kho');
+
+  //   // Set column widths and headers
+  //   worksheet.columns = [
+  //     { header: 'STT', key: 'stt', width: 6 },
+  //     { header: 'SKU', key: 'sku', width: 15 },
+  //     { header: 'Tên Sản Phẩm', key: 'product_name', width: 35 },
+  //     { header: 'Thương Hiệu', key: 'brand', width: 15 },
+  //     { header: 'Danh Mục', key: 'category', width: 15 },
+  //     { header: 'Size', key: 'size', width: 10 },
+  //     { header: 'Giới Tính', key: 'gender', width: 12 },
+  //     { header: 'Số Lượng', key: 'quantity', width: 12 },
+  //     { header: 'Ngưỡng Cảnh Báo', key: 'threshold', width: 15 },
+  //     { header: 'Trạng Thái', key: 'status', width: 15 },
+  //     { header: 'Giá Gốc', key: 'price', width: 12 },
+  //   ];
+
+  //   // Style header row
+  //   const headerRow = worksheet.getRow(1);
+  //   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  //   headerRow.fill = {
+  //     type: 'pattern',
+  //     pattern: 'solid',
+  //     fgColor: { argb: 'FF4472C4' },
+  //   };
+  //   headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  //   headerRow.height = 25;
+
+  //   // Add data rows
+  //   snapshots.forEach((snapshot, index) => {
+  //     const variant = snapshot.product_variants;
+  //     const product = variant?.products;
+  //     const alertLevel = this.getAlertLevel(snapshot.quantity, variant?.low_stock_threshold || 10);
+
+  //     const row = worksheet.addRow({
+  //       stt: index + 1,
+  //       sku: variant?.sku || 'N/A',
+  //       product_name: product?.product_name || 'N/A',
+  //       brand: product?.brands?.brand_name || 'N/A',
+  //       category: product?.categories?.category_name || 'N/A',
+  //       size: variant?.sizes?.size_label || 'N/A',
+  //       gender: variant?.sizes?.gender || 'N/A',
+  //       quantity: snapshot.quantity,
+  //       threshold: variant?.low_stock_threshold || 0,
+  //       status: this.getStatusText(alertLevel),
+  //       price: variant?.base_price || 0,
+  //     });
+
+  //     // Style based on stock level
+  //     const fillColor = this.getRowColor(alertLevel);
+  //     row.eachCell((cell, colNumber) => {
+  //       if (colNumber === 8) {
+  //         // Quantity column
+  //         cell.font = { bold: true };
+  //       }
+  //       if (colNumber === 10) {
+  //         // Status column
+  //         cell.font = { bold: true, color: { argb: this.getStatusColor(alertLevel) } };
+  //       }
+  //       if (colNumber === 11) {
+  //         // Price column
+  //         cell.numFmt = '#,##0"₫"';
+  //       }
+
+  //       cell.border = {
+  //         top: { style: 'thin' },
+  //         left: { style: 'thin' },
+  //         bottom: { style: 'thin' },
+  //         right: { style: 'thin' },
+  //       };
+
+  //       if (fillColor) {
+  //         cell.fill = {
+  //           type: 'pattern',
+  //           pattern: 'solid',
+  //           fgColor: { argb: fillColor },
+  //         };
+  //       }
+  //     });
+
+  //     row.alignment = { vertical: 'middle' };
+  //   });
+
+  //   // Add summary row
+  //   const totalRow = worksheet.addRow({
+  //     stt: '',
+  //     sku: '',
+  //     product_name: 'TỔNG CỘNG',
+  //     brand: '',
+  //     category: '',
+  //     size: '',
+  //     gender: '',
+  //     quantity: snapshots.reduce((sum, s) => sum + s.quantity, 0),
+  //     threshold: '',
+  //     status: '',
+  //     price: '',
+  //   });
+
+  //   totalRow.font = { bold: true };
+  //   totalRow.fill = {
+  //     type: 'pattern',
+  //     pattern: 'solid',
+  //     fgColor: { argb: 'FFE7E6E6' },
+  //   };
+
+  //   // Add metadata
+  //   const metadataRow = worksheet.addRow([]);
+  //   worksheet.addRow(['Ngày xuất báo cáo:', format(new Date(), 'dd/MM/yyyy HH:mm:ss')]);
+  //   worksheet.addRow(['Ngày tồn kho:', format(targetDate, 'dd/MM/yyyy')]);
+  //   worksheet.addRow(['Tổng số biến thể:', snapshots.length]);
+
+  //   // Generate buffer
+  //   return (await workbook.xlsx.writeBuffer()) as ExcelJS.Buffer;
+  // }
+
+  // /**
+  //  * Export inventory range (multiple dates)
+  //  */
+  // async exportInventoryRangeToExcel(
+  //   startDate: string,
+  //   endDate: string,
+  //   variantIds?: number[],
+  // ): Promise<ExcelJS.Buffer> {
+  //   const start = parseISO(startDate);
+  //   const end = parseISO(endDate);
+  //   start.setHours(0, 0, 0, 0);
+  //   end.setHours(23, 59, 59, 999);
+
+  //   const whereClause: any = {
+  //     snapshot_date: {
+  //       gte: start,
+  //       lte: end,
+  //     },
+  //   };
+
+  //   if (variantIds?.length) {
+  //     whereClause.variant_id = { in: variantIds };
+  //   }
+
+  //   const snapshots = await this.prisma.inventory_snapshots.findMany({
+  //     where: whereClause,
+  //     include: {
+  //       product_variants: {
+  //         include: {
+  //           products: {
+  //             include: {
+  //               brands: true,
+  //               categories: true,
+  //             },
+  //           },
+  //           sizes: true,
+  //         },
+  //       },
+  //     },
+  //     orderBy: [{ variant_id: 'asc' }, { snapshot_date: 'asc' }],
+  //   });
+
+  //   // Group by variant
+  //   const variantMap = new Map<number, any[]>();
+  //   const dates = new Set<string>();
+
+  //   snapshots.forEach((s) => {
+  //     const dateStr = format(s.snapshot_date, 'yyyy-MM-dd');
+  //     dates.add(dateStr);
+
+  //     if (!variantMap.has(s.variant_id)) {
+  //       variantMap.set(s.variant_id, []);
+  //     }
+  //     variantMap.get(s.variant_id)?.push({
+  //       date: dateStr,
+  //       quantity: s.quantity,
+  //       variant: s.product_variants,
+  //     });
+  //   });
+
+  //   const sortedDates = Array.from(dates).sort();
+
+  //   // Create workbook
+  //   const workbook = new ExcelJS.Workbook();
+  //   const worksheet = workbook.addWorksheet('Tồn Kho Theo Thời Gian');
+
+  //   // Dynamic columns
+  //   const columns: any[] = [
+  //     { header: 'STT', key: 'stt', width: 6 },
+  //     { header: 'SKU', key: 'sku', width: 15 },
+  //     { header: 'Tên Sản Phẩm', key: 'product_name', width: 35 },
+  //     { header: 'Size', key: 'size', width: 10 },
+  //   ];
+
+  //   sortedDates.forEach((date) => {
+  //     columns.push({
+  //       header: format(parseISO(date), 'dd/MM'),
+  //       key: date,
+  //       width: 12,
+  //     });
+  //   });
+
+  //   worksheet.columns = columns;
+
+  //   // Style header
+  //   const headerRow = worksheet.getRow(1);
+  //   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  //   headerRow.fill = {
+  //     type: 'pattern',
+  //     pattern: 'solid',
+  //     fgColor: { argb: 'FF4472C4' },
+  //   };
+  //   headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  //   // Add data
+  //   let rowIndex = 1;
+  //   variantMap.forEach((snapshots, variantId) => {
+  //     const firstSnapshot = snapshots[0];
+  //     const variant = firstSnapshot.variant;
+
+  //     const rowData: any = {
+  //       stt: rowIndex++,
+  //       sku: variant?.sku || 'N/A',
+  //       product_name: variant?.products?.product_name || 'N/A',
+  //       size: variant?.sizes?.size_label || 'N/A',
+  //     };
+
+  //     // Fill quantities for each date
+  //     const quantityMap = new Map(snapshots.map((s) => [s.date, s.quantity]));
+  //     sortedDates.forEach((date) => {
+  //       rowData[date] = quantityMap.get(date) || 0;
+  //     });
+
+  //     const row = worksheet.addRow(rowData);
+  //     row.eachCell((cell) => {
+  //       cell.border = {
+  //         top: { style: 'thin' },
+  //         left: { style: 'thin' },
+  //         bottom: { style: 'thin' },
+  //         right: { style: 'thin' },
+  //       };
+  //     });
+  //   });
+
+  //   return (await workbook.xlsx.writeBuffer()) as ExcelJS.Buffer;
+  // }
+
+  // // Helper methods
+  // private getAlertLevel(quantity: number, threshold: number): string {
+  //   if (quantity === 0) return 'out_of_stock';
+  //   if (quantity <= threshold * 0.5) return 'critical';
+  //   if (quantity <= threshold) return 'low';
+  //   return 'normal';
+  // }
+
+  // private getStatusText(level: string): string {
+  //   const statusMap: Record<string, string> = {
+  //     out_of_stock: 'Hết hàng',
+  //     critical: 'Cực kỳ thấp',
+  //     low: 'Sắp hết',
+  //     normal: 'Bình thường',
+  //   };
+  //   return statusMap[level] || 'Không xác định';
+  // }
+
+  // private getRowColor(level: string): string | null {
+  //   const colorMap: Record<string, string> = {
+  //     out_of_stock: 'FFFF0000', // Red
+  //     critical: 'FFFFC000', // Orange
+  //     low: 'FFFFFF00', // Yellow
+  //   };
+  //   return colorMap[level] || null;
+  // }
+
+  // private getStatusColor(level: string): string {
+  //   const colorMap: Record<string, string> = {
+  //     out_of_stock: 'FFFF0000',
+  //     critical: 'FFFF6600',
+  //     low: 'FFCC9900',
+  //     normal: 'FF00B050',
+  //   };
+  //   return colorMap[level] || 'FF000000';
+  // }
 }

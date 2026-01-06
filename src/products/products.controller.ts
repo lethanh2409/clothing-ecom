@@ -13,7 +13,7 @@ import {
   UploadedFile,
   UploadedFiles,
 } from '@nestjs/common';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import type { Express } from 'express';
 import { Public } from 'src/auth/public.decorator';
 import { Roles } from 'src/auth/roles.decorate';
@@ -22,6 +22,7 @@ import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { VariantFilterDto } from './dtos/variant-filter.dto';
 import { FilterProductDto } from './dtos/filter-product.dto';
+import { CreateProductWithImagesDto } from './dtos/create-product-with-image';
 
 type ListResponse<T = any> = {
   success: true;
@@ -58,18 +59,12 @@ export class ProductsController {
 
   @Public()
   @Get('admin')
-  async getAllProducts(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-  ): Promise<ListResponse> {
+  async getAllProducts(): Promise<ListResponse> {
     const items = await this.productsService.getAllProductsWithVariants();
-    const start = (page - 1) * limit;
     return {
       success: true,
       count: items.length,
-      data: items.slice(start, start + limit),
-      page,
-      limit,
+      data: items,
     };
   }
 
@@ -170,5 +165,28 @@ export class ProductsController {
   ) {
     const res = await this.productsService.deleteVariantAsset(variantId, assetId);
     return { success: true, data: res };
+  }
+
+  @Post('with-images')
+  @Roles('ADMIN')
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'images', maxCount: 20 }, // Support multiple images
+    ]),
+  )
+  async createWithImages(
+    @Body() dto: CreateProductWithImagesDto,
+    @UploadedFiles() files: { images?: Express.Multer.File[] },
+  ): Promise<ItemResponse> {
+    console.log('[POST /products/with-images] body =', JSON.stringify(dto));
+    console.log('[POST /products/with-images] files =', files?.images?.length || 0);
+
+    const data = await this.productsService.createProductWithImagesAndVariants(
+      dto,
+      files?.images || [],
+    );
+    console.log('[POST /products/with-images] result =', data?.product_id);
+
+    return { success: true, data };
   }
 }

@@ -12,6 +12,7 @@ import { UpdateProductDto } from './dtos/update-product.dto';
 import { FilterProductDto } from './dtos/filter-product.dto';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import slugify from 'slugify';
+import { CreateProductWithImagesDto } from './dtos/create-product-with-image';
 
 // ===== Types kết quả =====
 type VariantWithAssets = Prisma.product_variantsGetPayload<{
@@ -159,6 +160,7 @@ export class ProductsService {
       variant_id: v.variant_id,
       sku: v.sku,
       barcode: v.barcode,
+      low_stock_threshold: v.low_stock_threshold,
       price: v.base_price ? v.base_price.toNumber() : null,
       quantity: v.quantity,
       status: v.status,
@@ -463,7 +465,7 @@ export class ProductsService {
                 locale: 'vi', // hỗ trợ tiếng Việt
               }),
             description: input.description ?? '',
-            status: (input.status as any) ?? 'ACTIVE',
+            status: 'ACTIVE',
           },
         });
 
@@ -877,4 +879,210 @@ export class ProductsService {
       })),
     }));
   }
+
+  // async createProductWithImagesAndVariants(
+  //   input: CreateProductWithImagesDto,
+  //   images: Express.Multer.File[],
+  // ) {
+  //   if (!Array.isArray(input.variants) || input.variants.length === 0) {
+  //     throw new BadRequestException('`variants` must be a non-empty array');
+  //   }
+
+  //   if (input.slug) {
+  //     const existedSlug = await this.prisma.products.findUnique({ where: { slug: input.slug } });
+  //     if (existedSlug) {
+  //       throw new ConflictException('Slug đã tồn tại, vui lòng chọn slug khác');
+  //     }
+  //   }
+
+  //   try {
+  //     return await this.prisma.$transaction(async (tx) => {
+  //       // 1. Create product
+  //       const product = await tx.products.create({
+  //         data: {
+  //           brand_id: input.brand_id,
+  //           category_id: input.category_id,
+  //           product_name: String(input.product_name),
+  //           slug:
+  //             input.slug ??
+  //             slugify(input.product_name, {
+  //               lower: true,
+  //               strict: true,
+  //               locale: 'vi',
+  //             }),
+  //           description: input.description ?? '',
+  //           status: 'ACTIVE',
+  //         },
+  //       });
+
+  //       // 2. Check duplicate variants
+  //       const seen = new Set<string>();
+  //       for (const v of input.variants) {
+  //         const key = `${Number(v.size_id)}::${String(v.color).trim().toLowerCase()}`;
+  //         if (seen.has(key)) {
+  //           throw new ConflictException(`Biến thể bị trùng (size,color): ${key}`);
+  //         }
+  //         seen.add(key);
+  //       }
+
+  //       // 3. Get brand & category for sync
+  //       const brand = await tx.brands.findUnique({ where: { brand_id: input.brand_id } });
+  //       const category = await tx.categories.findUnique({
+  //         where: { category_id: input.category_id },
+  //       });
+
+  //       // 4. Calculate images per variant
+  //       const imagesPerVariant = Math.floor(images.length / input.variants.length);
+  //       let imageIndex = 0;
+
+  //       // 5. Create variants with images and upload to Cloudinary
+  //       for (let i = 0; i < input.variants.length; i++) {
+  //         const v = input.variants[i];
+  //         const color = String(v.color).trim();
+
+  //         const sku =
+  //           v.sku ??
+  //           (await this.generateUniqueSku(
+  //             tx,
+  //             product.product_id,
+  //             product.product_name,
+  //             Number(v.size_id),
+  //             color,
+  //           ));
+
+  //         const barcode =
+  //           v.barcode ??
+  //           (await this.generateBarcode(tx, product.product_id, Number(v.size_id), color));
+
+  //         const variant = await tx.product_variants.create({
+  //           data: {
+  //             product_id: product.product_id,
+  //             size_id: Number(v.size_id),
+  //             sku,
+  //             barcode,
+  //             base_price: v.base_price,
+  //             quantity: v.quantity != null ? Number(v.quantity) : 0,
+  //             status: true,
+  //             attribute: { color } as any,
+  //           },
+  //         });
+
+  //         // Get images for this variant
+  //         const variantImages = images.slice(imageIndex, imageIndex + imagesPerVariant);
+  //         imageIndex += imagesPerVariant;
+
+  //         // If last variant, take remaining images
+  //         if (i === input.variants.length - 1 && imageIndex < images.length) {
+  //           variantImages.push(...images.slice(imageIndex));
+  //         }
+
+  //         // Upload images to Cloudinary and save to database
+  //         for (let j = 0; j < variantImages.length; j++) {
+  //           const file = variantImages[j];
+  //           const isPrimary = j === 0; // First image is primary
+
+  //           try {
+  //             // Upload to Cloudinary
+  //             const cloudinaryResult = await this.cloudinary.uploadBuffer(
+  //               file,
+  //               `${process.env.CLOUDINARY_FOLDER || 'clothing_ecom'}/variant`,
+  //             );
+
+  //             // If this is primary, unset other primary images
+  //             if (isPrimary) {
+  //               await tx.variant_assets.updateMany({
+  //                 where: { variant_id: variant.variant_id, is_primary: true },
+  //                 data: { is_primary: false },
+  //               });
+  //             }
+
+  //             // Save to database
+  //             await tx.variant_assets.create({
+  //               data: {
+  //                 variant_id: variant.variant_id,
+  //                 url: cloudinaryResult.secure_url,
+  //                 type: 'IMAGE',
+  //                 is_primary: isPrimary,
+  //               },
+  //             });
+
+  //             console.log(
+  //               `✅ Uploaded image ${j + 1}/${variantImages.length} for variant ${variant.variant_id}`,
+  //             );
+  //           } catch (uploadError) {
+  //             console.error(
+  //               `❌ Failed to upload image to Cloudinary for variant ${variant.variant_id}:`,
+  //               uploadError,
+  //             );
+  //             // Continue with other images even if one fails
+  //           }
+  //         }
+
+  //         // Sync variant to vector store
+  //         try {
+  //           const size = await tx.sizes.findUnique({ where: { size_id: Number(v.size_id) } });
+  //           await this.embedding.syncVariant(variant, product, brand, category, size);
+  //         } catch (error) {
+  //           console.error('❌ Failed to sync variant to vector store:', error);
+  //           // Don't throw error to avoid blocking product creation
+  //         }
+  //       }
+
+  //       // 6. Return result with all images
+  //       const raw = await tx.products.findUnique({
+  //         where: { product_id: product.product_id },
+  //         include: {
+  //           product_variants: {
+  //             include: {
+  //               variant_assets: {
+              
+  //               },
+  //               sizes: true,
+  //             },
+  //             orderBy: { variant_id: 'asc' },
+  //           },
+  //           brands: true,
+  //           categories: true,
+  //         },
+  //       });
+
+  //       return {
+  //         product_id: raw!.product_id,
+  //         product_name: raw!.product_name,
+  //         slug: raw!.slug,
+  //         description: raw!.description,
+  //         brand: raw!.brands
+  //           ? { brand_id: raw!.brands.brand_id, brand_name: raw!.brands.brand_name }
+  //           : null,
+  //         category: raw!.categories
+  //           ? {
+  //               category_id: raw!.categories.category_id,
+  //               category_name: raw!.categories.category_name,
+  //             }
+  //           : null,
+  //         status: raw!.status,
+  //         variants: raw!.product_variants.map((v) => ({
+  //           variant_id: v.variant_id,
+  //           sku: v.sku,
+  //           barcode: v.barcode,
+  //           price: v.base_price != null ? Number(v.base_price) : null,
+  //           quantity: v.quantity,
+  //           size: v.sizes?.size_label ?? null,
+  //           color: this.readColor(v),
+  //           images: v.variant_assets
+  //             .filter((a) => a.asset_type === 'IMAGE')
+  //             .map((a) => ({
+  //               asset_id: a.asset_id,
+  //               url: a.asset_url,
+  //               is_primary: a.is_primary,
+  //               display_order: a.display_order,
+  //             })),
+  //         })),
+  //       };
+  //     });
+  //   } catch (error) {
+  //     console.error('❌ Failed to create product with images:', error);
+  //     throw error;
+  //   }
+  // }
 }
